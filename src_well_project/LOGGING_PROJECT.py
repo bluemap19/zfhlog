@@ -4,7 +4,7 @@ from src_well_data.DATA_WELL import WELL
 
 class LOGGING_PROJECT:
     def __init__(self):
-        self.PROJECT_PATH=r'C:\Users\Administrator\Desktop\算法测试-长庆数据收集\Code_input-O'
+        self.PROJECT_PATH=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\Code_input-O'
         self.WELL_NAMES = ['白75', '白159', '白291', '白300']
         self.WELL_PATH = {}
         self.target_curves = {}
@@ -28,6 +28,7 @@ class LOGGING_PROJECT:
             self.WELL_DATA[well] = WELL(self.PROJECT_PATH, well)
 
         return self.WELL_DATA[well].get_table_2()
+
 B = LOGGING_PROJECT()
 # data_t = B.get_well_data('白75', ['AC', 'CNL', 'GR'])
 # print(data_t)
@@ -44,7 +45,3 @@ B = LOGGING_PROJECT()
 # print(data_t)
 
 
-data_t = B.get_table_data('白75')
-print(data_t)
-data_t = B.get_table_data('白291')
-print(data_t)

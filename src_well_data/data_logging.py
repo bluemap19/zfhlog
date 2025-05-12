@@ -17,7 +17,11 @@ class data_logging:
         if file_path.endswith('.csv'):
             self.data = pd.read_csv(file_path)
         elif file_path.endswith('.xlsx'):
-            self.data = pd.read_excel(file_path, sheet_name=table_name)
+            try:
+                self.data = pd.read_excel(file_path, sheet_name=table_name)
+            except Exception as e:
+                print('文件读取失败', e)
+                self.data = pd.DataFrame()
 
         self.curve_names = list(self.data.columns)
 
@@ -30,4 +34,8 @@ class data_logging:
             self.read_data()
         if curve_names == []:
             curve_names = self.curve_names
-        return self.data[curve_names]
+        if curve_names[0].lower().__contains__('depth'):
+            return self.data[curve_names]
+        else:
+            curve_names = [self.curve_names[0]] + curve_names
+            return self.data[curve_names]

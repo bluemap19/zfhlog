@@ -13,6 +13,7 @@ mpl.rcParams["font.sans-serif"] = ["SimHei"]
 # 设置正常显示符号
 mpl.rcParams["axes.unicode_minus"] = False
 
+
 def find_mode(arr: np.array) -> np.float64:
     """返回数组中的所有众数"""
     # 展平数组并计算唯一值与频次
@@ -24,11 +25,13 @@ def find_mode(arr: np.array) -> np.float64:
     modes = unique_vals[counts == max_count]
     return modes[0]
 
+
 def get_resolution_by_depth(depth_array: np.array) -> np.float64:
     depth_array = depth_array.ravel()
     depth_diff = np.diff(depth_array)
     depth_resolution = find_mode(depth_diff)
     return depth_resolution
+
 
 # 根据深度获取曲线的index，只适合连续测井深度数据
 def get_index_by_depth(logging, depth):
@@ -95,6 +98,7 @@ def get_data_by_depths(logging_data, depth):
     index_end = get_index_by_depth(logging_data[:, 0], depth[1])
 
     return logging_data[index_start:index_end, :]
+
 
 
 # 数据合并，把几种带有深度的 测井信息进行 通过深度的 数据合并导出，按统一深度把数据合并，方便数据统一后进行无监督聚类
@@ -337,11 +341,12 @@ def data_combine_table3col(data_main, table_vice, drop=True):
 
     return np.array(data_final)
 
+
 def data_combine_table2col(data_main, table_vice, drop=True):
     """
     数据合并
     :param data_main:主数据，为n行m列的测井数据，n*m 必须连续且等差
-    :param table_vice: 表格数据，一般为解释结论n*2 必须遵循 [depth, Type]
+    :param table_vice: 表格数据，一般为解释结论n*2 必须遵循 [depth, Type]   Type必须为数字，否则会报错。
     :param drop:是否抛弃 解释结论表格没有的数据，True的话，就舍弃掉，数字的话，就用那个数字代替，False的话，就用-1代替
     :return: numpy.ndarray:合并后的测井数据
     """
@@ -354,6 +359,7 @@ def data_combine_table2col(data_main, table_vice, drop=True):
 
     depth_table_resolution = get_resolution_by_depth(table_vice[:, 0])
     depth_resolution = get_resolution_by_depth(data_main[:, 0])
+    # table_vice[:, 0].astype(np.float64)
 
     data_final = []
     index_table_continue = 0
@@ -362,13 +368,14 @@ def data_combine_table2col(data_main, table_vice, drop=True):
         depth = data_main[i, 0]
         flag = True
         for j in range(table_vice.shape[0]-index_table_continue):
-            dep_table = table_vice[j+index_table_continue, 0]
+            dep_table = float(table_vice[j+index_table_continue, 0])
             type = table_vice[j+index_table_continue, -1]
             if abs(depth-dep_table) < (depth_table_resolution/2+0.001):
                 data_final.append(np.append(data_main[i].ravel(), type))
                 index_table_continue = j+index_table_continue
                 combined_successfully += 1
                 flag = False
+                # index_table_continue = np.max(0, index_table_continue-1)
                 break
 
         if flag == True:
@@ -378,9 +385,16 @@ def data_combine_table2col(data_main, table_vice, drop=True):
                 data_final.append(np.append(data_main[i].ravel(), np.nan))
 
     data_final = np.array(data_final)
-    print('data logging_data:[{:.2f},{:.2f}] ++++ data table:[{:.2f},{:.2f}] ----> data_combined :{},[{:.2f}, {:.2f}]\n'
+    # data_final[:, 0].astype(np.float64)
+    print('data logging_data:[{:.2f},{:.2f}] ++++ data table:[{},{}] ----> data_combined :{},[{}, {}]\n'
           'with resolution {:.4f}, success count:{}'.format(data_main[0, 0], data_main[-1, 0], table_vice[0, 0], table_vice[-1, 0],
                                                         data_final.shape, data_final[0, 0], data_final[-1, 0], depth_resolution, combined_successfully))
+    # print('data logging_data:[{},{}] ++++ data table:[{},{}] ----> data_combined :{},[{}, {}]\n'
+    #       'with resolution {}, success count:{}'.format(data_main[0, 0], data_main[-1, 0], table_vice[0, 0],
+    #                                                         table_vice[-1, 0],
+    #                                                         data_final.shape, data_final[0, 0], data_final[-1, 0],
+    #                                                         depth_resolution, combined_successfully))
+
     # print('success combine table info:{}'.format(combined_successfully))
     return data_final
 
@@ -668,34 +682,7 @@ def data_disScatter(data, labels, pltTitle='', img_path=r'', skip_point=-1,
 
 
 
-# 把二维的 深度-类别 的n*2信息 合并成三维的 顶深-底深-类别 n*3信息，必须保持数据是连续的，中间不能有任何的数据缺失
-def layer_table_combine(layer_inf_str):
-    # 记录下每一个类型发生变化的index信息
-    index_list = [0]
-    for i in range(layer_inf_str.shape[0]-1):
-        if layer_inf_str[i][-1] != layer_inf_str[i+1][-1]:
-            index_list.append(i)
-    index_list.append(layer_inf_str.shape[0]-1)
 
-
-    depth_min = layer_inf_str[0][0]
-    depth_max = layer_inf_str[-1][0]
-    depth_step = (depth_max - depth_min)/(layer_inf_str.shape[0]-1)
-    # print('depth_step is {}'.format(depth_step), index_list)
-
-
-    # 通过index信息，收集类型发生变化的深度信息及类型信息
-    layer_inf_final = []
-    for i in range(len(index_list)-1):
-        if i == 0:
-            dep_start = layer_inf_str[index_list[i]][0]
-        else:
-            dep_start = (layer_inf_str[index_list[i]][0]+depth_step/2)
-        dep_end = min(layer_inf_str[index_list[i+1]][0]+depth_step/2, depth_max)
-        dep_class = layer_inf_str[index_list[i+1]][-1]
-        layer_inf_final.append(np.array([dep_start, dep_end, dep_class]))
-
-    return np.array(layer_inf_final)
 
 
 # layer_inf_str=np.array([[1, 1], [2, 3], [3, 1], [4, 2], [5, 1], [6, 1], [7, 1], [8, 2], [9, 1], [10, 2], [11, 1], [12, 3]])
@@ -738,46 +725,6 @@ def layer_table_combine(layer_inf_str):
 #     list_layer_class = np.array(list_layer_class)
 #
 #     return np.hstack((list_layer_depth.reshape((-1, 1)), list_layer_class.reshape((-1, 1))))
-
-
-
-# 将三维的 顶深-底深-类别 n*3信息 转换成二维的 深度-类别 的n*2信息,适合含有断层的层位信息处理
-def layer_table_to_list_fully(np_layer, step=0.0025):
-    # if step <= 0:
-    #     step = get_resolution_by_depth(np_layer[:, 0])
-    #     print('set current new well resolution : {}'.format(step))
-
-    if np_layer.shape[1] > 3:
-        print('label if too larget, please give label as n*3 shape...')
-        exit()
-
-    list_layer_type = []
-    for i in range(np_layer.shape[0]):
-        # 进行层位信息的基础检查，下一行开始的深度 不能小于 上一行结束的深度
-        if i>0:
-            if np_layer[i][0] < np_layer[i-1][1]:
-                print('Error layer config:{}-->{}'.format(np_layer[i-1], np_layer[i]))
-                exit(0)
-        if np_layer[i][0] > np_layer[i][1]:
-            print('Error layer config:{}'.format(np_layer[i]))
-            exit(0)
-
-        dep_start, dep_end, type = np_layer[i]
-        num_dep = int((dep_end - dep_start) / step) + 1
-        for i in range(0, num_dep):
-            dep_temp = dep_start + i * step
-            list_layer_type.append([dep_temp, type])
-
-    return np.array(list_layer_type)
-
-# table_data = np.array([[4721.8561, 4722.0, 3],
-#  [4727.5964, 4728.1839, 2],
-#  [4730.7, 4733.5, 1],
-#  [4734.4899, 4734.1, 3]])
-# np.set_printoptions(precision=2, suppress=True)
-# print(table_data)
-# list_type_data = layer_table_to_list_fully(table_data, step=0.1)
-# print(list_type_data)
 
 
 
