@@ -2,9 +2,6 @@ import os
 from pathlib import Path
 from typing import Union, Iterable, List
 
-import cv2
-import numpy as np
-
 
 # 检查是否存在指定文件夹，如果不存在，则建立新的文件夹
 def check_and_make_dir(dir_path):

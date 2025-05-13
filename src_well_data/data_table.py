@@ -21,7 +21,13 @@ class data_table:
             table_name = self.well_name
 
         if file_path.endswith('.csv'):
-            self.data = pd.read_csv(file_path)
+            try:
+                # 尝试中文编码
+                self.data = pd.read_csv(file_path, encoding='gbk')
+            except UnicodeDecodeError:
+                # 尝试其他编码
+                self.data = pd.read_csv(file_path, encoding='utf-8-sig')  # 处理 BOM 头
+            # self.data = pd.read_csv(file_path)
         elif file_path.endswith('.xlsx'):
             try:
                 self.data = pd.read_excel(file_path, sheet_name=table_name)
@@ -66,14 +72,20 @@ class data_table:
         table_3_to_2(self.table_3.values, step=resolution)
 
 
-    def get_table_3(self):
+    def get_table_3(self, curve_names=[]):
         if self.table_3.shape[0] == 0:
             self.table_2_to_3()
+        if len(curve_names) == 3:
+            return self.table_3[curve_names]
+        if self.table_2.shape[1] > 3:
+            return self.table_2.iloc[:, [0, 1, -1]]
         return self.table_3
 
-    def get_table_2(self):
+    def get_table_2(self, curve_names=[]):
         if self.table_2.shape[0] == 0:
             self.table_3_to_2()
+        if len(curve_names) == 2:
+            return self.table_2[curve_names]
         if self.table_2.shape[1] > 2:
             return self.table_2.iloc[:, [0, -1]]
         return self.table_2
@@ -82,11 +94,7 @@ class data_table:
         if resolution > 0:
             self.table_resolution = resolution
 
-    def table_type_replace(self):
-
-        pass
-
-    def table_replace(self, replace_dict={}, new_col=''):
+    def table_type_replace(self, replace_dict={}, new_col=''):
         if replace_dict == {}:
             replace_dict = self.replace_dict
 

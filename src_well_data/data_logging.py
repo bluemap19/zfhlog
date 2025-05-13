@@ -7,6 +7,7 @@ class data_logging:
         self.curve_names = []
         self.file_path = path
         self.table_name = well_name
+        self.data_with_type = pd.DataFrame()
 
     def read_data(self, file_path='', table_name=''):
         if file_path == '':
