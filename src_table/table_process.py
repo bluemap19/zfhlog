@@ -7,10 +7,9 @@ def get_replace_dict(df):
     :param df:只能是类别信息，DF或者是array
     :return:
     """
-    type_data = np.array([])
     if isinstance(df, pd.DataFrame):
         type_data = df.values.ravel()
-    elif isinstance(df, np.ndarray):
+    elif isinstance(df, pd.Series):
         type_data = df.ravel()
     elif isinstance(df, np.ndarray):
         type_data = df.ravel()
@@ -44,17 +43,17 @@ def table_3_to_2(np_layer_3, step=-1):
     for i in range(np_layer_3.shape[0]):
         # 进行层位信息的基础检查，下一行开始的深度 不能小于 上一行结束的深度
         if i>0:
-            if np_layer_3[i][0] < np_layer_3[i - 1][1]:
+            if float(np_layer_3[i][0]) < float(np_layer_3[i - 1][1]):
                 print('Error layer config:{}-->{}'.format(np_layer_3[i - 1], np_layer_3[i]))
                 return np.array([])
-        if np_layer_3[i][0] > np_layer_3[i][1]:
+        if float(np_layer_3[i][0]) > float(np_layer_3[i][1]):
             print('Error layer config:{}'.format(np_layer_3[i]))
             return np.array([])
 
         dep_start, dep_end, type = np_layer_3[i]
-        num_dep = int((dep_end - dep_start) / step) + 1
+        num_dep = int((float(dep_end) - float(dep_start)) / step) + 1
         for i in range(0, num_dep):
-            dep_temp = dep_start + i * step
+            dep_temp = float(dep_start) + i * step
             np_layer_2.append([dep_temp, type])
 
     return np.array(np_layer_2)

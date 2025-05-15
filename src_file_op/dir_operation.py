@@ -112,8 +112,6 @@ def get_all_subfolder_paths(root_dir: Union[str, Path]) -> List[str]:
     root_path = Path(root_dir)
     folder_paths = []
     for current_dir, dirs, _ in os.walk(root_path):
-        # 包含当前遍历目录本身
-        folder_paths.append(str(Path(current_dir)))
         # 添加子目录
         for dir_name in dirs:
             folder_paths.append(str(Path(current_dir) / dir_name))

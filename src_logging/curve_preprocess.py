@@ -386,7 +386,7 @@ def data_combine_table2col(data_main, table_vice, drop=True):
 
     data_final = np.array(data_final)
     # data_final[:, 0].astype(np.float64)
-    print('data logging_data:[{:.2f},{:.2f}] ++++ data table:[{},{}] ----> data_combined :{},[{}, {}]\n'
+    print('data logging:[{:.2f},{:.2f}] ＋ data table:[{},{}] --> data combined :{},[{}, {}]， '
           'with resolution {:.4f}, success count:{}'.format(data_main[0, 0], data_main[-1, 0], table_vice[0, 0], table_vice[-1, 0],
                                                         data_final.shape, data_final[0, 0], data_final[-1, 0], depth_resolution, combined_successfully))
     # print('data logging_data:[{},{}] ++++ data table:[{},{}] ----> data_combined :{},[{}, {}]\n'
@@ -479,9 +479,10 @@ def data_normalized(logging_data, max_ratio=0.1, logging_range=[-99, 9999], DEPT
         logging_data_N[:, j][logging_data_N[:, j]>1] = 1
 
     if DEPTH_USE:
+        logging_data_N[(logging_data[:, 1:] < logging_range[0]) | (logging_data[:, 1:] > logging_range[1])] = np.nan
         logging_data_N = np.hstack((logging_data[:, 0].reshape(-1, 1), logging_data_N))
-        # logging_data[:, 1:] = logging_data_N
-        # logging_data_N = logging_data
+    else:
+        logging_data_N[(logging_data >= logging_range[0]) & (logging_data < logging_range[1])] = np.nan
 
     return logging_data_N, extreme_list
 
@@ -545,6 +546,24 @@ def data_normalized_locally(logging_data, windows_length=500, max_ratio=0.1, log
 
     return logging_data_N2
 
+
+
+# 测井曲线归一化
+def data_Normalized(curve_org, DEPTH_USE=True, local_normalized=False, logging_range=[-99, 9999], max_ratio=0.1):
+    curve_normalize = copy.deepcopy(curve_org)
+
+    curve_normalize_fully, extreme_list = data_normalized(curve_normalize, DEPTH_USE=DEPTH_USE, logging_range=logging_range, max_ratio=max_ratio)
+    extreme_list = np.array(extreme_list)
+    np.set_printoptions(precision=4)
+    print('curve normalized shape is :{}, extreme list:\n{}'.format(curve_normalize_fully.shape, extreme_list))
+
+    # 局部特征以及整体特征的曲线归一化
+    # 局部的曲线归一化，及其消耗时间，非必要一般不进行处理
+    if local_normalized:
+        curve_normalize_locally = data_normalized_locally(curve_normalize, DEPTH_USE=True)
+        return curve_normalize_locally
+
+    return curve_normalize_fully
 
 
 
