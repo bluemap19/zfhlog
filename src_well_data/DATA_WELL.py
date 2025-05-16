@@ -20,7 +20,7 @@ class WELL:
         self.FMI_dict = {}
         self.NMR_dict = {}
         self.logging_table = {}
-        # self.resolution = {}
+        self.resolution = {}
 
         self.well_path = path_folder
         self.curve_names = {}
@@ -35,7 +35,7 @@ class WELL:
         # 初始化之后，直接寻找一下本地路径下是否含有需要的文件
         self.search_data_file()
 
-
+    # 初始化self.file_path_dict字典，存在四种key，分别是‘logging’，‘table’，‘FMI’，‘NMR’每一个key对应一个list，list里面装的是对应目标测井文件格式的数据路径
     def search_data_file(self):
         # 搜寻测井数据所在文件
         file_list = search_files_by_criteria(self.well_path, name_keywords=[self.WELL_NAME]+self.file_charter_dict['logging'], file_extensions=['.xlsx', '.csv'])
@@ -62,7 +62,7 @@ class WELL:
             print('No table file found,in path:{}, by charter:{}'.format(self.well_path, [self.WELL_NAME]+self.file_charter_dict['table']))
             self.file_path_dict['table'] = []
 
-    # 测井文件读取
+    # 测井文件读取，data_logging类型的初始化
     def data_logging_init(self, path):
         if path in list(self.logging_dict.keys()):
             return
@@ -73,8 +73,9 @@ class WELL:
             self.logging_dict[path] = logging_data
             # 井表头初始化
             self.curve_names[path] = logging_data.get_curve_names()
+            self.resolution[path] = logging_data._resolution
 
-    # 表格资料读取
+    # 表格资料读取，table_data类型的初始化
     def data_table_init(self, path):
         if path in list(self.table_dict.keys()):
             return
@@ -86,8 +87,8 @@ class WELL:
                 table_data.set_table_resolution(self.get_logging_resolution())
             self.table_dict[path] = table_data
 
-
-    def get_logging_data(self, well_key='', curve_names=[]):
+    # 获取测井数据
+    def get_logging_data(self, well_key='', curve_names=[], Norm=False):
         # 如果测井资料为空，初始化测井资料
         if not self.logging_dict:
             # 判断是否存在合适的测井数据文件
@@ -101,24 +102,29 @@ class WELL:
 
         # 如果不为空的话，就要取第一个文件作为数据输出文件了
         well_value = self.get_default_dict(dict=self.logging_dict, key_default=well_key)
-        return well_value.get_data(curve_names)
+        if Norm:
+            data_temp = well_value.get_data_normed(curve_names)
+        else:
+            data_temp = well_value.get_data(curve_names)
+        return data_temp
 
-    def get_logging_data_normed(self, well_key='', curve_names=[]):
-        # 如果测井资料为空，初始化测井资料
-        if not self.logging_dict:
-            # 判断是否存在合适的测井数据文件
-            if len(self.file_path_dict['logging']) > 0:
-                for path in self.file_path_dict['logging']:
-                    self.data_logging_init(path=path)
-            else:
-                print('No Logging Data Found:{}'.format(self.file_path_dict['logging']))
-                self.search_data_file()
-                return pd.DataFrame()
+    # def get_logging_data_normed(self, well_key='', curve_names=[]):
+    #     # 如果测井资料为空，初始化测井资料
+    #     if not self.logging_dict:
+    #         # 判断是否存在合适的测井数据文件
+    #         if len(self.file_path_dict['logging']) > 0:
+    #             for path in self.file_path_dict['logging']:
+    #                 self.data_logging_init(path=path)
+    #         else:
+    #             print('No Logging Data Found:{}'.format(self.file_path_dict['logging']))
+    #             self.search_data_file()
+    #             return pd.DataFrame()
+    #
+    #     # 如果不为空的话，就要取第一个文件作为数据输出文件了
+    #     well_value = self.get_default_dict(dict=self.logging_dict, key_default=well_key)
+    #     return
 
-        # 如果不为空的话，就要取第一个文件作为数据输出文件了
-        well_value = self.get_default_dict(dict=self.logging_dict, key_default=well_key)
-        return well_value.get_data_normed(curve_names)
-
+    # 获得dep-s，dep-e，type类型的表格数据
     def get_type_3(self, table_key='', curve_names=[]):
         # 如果字典表格数据为空，初始化表格数据字典
         if not self.table_dict:
@@ -135,6 +141,7 @@ class WELL:
 
         return table_value.get_table_3(curve_names=curve_names)
 
+    # 获得depth，type类型的表格数据
     def get_type_2(self, table_key='', curve_names=[]):
         # 如果字典表格数据为空，初始化表格数据字典
         if not self.table_dict:
@@ -157,14 +164,14 @@ class WELL:
         if table_key == '':
             table_key = list(self.table_dict.keys())[0]
 
-        if Norm:
-            logging_value = self.get_logging_data_normed(well_key=well_key, curve_names=curve_names_logging)
-        else:
-            logging_value = self.get_logging_data(well_key=well_key, curve_names=curve_names_logging)
+        logging_value = self.get_logging_data(well_key=well_key, curve_names=curve_names_logging, Norm=Norm)
+
         # 现根据replace_dict更新表格数据table_value
         self.table_replace_update(table_key=table_key, replace_dict=replace_dict, new_col=new_col)
+
         # 再获得table_value，进行测井数据-表格数据的合并
         table_value = self.get_type_2(table_key=table_key, curve_names=curve_names_table)
+
         logging_columns = list(logging_value.columns)
         table_columns = list(table_value.columns)
         data_new = data_combine_table2col(logging_value.values, table_value.values, drop=True)
@@ -238,10 +245,7 @@ class WELL:
             self.get_logging_data()
 
         # 获取默认分辨率
-        if well_key == '':
-            resolution_default = self.get_default_dict(dict=self.resolution, key_default=well_key)
-        else:
-            resolution_default = self.resolution[well_key]
+        resolution_default = self.get_default_dict(dict=self.resolution, key_default=well_key)
         return resolution_default
 
 
@@ -287,6 +291,14 @@ class WELL:
 
         return os.path.join(dir_path, new_name)
 
+    def get_logging_path_list(self):
+        return self.file_path_dict['logging']
+    def get_table_path_list(self):
+        return self.file_path_dict['table']
+    def get_FMI_path_list(self):
+        return self.file_path_dict['FMI']
+    def get_NMR_path_list(self):
+        return self.file_path_dict['NMR']
 
 # a = WELL(path_folder=r'C:\Users\Administrator\Desktop\算法测试-长庆数据收集\Code_input-O', well_charter='白75')
 # print(a.get_logging_data().describe())

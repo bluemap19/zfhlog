@@ -65,12 +65,16 @@ def create_random_logging(logging_data_shape=(1000, 5), logging_resolution=0.1, 
     print('create random logging_data data as shape:{}, depth information:[{}, {}]'.format(logging_data.shape, logging_data[0, 0], logging_data[-1, 0]))
     return logging_data
 
-def get_random_logging_dataframe(curve_name=['#DEPTH', 'GR', 'AC', 'CNL', 'DEN'], logging_resolution=0.1, dep_start=100, dep_end=500):
+def get_random_logging_dataframe(curve_name=['#DEPTH', 'GR', 'AC', 'CNL', 'DEN', 'Type'], logging_resolution=0.1, dep_start=100, dep_end=500):
     data_num = int((dep_end-dep_start)/logging_resolution)
     logging_data_shape = (data_num, len(curve_name))
     logging_data = create_random_logging(logging_data_shape, logging_resolution, dep_start=dep_start)
     df = pd.DataFrame(logging_data, columns=curve_name)
+    if 'Type' in df.columns:
+        df['Type'] = np.random.choice([0, 1, 2, 3, 4, 5], size=data_num, replace=True)
     return df
+
+
 # a = get_random_logging_dataframe()
 # print(a.describe())
 

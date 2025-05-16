@@ -2,6 +2,8 @@ import os
 
 import pandas as pd
 
+from src_data_process.data_correction_analysis import data_correction_analyse_by_tree
+from src_data_process.data_filter import pdnads_data_drop, pandas_data_filtration
 from src_file_op.dir_operation import get_all_subfolder_paths
 from src_table.table_process import get_replace_dict
 from src_well_data.DATA_WELL import WELL
@@ -13,6 +15,11 @@ class LOGGING_PROJECT:
         # ['元543', '元552', '悦235', '悦88', '悦92', '珠201', '珠202', '珠23', '珠45', '珠74', '珠79', '珠80', '白159', '白291', '白292', '白294', '白300', '白75']
         self.WELL_NAMES = []
         self.WELL_PATH = {}
+        self.well_logging_path_dict = {}
+        self.well_table_path_dict = {}
+        self.well_FMI_path_dict = {}
+        self.well_NMR_path_dict={}
+
         self.target_curves = {}
         self.WELL_DATA = {}
         self.replace_dict_all = {}
@@ -39,11 +46,22 @@ class LOGGING_PROJECT:
             self.WELL_NAMES = WELL_NAMES
 
         for well_name in self.WELL_PATH.keys():
-            self.WELL_DATA[well_name] = WELL(path_folder=self.WELL_PATH[well_name], WELL_NAME=well_name)
+            well_temp = WELL(path_folder=self.WELL_PATH[well_name], WELL_NAME=well_name)
+            self.well_logging_path_dict[well_name] = well_temp.get_logging_path_list()
+            self.well_table_path_dict[well_name] = well_temp.get_table_path_list()
+            # self.well_FMI_path_dict[well_name] = well_temp.get_FMI_path_list()
+            # self.well_NMR_path_dict = well_temp.get_NMR_path_list()
+
+            self.WELL_DATA[well_name] = well_temp
 
         # print(self.WELL_NAMES)
         # print(self.WELL_PATH)
         # print(self.WELL_DATA)
+
+        print(self.well_logging_path_dict)
+        print(self.well_table_path_dict)
+        # print(self.well_FMI_path_dict)
+        # print(self.well_NMR_path_dict)
     def get_default_dict(self, dict={}, key_default=''):
         if not dict:
             print('Empty dictionary get')
@@ -63,9 +81,14 @@ class LOGGING_PROJECT:
                 print('Error well name:{}'.format(well_name))
                 exit(0)
 
+        if file_path == '':
+            file_path = self.well_logging_path_dict[well_name][0]
+            print('current file path set as: {}'.format(file_path))
+
         WELL_temp = self.get_default_dict(self.WELL_DATA, well_name)
         data = WELL_temp.get_logging_data(well_key=file_path, curve_names=curve_names)
         return data
+
 
     def get_table_3_data(self, well_name='', file_path='', curve_names=[]):
         WELL_temp = self.get_default_dict(self.WELL_DATA, well_name)
@@ -75,13 +98,14 @@ class LOGGING_PROJECT:
         WELL_temp = self.get_default_dict(self.WELL_DATA, well_name)
         type_2 = WELL_temp.get_type_2(table_key=file_path, curve_names=curve_names)
         return type_2
+
     def get_table_3_all_data(self, well_names=[], file_path={}, curve_names=[]):
         if well_names == []:
             well_names = self.WELL_NAMES
 
         if not file_path:
             for well_name in well_names:
-                file_path[well_name] = self.WELL_PATH[well_name]
+                file_path[well_name] = self.well_table_path_dict[well_name][0]
 
         table_3_list = []
         for well_name in well_names:
@@ -125,17 +149,55 @@ class LOGGING_PROJECT:
             print('No replace dict')
             exit(0)
 
+    def combined_all_logging_with_type(self, well_names=[], file_path_logging={}, file_path_table={}, curve_names_logging=[], curve_names_type=[], replace_dict={}, type_col_name='', Norm=False):
+        if well_names == []:
+            well_names = self.WELL_NAMES
+        if not file_path_logging:
+            for well_name in well_names:
+                file_path_logging[well_name] = self.well_logging_path_dict[well_name][0]
+        if not file_path_table:
+            for well_name in well_names:
+                file_path_table[well_name] = self.well_table_path_dict[well_name][0]
+
+        if not replace_dict:
+            replace_dict = self.replace_dict_all
+
+        data_logging_type_list = []
+        for well_name in well_names:
+            well_data = self.get_default_dict(self.WELL_DATA, well_name)
+            data_logging_type = well_data.combine_logging_table(well_key=file_path_logging[well_name],
+                                                                curve_names_logging=curve_names_logging,
+                                                                table_key=file_path_table[well_name],
+                                                                curve_names_table=curve_names_type,
+                                                                replace_dict=replace_dict, new_col=type_col_name, Norm=Norm)
+            data_logging_type_list.append(data_logging_type)
+            print(data_logging_type.describe())
+        data_final = self.data_vertical_cohere(data_list=data_logging_type_list, well_names=well_names)
+        print(data_final.describe())
+        return data_final
+
+
 LG = LOGGING_PROJECT()
-a = LG.get_well_data(curve_names=['AC', 'CNL', 'GR'])
+a = LG.get_well_data(well_name='白75', curve_names=['AC', 'CNL', 'GR'])
 # print(a)
 
 data_vc = LG.get_table_3_all_data()
-print(data_vc.head(30))
 b = LG.get_all_table_replace_dict()
 print(b)
-LG.set_all_table_replace_dict(dict={'中GR长英黏土质': 0, '中GR长英黏土质（泥岩）': 0, '中低GR长英质': 1, '中低GR长英质（砂岩）': 1,
+dict = {'中GR长英黏土质': 0, '中GR长英黏土质（泥岩）': 0, '中低GR长英质': 1, '中低GR长英质（砂岩）': 1,
                                    '富有机质长英质': 2, '富有机质长英质页岩': 2, '富有机质黏土质': 3, '富有机质黏土质页岩': 3,
-                                   '高GR富凝灰长英质': 4, '高GR富凝灰长英质（沉凝灰岩）': 4})
+                                   '高GR富凝灰长英质': 4, '高GR富凝灰长英质（沉凝灰岩）': 4}
+LG.set_all_table_replace_dict(dict=dict)
+
+c = LG.combined_all_logging_with_type(well_names=['元543', '元552', '悦235', '珠23'], curve_names_logging=['AC', 'CNL', 'GR'], Norm=True)
+d = pdnads_data_drop(c)
+print(d.describe())
+e = pandas_data_filtration(d)
+f = d.iloc[e]
+print(f.describe())
+
+data_correction_analyse_by_tree(f, ['AC', 'CNL', 'GR'], 'Type', 10,
+                                y_replace_dict=dict, title_string='fffffffffuck')
 # data_t = B.get_well_data('白75', ['AC', 'CNL', 'GR'])
 # print(data_t)
 # data_t = B.get_well_data('白75', ['DEN', 'SP'])
