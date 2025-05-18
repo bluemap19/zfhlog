@@ -400,7 +400,6 @@ def data_combine_table2col(data_main, table_vice, drop=True):
 
 
 
-
 # 获取指定曲线 指定比例 指定范围内的 最大值、最小值
 def get_extreme_value_by_ratio(curve=np.array([]), ratio_c=0.2, range_c=[-99, 9999]):
     """
@@ -513,7 +512,7 @@ def data_normalized_manually(logging_data, limit=[[-1, -1], [-1, -1], [-1, -1], 
 
 
 # 基于局部特征的数据标准化
-def data_normalized_locally(logging_data, windows_length=500, max_ratio=0.1, logging_range=[-999, 9999], DEPTH_USE=False):
+def data_normalized_locally(logging_data, windows_length=400, max_ratio=0.1, logging_range=[-999, 9999], DEPTH_USE=False):
     """
     基于局部特征的数据标准化
     :param logging_data:
@@ -552,16 +551,16 @@ def data_normalized_locally(logging_data, windows_length=500, max_ratio=0.1, log
 def data_Normalized(curve_org, DEPTH_USE=True, local_normalized=False, logging_range=[-99, 9999], max_ratio=0.1):
     curve_normalize = copy.deepcopy(curve_org)
 
-    curve_normalize_fully, extreme_list = data_normalized(curve_normalize, DEPTH_USE=DEPTH_USE, logging_range=logging_range, max_ratio=max_ratio)
-    extreme_list = np.array(extreme_list)
-    np.set_printoptions(precision=4)
-    print('curve normalized shape is :{}, extreme list:\n{}'.format(curve_normalize_fully.shape, extreme_list))
-
     # 局部特征以及整体特征的曲线归一化
     # 局部的曲线归一化，及其消耗时间，非必要一般不进行处理
     if local_normalized:
         curve_normalize_locally = data_normalized_locally(curve_normalize, DEPTH_USE=True)
         return curve_normalize_locally
+
+    curve_normalize_fully, extreme_list = data_normalized(curve_normalize, DEPTH_USE=DEPTH_USE, logging_range=logging_range, max_ratio=max_ratio)
+    extreme_list = np.array(extreme_list)
+    np.set_printoptions(precision=4)
+    print('curve normalized shape is :{}, extreme list:\n{}'.format(curve_normalize_fully.shape, extreme_list))
 
     return curve_normalize_fully
 

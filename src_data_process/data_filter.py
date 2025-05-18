@@ -128,13 +128,9 @@ def pdnads_data_drop(data_input: pd.DataFrame) -> pd.DataFrame:
 
     data = data.reset_index(drop=True)
 
-    # 检查数据有效性 ---
+    # 检查数据有效性
     if data.empty:
         raise ValueError("过滤后数据为空，请调整过滤条件")
-    data = data.select_dtypes(include=[np.number])
-    if data.empty:
-        raise ValueError("无有效数值列")
-
     return data
 
 

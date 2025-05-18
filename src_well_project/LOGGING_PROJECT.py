@@ -1,9 +1,5 @@
 import os
-
 import pandas as pd
-
-from src_data_process.data_correction_analysis import data_correction_analyse_by_tree
-from src_data_process.data_filter import pdnads_data_drop, pandas_data_filtration
 from src_file_op.dir_operation import get_all_subfolder_paths
 from src_table.table_process import get_replace_dict
 from src_well_data.DATA_WELL import WELL
@@ -131,6 +127,7 @@ class LOGGING_PROJECT:
                 data_vertical_combined = pd.concat(
                     [data_vertical_combined, well_temp], axis=0
                 )
+            # print('well_temp:\n{}'.format(well_temp))
 
         print('data_vertical_combined shape :', data_vertical_combined.shape)
         data_vertical_combined.reset_index(drop=True, inplace=True)
@@ -171,45 +168,8 @@ class LOGGING_PROJECT:
                                                                 curve_names_table=curve_names_type,
                                                                 replace_dict=replace_dict, new_col=type_col_name, Norm=Norm)
             data_logging_type_list.append(data_logging_type)
-            print(data_logging_type.describe())
+            # print(data_logging_type.describe())
         data_final = self.data_vertical_cohere(data_list=data_logging_type_list, well_names=well_names)
-        print(data_final.describe())
+        # print(data_final.head(10))
         return data_final
-
-
-LG = LOGGING_PROJECT()
-a = LG.get_well_data(well_name='白75', curve_names=['AC', 'CNL', 'GR'])
-# print(a)
-
-data_vc = LG.get_table_3_all_data()
-b = LG.get_all_table_replace_dict()
-print(b)
-dict = {'中GR长英黏土质': 0, '中GR长英黏土质（泥岩）': 0, '中低GR长英质': 1, '中低GR长英质（砂岩）': 1,
-                                   '富有机质长英质': 2, '富有机质长英质页岩': 2, '富有机质黏土质': 3, '富有机质黏土质页岩': 3,
-                                   '高GR富凝灰长英质': 4, '高GR富凝灰长英质（沉凝灰岩）': 4}
-LG.set_all_table_replace_dict(dict=dict)
-
-c = LG.combined_all_logging_with_type(well_names=['元543', '元552', '悦235', '珠23'], curve_names_logging=['AC', 'CNL', 'GR'], Norm=True)
-d = pdnads_data_drop(c)
-print(d.describe())
-e = pandas_data_filtration(d)
-f = d.iloc[e]
-print(f.describe())
-
-data_correction_analyse_by_tree(f, ['AC', 'CNL', 'GR'], 'Type', 10,
-                                y_replace_dict=dict, title_string='fffffffffuck')
-# data_t = B.get_well_data('白75', ['AC', 'CNL', 'GR'])
-# print(data_t)
-# data_t = B.get_well_data('白75', ['DEN', 'SP'])
-# print(data_t)
-# data_t = B.get_well_data('白75', ['AC', 'CNL', 'GR', 'DEN', 'SP'])
-# print(data_t)
-#
-# data_t = B.get_well_data('白291', ['AC', 'CNL', 'GR', 'DEN', 'SP'])
-# print(data_t)
-# data_t = B.get_well_data('白291', ['DEN', 'SP'])
-# print(data_t)
-# data_t = B.get_well_data('白291', ['AC', 'CNL'])
-# print(data_t)
-
 

@@ -67,8 +67,8 @@ def analyse_attribute_by_random_forest_classifer(X, y, feature_x, path_saved=r'D
     scoring = 'f1_weighted'
     scores = cross_val_score(
         random_forest_model,
-        X_train,  # 仅在训练集上做CV
-        y_train.ravel(),
+        X,  # 仅在训练集上做CV
+        y.ravel(),
         cv=cv_strategy,
         scoring=scoring
     )
@@ -148,21 +148,22 @@ def analyse_attribute_by_random_forest_classifer(X, y, feature_x, path_saved=r'D
             fpr, tpr, thr = roc_curve(y_test[:, i].ravel(), y_pred[:, i].ravel())
             print("classes_{}, fpr:{}, tpr:{}, threshold:{}".format(i, fpr, tpr, thr))
             # 绘制ROC曲线，并计算AUC值
-            if plot_index[0] == 1:
-                axes[i % plot_index[1]].plot(fpr, tpr, color=colors[i], marker=markers[i], label="AUC: {:.2f}".format(auc(fpr, tpr)))
-                axes[i % plot_index[1]].set_xlabel("FPR")
-                axes[i % plot_index[1]].set_ylabel("TPR")
+            if plot_index[1] == 1:
+                axes[i % plot_index[0]].plot(fpr, tpr, color=colors[i], marker=markers[i], label="AUC: {:.2f}".format(auc(fpr, tpr)))
+                axes[i % plot_index[0]].set_xlabel("FPR")
+                axes[i % plot_index[0]].set_ylabel("TPR")
                 # axes[i % plot_index[1]].set_title("Class_{}".format(random_forest_model.classes_[i]))
-                axes[i % plot_index[1]].set_title(axes_title_list[i])
-                axes[i % plot_index[1]].legend(loc="lower right")
+                axes[i % plot_index[0]].set_title(axes_title_list[i])
+                axes[i % plot_index[0]].legend(loc="lower right")
             else:
                 axes[i//plot_index[1], i % plot_index[1]].plot(fpr, tpr, color=colors[i], marker=markers[i], label="AUC: {:.2f}".format(auc(fpr, tpr)))
                 axes[i//plot_index[1], i % plot_index[1]].set_xlabel("FPR")
                 axes[i//plot_index[1], i % plot_index[1]].set_ylabel("TPR")
-                # axes[i//plot_index[1], i % plot_index[1]].set_title("Class_{}".format(random_forest_model.classes_[i]))
-                axes[i//plot_index[1], i % plot_index[1]].set_title(axes_title_list[i])
                 axes[i//plot_index[1], i % plot_index[1]].legend(loc="lower right")
-        fig.suptitle('Different Class ROC Curve {}'.format(plot_title_charter))
+                axes[i//plot_index[1], i % plot_index[1]].set_title(axes_title_list[i])
+
+        # fig.suptitle('Different Class ROC Curve {}'.format(plot_title_charter))
+        plt.tight_layout()
         fig.show()
 
     # ####### Draw decision tree visualizing plot
@@ -217,14 +218,16 @@ def data_correction_analyse_by_tree(data_input: pd.DataFrame,
                                     path_saved:str='',
                             ) -> pd.DataFrame:
     assert isinstance(data_input, pd.DataFrame)
+    plot_index = {1:[1, 1], 2:[2, 1], 3:[3, 1], 4:[2, 2], 5:[5, 1], 6:[2, 3], 7:[7, 1], 8:[2, 4], 9:[3, 3], 10:[2, 5]}
+    figure_dict = {1:(10, 10), 2:(5, 10), 3:(5, 15), 4:(12, 12), 5:(5, 25), 6:(15, 10), 7:(5, 35), 8:(10, 5), 9:(20, 20), 10:(25, 10)}
 
     # 相关性分析
     X = data_input[feature_input].astype('float64')
     y = data_input[feature_target].astype(np.int32)
+
     y_classes = np.unique(y)
     y_len = len(y_classes)
-    plot_index = {1:[1, 1], 2:[1, 2], 3:[1, 3], 4:[2, 2], 5:[1, 5], 6:[2, 3], 7:[1, 7], 8:[2, 4], 9:[3, 3], 10:[2, 5]}
-    figure_dict = {1:(10, 10), 2:(10, 5), 3:(15, 5), 4:(12, 12), 5:(25, 5), 6:(15, 10), 7:(35, 5), 8:(20, 5), 9:(20, 20), 10:(25, 10)}
+
     print('analysis input X:{} y:{}, y_classes:{}'.format(X.shape, y.shape, y_classes))
     CVS_scores, Class_accuracy, Auc_average, importances = analyse_attribute_by_random_forest_classifer(
         X, y, feature_input, n_classes=y_len,
