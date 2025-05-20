@@ -7,8 +7,8 @@ from src_plot.plot_acc_heatmap import plot_clustering_heatmap
 from src_plot.plot_matrxi_scatter import plot_matrxi_scatter
 from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 
-
 LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV')
+# LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV')
 # curves_list = ['AC', 'CNL', 'GR', 'DEN', 'SP', 'RT', 'CAL']
 curves_list = ['CNL', 'GR', 'DEN', 'RT']
 # curves_list = ['AC', 'CNL', 'GR']

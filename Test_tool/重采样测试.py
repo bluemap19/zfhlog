@@ -5,6 +5,9 @@ from sklearn.decomposition import PCA
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import SMOTE
 from imblearn.combine import SMOTEENN
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei']
+plt.rcParams['axes.unicode_minus'] = False
+
 
 
 # 1. 生成不平衡数据集
