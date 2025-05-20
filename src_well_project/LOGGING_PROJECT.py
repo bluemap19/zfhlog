@@ -6,8 +6,8 @@ from src_well_data.DATA_WELL import WELL
 
 
 class LOGGING_PROJECT:
-    def __init__(self):
-        self.PROJECT_PATH=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV'
+    def __init__(self, project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV'):
+        self.PROJECT_PATH=project_path
         # ['元543', '元552', '悦235', '悦88', '悦92', '珠201', '珠202', '珠23', '珠45', '珠74', '珠79', '珠80', '白159', '白291', '白292', '白294', '白300', '白75']
         self.WELL_NAMES = []
         self.WELL_PATH = {}
