@@ -5,7 +5,7 @@ from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 
 LG = LOGGING_PROJECT()
 # curves_list = ['AC', 'CNL', 'GR', 'DEN', 'SP', 'RT', 'CAL']
-curves_list = ['CNL', 'GR', 'DEN', 'RT', 'SP']
+curves_list = ['CNL', 'GR', 'DEN', 'RT']
 # curves_list = ['AC', 'CNL', 'GR']
 a = LG.get_well_data(well_name='白75', curve_names=curves_list)
 # print(a)

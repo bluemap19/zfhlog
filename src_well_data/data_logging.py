@@ -63,7 +63,7 @@ class data_logging:
         if self._data_normed.empty:
             data_target = self.get_data(curve_names)
             cols_new_temp = list(data_target.columns)
-            data_normed_temp = data_Normalized(data_target.values, DEPTH_USE=True, logging_range=[-999, 9999], max_ratio=0.01, local_normalized=True)
+            data_normed_temp = data_Normalized(data_target.values, DEPTH_USE=True, logging_range=[-999, 9999], max_ratio=0.01, local_normalized=False)
             self._data_normed = pd.DataFrame(data_normed_temp, columns=cols_new_temp)
         else:
             pass
