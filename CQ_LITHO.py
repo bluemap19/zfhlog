@@ -55,7 +55,7 @@ plot_clustering_heatmap(
 plt.show()
 
 
-# plot_matrxi_scatter(df=data_all_dropped_filted, input_names=curves_list, target_col='Type', plot_string='分类相关性', target_col_dict=dict_rf)
-# plot_matrxi_scatter(df=data_all_dropped_filted, input_names=curves_list, target_col='Well_Name', plot_string='分井')
+plot_matrxi_scatter(df=data_all_dropped_filted, input_names=curves_list, target_col='Type', plot_string='分类相关性', target_col_dict=dict_rf)
+plot_matrxi_scatter(df=data_all_dropped_filted, input_names=curves_list, target_col='Well_Name', plot_string='分井')
 
 

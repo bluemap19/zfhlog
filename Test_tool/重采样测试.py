@@ -69,6 +69,8 @@ for i, (data, labels, title) in enumerate(datasets):
     ax.set_title(f"{title}\nDistribution: {np.bincount(labels)}", pad=12)
     ax.grid(alpha=0.3, linestyle=':')
 
+
+
 # 添加全局图例
 plt.tight_layout(rect=[0, 0, 0.85, 0.96])
 cbar_ax = plt.gcf().add_axes([0.88, 0.15, 0.02, 0.7])  # 右侧添加颜色条
