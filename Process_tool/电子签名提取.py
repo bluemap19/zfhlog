@@ -31,7 +31,8 @@ def process_signature(input_path, output_path, background_threshold=240):
 
 # 使用示例
 process_signature(
-    input_path=r"C:\Users\ZFH\Desktop\LWD_ZKY\项目结题材料\电子签名\孔雪.jpg",
-    output_path="transparent_signature.png",
-    background_threshold=160  # 根据实际情况调整阈值
+    # input_path=r"C:\Users\ZFH\Desktop\LWD_ZKY\项目结题材料\电子签名\孔雪.jpg",
+    input_path=r"C:\Users\ZFH\Desktop\日期2.png",
+    output_path="日期2_p.png",
+    background_threshold=220  # 根据实际情况调整阈值
 )
