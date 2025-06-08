@@ -8,20 +8,20 @@ from src_well_data.DATA_WELL import WELL
 class LOGGING_PROJECT:
     def __init__(self, project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV'):
         self.PROJECT_PATH=project_path
-        # ['元543', '元552', '悦235', '悦88', '悦92', '珠201', '珠202', '珠23', '珠45', '珠74', '珠79', '珠80', '白159', '白291', '白292', '白294', '白300', '白75']
-        self.WELL_NAMES = []
-        self.WELL_PATH = {}
-        self.well_logging_path_dict = {}
-        self.well_table_path_dict = {}
+        self.WELL_NAMES = []        ### ['元543',  '珠74', '珠79', '珠80']
+        self.WELL_PATH = {}         ### {'珠80': 'C:\\Users\\ZFH\\Desktop\\算法测试-长庆数据收集\\logging_CSV\\珠80', '元543': 'C:\\Users\\ZFH\\Desktop\\算法测试-长庆数据收集\\logging_CSV\\元543', '珠74': 'C:\\Users\\ZFH\\Desktop\\算法测试-长庆数据收集\\logging_CSV\\珠74', '珠79': 'C:\\Users\\ZFH\\Desktop\\算法测试-长庆数据收集\\logging_CSV\\珠79'}
+        # 存放的是每一个井名对应的文件路径
+        self.well_logging_path_dict = {}        ### {'珠80':['C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\珠80\Texture_File\珠80_Texture_ALL_logging_50_5.csv', 'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\珠80\珠80_logging_data.csv']}
+        self.well_table_path_dict = {}          ### {'珠80':['C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\珠80\珠80__LITHO_TYPE.csv'}
         self.well_FMI_path_dict = {}
         self.well_NMR_path_dict={}
 
-        self.target_curves = {}
-        self.WELL_DATA = {}
-        self.replace_dict_all = {}
-        self.data_vc = pd.DataFrame()
+        self.target_curves = {}                 ### 做整体任务时，需要用到输入测井资料的配置
+        self.WELL_DATA = {}                     ### {'珠80':WELL(path='珠80'), '元543'=WELL(path='元543'), '珠74':WELL(path='珠74'), '珠79':WELL(path='珠79')}
+        self.replace_dict_all = {}              ### 做整体任务时，需要用到的替换字典配置
+        self.data_vc = pd.DataFrame()           ### 做整体任务时，数据垂直链接到一起的整体数据
 
-        self.init_well_path()
+        self.init_well_path()                   ### 初始化工作区间数据，主要包括初始化井名，井类Class：WELL
 
     def init_well_path(self):
         # 便利self.PROJECT_PATH项目路径文件夹
@@ -60,7 +60,7 @@ class LOGGING_PROJECT:
         # print(self.well_FMI_path_dict)
         # print(self.well_NMR_path_dict)
 
-    # 这个是获取字典元素，如果key_default为空，就取第一个元素，否则取key_default对应的元素
+    # 这个是获取字典元素，如果key_default为空，就取第一个Value元素，否则取key_default对应的元素
     # 这个主要是用来对各种字典进行元素提取的
     def get_default_dict(self, dict={}, key_default=''):
         if not dict:
@@ -106,6 +106,10 @@ class LOGGING_PROJECT:
                                                           curve_names=curve_names, Norm=Norm)
         return target_file
 
+    def search_target_file_path(self, well_name='', target_path_feature=['Texture_ALL', '_20_5'], target_file_type='logging'):
+        WELL = self.get_default_dict(self.WELL_DATA, well_name)
+        path = WELL.get_data_path_by_charters(target_path_feature=target_path_feature, target_file_type=target_file_type)
+        return path
 
     # 获取指定井的类别数据，
     def get_table_3_data(self, well_name='', file_path='', curve_names=[]):
@@ -117,6 +121,7 @@ class LOGGING_PROJECT:
         type_2 = WELL_temp.get_type_2(table_key=file_path, curve_names=curve_names)
         return type_2
 
+    # 获取指定井的3列类别数据，这个主要是用来统计工作区间都是包含那些类的
     def get_table_3_all_data(self, well_names=[], file_path={}, curve_names=[]):
         if well_names == []:
             well_names = self.WELL_NAMES
@@ -132,9 +137,8 @@ class LOGGING_PROJECT:
         self.data_vc = self.data_vertical_cohere(data_list=table_3_list, well_names=well_names)
         return self.data_vc
 
+    # dataframe的垂直合并，将多个井的数据合并为一个dataframe，输入为需要进行垂直合并的dataframe数据list及其对应的井名数据，井名数据需要作为一个新的列加入进去
     def data_vertical_cohere(self, data_list=[], well_names=[]):
-        if data_list == []:
-            data_list = self.data_norm_list
         if well_names == []:
             well_names = self.WELL_NAMES
 
@@ -151,15 +155,16 @@ class LOGGING_PROJECT:
                 )
             # print('well_temp:\n{}'.format(well_temp))
 
-        print('data_vertical_combined shape :', data_vertical_combined.shape)
+        print('data vertical combined as shape:{}'.format(data_vertical_combined.shape))
         data_vertical_combined.reset_index(drop=True, inplace=True)
         return data_vertical_combined
 
-    def get_all_table_replace_dict(self):
-        table_value = self.get_table_3_all_data()
+    # 获得所有数据的合并table3，并利用table3计算replace_dict
+    def get_all_table_replace_dict(self, well_names=[]):
+        table_value = self.get_table_3_all_data(well_names=well_names)
         self.replace_dict_all = get_replace_dict(table_value['Type'])
         return self.replace_dict_all
-
+    # 设置replace_dict
     def set_all_table_replace_dict(self, dict={}):
         if dict:
             self.replace_dict_all = dict
@@ -194,4 +199,3 @@ class LOGGING_PROJECT:
         data_final = self.data_vertical_cohere(data_list=data_logging_type_list, well_names=well_names)
         # print(data_final.head(10))
         return data_final
-

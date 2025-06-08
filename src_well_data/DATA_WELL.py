@@ -180,6 +180,7 @@ class WELL:
         self.update_data_with_type(well_key=well_key, df=df_new)
         return df_new
 
+
     # 更新well_value._data_with_type数据到well_value类里面
     def update_data_with_type(self, well_key='', df=pd.DataFrame()):
         well_value = self.get_default_dict(self.logging_dict, well_key)
@@ -236,19 +237,23 @@ class WELL:
                 # 筛选测井数据＋分类数据的合并
                 self.data_save(path=path_combined, new_sheet_name=self.WELL_NAME, df=data_logging._data_with_type)
 
+    # 根据目标字符串特征，搜索符合目标特征的文件，读取文件并返回目标数据
     def get_well_data_by_charters(self, target_path_feature=[], target_file_type='logging', curve_names=[], Norm=False):
+        path_target = self.get_data_path_by_charters(target_path_feature, target_file_type)
+        result = self.get_logging_data(well_key=path_target, curve_names=curve_names, Norm=Norm)
+        return result
+
+    # 根据目标字符串特征，搜索符合目标特征的文件路径
+    def get_data_path_by_charters(self, target_path_feature=[], target_file_type='logging'):
         if target_path_feature == []:
             target_path_feature = ['logging_', 'csv']
 
         target_path_list = search_target_path(path_list=self.file_path_dict[target_file_type], target_path_feature=target_path_feature)
-        # print(target_path_list)
         if len(target_path_list) != 1:
-            print('error searching result as:{}, with charter:{}'.format(target_path_list, target_path_feature))
-            return
+            print('error searching in {} result as:{}, with charter:{}'.format(self.WELL_NAME, target_path_list, target_path_feature))
+            return None
         else:
-            result = self.get_logging_data(well_key=target_path_list[0], curve_names=curve_names, Norm=Norm)
-            return result
-
+            return target_path_list[0]
 
     # 通过读取测井数据文件，来初始化分辨率
     def get_logging_resolution(self, well_key=''):
@@ -274,6 +279,8 @@ class WELL:
         if key_default == '':
             key_default = list(dict.keys())[0]
             value_default = dict[key_default]
+        elif key_default is None:
+            value_default = pd.DataFrame()
         else:
             if key_default not in list(dict.keys()):
                 for key in list(dict.keys()):

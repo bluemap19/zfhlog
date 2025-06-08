@@ -9,13 +9,38 @@ from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 
 LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV')
 print(LG.WELL_NAMES)
-LG.get_well_data_by_charters(well_name='城96', target_path_feature=['Texture_ALL', '_40_5'], curve_names=['DEPTH', 'dy_con', 'dy_ASM', 'ss_cor', 'ss_ASM'])
+# well_texture1 = LG.get_well_data_by_charters(well_name='珠80', target_path_feature=['Texture_ALL', '_50_5'], curve_names=['DEPTH', 'dy_con', 'dy_ASM', 'ss_cor', 'ss_ASM'])
+# print(well_texture1.describe())
+# well_texture2 = LG.get_well_data_by_charters(well_name='城96', target_path_feature=['Texture_ALL', '_50_5'], curve_names=['DEPTH', 'dy_con', 'dy_ASM', 'ss_cor', 'ss_ASM'])
+# print(well_texture2.describe())
+path_logging_1 = LG.search_target_file_path(well_name='珠80', target_path_feature=['Texture_ALL', '_50_5'], target_file_type='logging')
+path_logging_2 = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', '_50_5'], target_file_type='logging')
+print(path_logging_1, path_logging_2)
+
+path_table_1 = LG.search_target_file_path(well_name='珠80', target_path_feature=['litho_type'], target_file_type='table')
+path_table_2 = LG.search_target_file_path(well_name='城96', target_path_feature=['litho_type'], target_file_type='table')
+print(path_table_1, path_table_2)
+
+LG.get_table_3_all_data(['城96', '珠80'])
+print(LG.get_all_table_replace_dict(well_names=['城96', '珠80']))
+dict = {'中GR长英黏土质': 0, '中GR长英黏土质（泥岩）': 0, '中低GR长英质': 1, '中低GR长英质（砂岩）': 1,
+        '富有机质长英质': 2, '富有机质长英质页岩': 2, '富有机质黏土质': 3, '富有机质黏土质页岩': 3, '高GR富凝灰长英质': 4, '高GR富凝灰长英质（沉凝灰岩）': 4}
+
+data_combined_all = LG.combined_all_logging_with_type(well_names=['城96', '珠80'], file_path_logging={'城96':path_logging_2, '珠80':path_logging_1},
+                                                      file_path_table={'城96':path_table_2, '珠80':path_table_1}, curve_names_logging=['dy_con', 'dy_ASM', 'ss_cor', 'ss_ASM'],
+                                                      replace_dict=dict, type_col_name='Type_litho', Norm=True)
+print(data_combined_all.describe())
+
+# LG.combined_all_logging_with_type_by_charters(  well_names=['城96', '珠80'], logging_charters=['Texture_ALL', '_50_5'], table_charters=['litho_type'],
+#                                                 curve_names_logging=['DEPTH', 'dy_con', 'dy_ASM', 'ss_cor', 'ss_ASM'], curve_names_type=['DEPTH', '岩相'],
+#                                                 replace_dict=dict, type_col_name='Type_num', Norm=True)
 
 # # LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV')
 # # curves_list = ['AC', 'CNL', 'GR', 'DEN', 'SP', 'RT', 'CAL']
 # curves_list = ['CNL', 'GR', 'DEN', 'RT']
 # # curves_list = ['AC', 'CNL', 'GR']
-#
+
+
 # LG.get_table_3_all_data()
 # ALL_REPLACE_DICT = LG.get_all_table_replace_dict()
 # print(ALL_REPLACE_DICT)
