@@ -1,8 +1,7 @@
 import os
 from datetime import datetime
-
 import pandas as pd
-from src_file_op.dir_operation import search_files_by_criteria
+from src_file_op.dir_operation import search_files_by_criteria, search_target_path
 from src_logging.curve_preprocess import get_resolution_by_depth, data_combine_new, data_combine_table2col
 from src_well_data.data_logging import data_logging
 from src_well_data.data_table import data_table
@@ -10,29 +9,41 @@ from src_well_data.data_table import data_table
 
 class WELL:
     def __init__(self, path_folder='', WELL_NAME=''):
+        # 初始化四种类型数据（测井数据、电成像数据、核磁数据、表格分类数据）的describe
+        # 存放格式为{logging_path1:describe_data1, logging_path2:describe_data2}
         self.describe_logging = {}
         self.describe_FMI = {}
         self.describe_NMR = {}
         self.describe_table = {}
-
+        # 初始化四种类型数据（测井数据、电成像数据、核磁数据、表格分类数据）的 数据实体存放，默认保存成{路径：dataframe}的字典格式
+        # 存放格式为{logging_path1:dataframe1, logging_path2:dataframe2}
         self.logging_dict = {}
         self.table_dict = {}
         self.FMI_dict = {}
         self.NMR_dict = {}
+        # 初始化 测井数据+表格数据 的保存，依旧是{路径：dataframe}的字典格式保存
         self.logging_table = {}
+        # 数据的分辨率保存，默认以九十{路径：float}字典格式
         self.resolution = {}
 
+        # 初始化井名所在的路径
         self.well_path = path_folder
+        # 初始化每一个path对应的dataframe对应的header表头，即曲线名称{路径：[depth, GR, DEN, CNL]}的字典格式，这个是保存所有的文件表头
         self.curve_names = {}
+        # 初始化每一个path对应的dataframe对应的目标文件header表头，即曲线名称{路径：[depth, GR, DEN]}的字典格式，这个保存的是所有文件的目标表头
         self.curve_names_target = {}
+        # 如果没有传入井名，那么就默认取路径最后一个文件夹的名字作为井名称
         if WELL_NAME == '':
             self.WELL_NAME = path_folder.split('/')[-1].split('\\')[-1].split('.')[0]
         else:
             self.WELL_NAME = WELL_NAME
+        # 配置四种格式文件的关键字，分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据路径关键词NMR
         self.file_charter_dict = {'logging':['_logging'], 'FMI':['FMI_dyna', 'FMI_stat'], 'NMR':['NMR'], 'table':['_LITHO_TYPE']} # 保存目标文件关键字,分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据NMR
-        self.file_path_dict = {}                # 保存目标文件路径,分别存放 测井数据文件路径键logging，表格数据路径键table，电成像数据路径键FMI， 核磁数据路径键NMR
+        # 保存目标文件路径,分别存放 测井数据文件路径键logging，表格数据路径键table，电成像数据路径键FMI， 核磁数据路径键NMR
+        # 存放格式为{logging:[logging_path1, logging_path2], table:[table_path1, table_path2], FMI:[FMI_path1, FMI_path2], NMR:[NMR_path1, NMR_path2]}
+        self.file_path_dict = {}
 
-        # 初始化之后，直接寻找一下本地路径下是否含有需要的文件
+        # 初始化之后，直接初始化本地路径下目标文件
         self.search_data_file()
 
     # 初始化self.file_path_dict字典，存在四种key，分别是‘logging’，‘table’，‘FMI’，‘NMR’每一个key对应一个list，list里面装的是对应目标测井文件格式的数据路径
@@ -87,7 +98,7 @@ class WELL:
                 table_data.set_table_resolution(self.get_logging_resolution())
             self.table_dict[path] = table_data
 
-    # 获取测井数据
+    # 获取测井数据，根据文件路径+曲线名称，返回dataframe格式的测井数据
     def get_logging_data(self, well_key='', curve_names=[], Norm=False):
         # 如果测井资料为空，初始化测井资料
         if not self.logging_dict:
@@ -108,21 +119,6 @@ class WELL:
             data_temp = well_value.get_data(curve_names)
         return data_temp
 
-    # def get_logging_data_normed(self, well_key='', curve_names=[]):
-    #     # 如果测井资料为空，初始化测井资料
-    #     if not self.logging_dict:
-    #         # 判断是否存在合适的测井数据文件
-    #         if len(self.file_path_dict['logging']) > 0:
-    #             for path in self.file_path_dict['logging']:
-    #                 self.data_logging_init(path=path)
-    #         else:
-    #             print('No Logging Data Found:{}'.format(self.file_path_dict['logging']))
-    #             self.search_data_file()
-    #             return pd.DataFrame()
-    #
-    #     # 如果不为空的话，就要取第一个文件作为数据输出文件了
-    #     well_value = self.get_default_dict(dict=self.logging_dict, key_default=well_key)
-    #     return
 
     # 获得dep-s，dep-e，type类型的表格数据
     def get_type_3(self, table_key='', curve_names=[]):
@@ -158,7 +154,10 @@ class WELL:
 
         return table_value.get_table_2(curve_names=curve_names)
 
-    def combine_logging_table(self, well_key='', curve_names_logging=[], table_key='', curve_names_table=[], replace_dict={}, new_col='', Norm=False):
+    # 根据测井数据路径+测井数据表格头 表格数据路径+表格数据头 表格数据类型对应的replace_dict 来进行 测井数据与表格数据的合并 用来进行分类任务输入数据获取
+    def combine_logging_table(self, well_key='', curve_names_logging=[],
+                                    table_key='', curve_names_table=[],
+                                    replace_dict={}, new_col='', Norm=False):
         if well_key == '':
             well_key = list(self.logging_dict.keys())[0]
         if table_key == '':
@@ -237,6 +236,18 @@ class WELL:
                 # 筛选测井数据＋分类数据的合并
                 self.data_save(path=path_combined, new_sheet_name=self.WELL_NAME, df=data_logging._data_with_type)
 
+    def get_well_data_by_charters(self, target_path_feature=[], target_file_type='logging', curve_names=[], Norm=False):
+        if target_path_feature == []:
+            target_path_feature = ['logging_', 'csv']
+
+        target_path_list = search_target_path(path_list=self.file_path_dict[target_file_type], target_path_feature=target_path_feature)
+        # print(target_path_list)
+        if len(target_path_list) != 1:
+            print('error searching result as:{}, with charter:{}'.format(target_path_list, target_path_feature))
+            return
+        else:
+            result = self.get_logging_data(well_key=target_path_list[0], curve_names=curve_names, Norm=Norm)
+            return result
 
 
     # 通过读取测井数据文件，来初始化分辨率
@@ -255,6 +266,7 @@ class WELL:
         table_value = self.table_dict[table_key]
         table_value.table_type_replace(replace_dict=replace_dict, new_col=new_col)
 
+    # 获得默认dict数据，key_default为空默认为dict的首个元素，若key_default有实值，则获得该值对应的value数据
     def get_default_dict(self, dict={}, key_default=''):
         if not dict:
             print('Empty dictionary get')
@@ -266,8 +278,9 @@ class WELL:
             if key_default not in list(dict.keys()):
                 for key in list(dict.keys()):
                     if key.__contains__(key_default):
-                        key_default = key
+                        # key_default = key
                         value_default = dict[key]
+                        break
             else:
                 value_default = dict[key_default]
         return value_default

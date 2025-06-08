@@ -79,7 +79,7 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
     # 创建画布（使用传入的figure或新建）    # 创建PairGrid对象
     if figure is None:
         plt.figure(dpi=240)  # 显式设置画布尺寸
-        fig = plt.gcf()  # 获取当前图形对象
+        # fig = plt.gcf()  # 获取当前图形对象
     else:
         fig = figure
         fig.clear()
@@ -170,28 +170,6 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
     plt.suptitle('{}矩阵分析（下三角：分类散点图 | 上三角：KDE等高线图）'.format(plot_string),
                  y=1.02,
                  fontsize=12,)
-
-    # # 创建线性分段色谱（网页2的方法）
-    # custom_cmap = LinearSegmentedColormap.from_list(
-    #     "geology", geology_colors, N=len(target_col_dict)
-    # )
-    # # # 生成离散颜色数组（网页6的调用方法）
-    # # palette = custom_cmap(np.linspace(0, 1, len(target_col_dict)))
-    # # 创建色条映射对象（参考网页5）
-    # bounds = list(target_col_dict_temp.keys()) + [max(target_col_dict_temp.keys()) + 1]
-    # norm = BoundaryNorm(bounds, len(geology_colors))
-    # sm = ScalarMappable(norm=norm, cmap=custom_cmap)
-    # # 在右侧添加色条（参考网页1的布局参数）
-    # cax = g.fig.add_axes([0.89, 0.06, 0.02, 0.7])  # 位置微调
-    # cbar = g.fig.colorbar(
-    #     sm,
-    #     cax=cax,
-    #     ticks=[k + 0.5 for k in target_col_dict_temp.keys()],
-    #     spacing='proportional'
-    # )
-    # cbar.set_ticklabels(target_col_dict_temp.values())
-    # cbar.ax.tick_params(labelsize=9)
-    # cbar.set_label('岩相类型', fontsize=12, rotation=270, labelpad=15)
 
 
     # 添加版权标识（可选）

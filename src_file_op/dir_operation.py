@@ -172,6 +172,22 @@ def search_files_by_criteria(
     return sorted(matched_files)
 
 
+# 根据关键字list：target_path_feature=[]在文件路径list：path_list中进行搜索，只有满足所有target_path_feature的文件路径才能被筛选出来，筛选出所有的path并返回
+def search_target_path(path_list=[], target_path_feature=[]):
+    # print(path_list)
+    # print(target_path_feature)
+    matched_paths = []
+    for path in path_list:
+        # 将路径拆分为组件
+        components = set(path.lower().split('/'))
+        components |= set(path.lower().split('\\'))
+
+        # 检查所有特征是否都在组件中
+        if all(any(feature.lower() in comp for comp in components) for feature in target_path_feature):
+            matched_paths.append(path)
+
+    return matched_paths
+
 # if __name__ == '__main__':
 #     save_dir = r'C:\Users\Administrator\Desktop\算法测试-长庆数据收集'
 #     path_list = get_all_subfolder_paths(save_dir)

@@ -24,13 +24,13 @@ class LOGGING_PROJECT:
         self.init_well_path()
 
     def init_well_path(self):
-
+        # 便利self.PROJECT_PATH项目路径文件夹
         path_all = get_all_subfolder_paths(self.PROJECT_PATH)
-
+        # 判断self.WELL_NAMES是否为空，如果为空，就把 项目文件夹 下所有的文件夹，初始化成其井名
         if not self.WELL_NAMES:
             self.WELL_NAMES = [os.path.basename(p) for p in path_all]
             self.WELL_PATH = {name: path for name, path in zip(self.WELL_NAMES, path_all)}
-        else:
+        else:       # 如果self.WELL_NAMES不为空，就使用指定的文件夹作为初始路径
             valid_paths = {}
             WELL_NAMES = []
             for p in path_all:
@@ -41,6 +41,7 @@ class LOGGING_PROJECT:
             self.WELL_PATH = valid_paths
             self.WELL_NAMES = WELL_NAMES
 
+        # 根据self.WELL_PATH初始化所有的井信息，初始化所有的WELL()类Class
         for well_name in self.WELL_PATH.keys():
             well_temp = WELL(path_folder=self.WELL_PATH[well_name], WELL_NAME=well_name)
             self.well_logging_path_dict[well_name] = well_temp.get_logging_path_list()
@@ -54,10 +55,13 @@ class LOGGING_PROJECT:
         # print(self.WELL_PATH)
         # print(self.WELL_DATA)
 
-        print(self.well_logging_path_dict)
-        print(self.well_table_path_dict)
+        # print(self.well_logging_path_dict)
+        # print(self.well_table_path_dict)
         # print(self.well_FMI_path_dict)
         # print(self.well_NMR_path_dict)
+
+    # 这个是获取字典元素，如果key_default为空，就取第一个元素，否则取key_default对应的元素
+    # 这个主要是用来对各种字典进行元素提取的
     def get_default_dict(self, dict={}, key_default=''):
         if not dict:
             print('Empty dictionary get')
@@ -69,7 +73,9 @@ class LOGGING_PROJECT:
             value_default = dict[key_default]
         return value_default
 
+    # 获取井数据，如果井名为空，就取第一个井名，如果文件路径为空，就取第一个文件路径，如果曲线名为空，就取第一个曲线名
     def get_well_data(self, well_name='', file_path='', curve_names=[]):
+        # 判断传进来的井名是否在self.WELL_NAMES中，如果不在，判断是否为空，如果在，继续根据井名获取井数据
         if well_name not in self.WELL_NAMES:
             if len(well_name) == 0:
                 well_name = self.WELL_NAMES[0]
@@ -85,7 +91,23 @@ class LOGGING_PROJECT:
         data = WELL_temp.get_logging_data(well_key=file_path, curve_names=curve_names)
         return data
 
+    def get_well_data_by_charters(self, well_name='', target_path_feature=['Texture_ALL', '_20_5'],
+                                  target_file_type='logging', curve_names=[], Norm=False):
+        """
+        :param well_name: 井名-字符串 string 例如：城96
+        :param target_path_feature: 搜索的目标字符串集合 例如：['Texture_ALL', '_20_5', 'csv']
+        :param target_file_type: 搜索哪一种数据，字符串string，只能从以下四种数据里面进行选择：logging, table, FMI, NMR
+        :param curve_names: 曲线名称对应list，例如：['GR', 'RHOB', 'NPHI']
+        :param Norm: 是否正则化，布尔值，True为正则化，False为不正则化
+        :return:返回目标数据dataframe
+        """
+        WELL = self.get_default_dict(self.WELL_DATA, well_name)
+        target_file = WELL.get_well_data_by_charters(target_path_feature=target_path_feature, target_file_type=target_file_type,
+                                                          curve_names=curve_names, Norm=Norm)
+        return target_file
 
+
+    # 获取指定井的类别数据，
     def get_table_3_data(self, well_name='', file_path='', curve_names=[]):
         WELL_temp = self.get_default_dict(self.WELL_DATA, well_name)
         type_3 = WELL_temp.get_type_3(table_key=file_path, curve_names=curve_names)
