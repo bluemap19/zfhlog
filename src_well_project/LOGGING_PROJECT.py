@@ -91,6 +91,7 @@ class LOGGING_PROJECT:
         data = WELL_temp.get_logging_data(well_key=file_path, curve_names=curve_names)
         return data
 
+    # # 根据井名、文件路径关键字特征、目标文件类型 获得目标文件的数据dataframe
     def get_well_data_by_charters(self, well_name='', target_path_feature=['Texture_ALL', '_20_5'],
                                   target_file_type='logging', curve_names=[], Norm=False):
         """
@@ -106,6 +107,7 @@ class LOGGING_PROJECT:
                                                           curve_names=curve_names, Norm=Norm)
         return target_file
 
+    # 根据井名、文件路径关键字特征、目标文件类型 获得目标文件的路径
     def search_target_file_path(self, well_name='', target_path_feature=['Texture_ALL', '_20_5'], target_file_type='logging'):
         WELL = self.get_default_dict(self.WELL_DATA, well_name)
         path = WELL.get_data_path_by_charters(target_path_feature=target_path_feature, target_file_type=target_file_type)
@@ -120,6 +122,13 @@ class LOGGING_PROJECT:
         WELL_temp = self.get_default_dict(self.WELL_DATA, well_name)
         type_2 = WELL_temp.get_type_2(table_key=file_path, curve_names=curve_names)
         return type_2
+    def get_table_3_data_replaced(self, well_name='', file_path='', curve_names=[], replace_dict={}):
+        if not replace_dict:
+            replace_dict = self.replace_dict_all
+
+        well_data = self.get_default_dict(self.WELL_DATA, well_name)
+        data_logging_type = well_data.get_type_3_replaced
+        return data_logging_type
 
     # 获取指定井的3列类别数据，这个主要是用来统计工作区间都是包含那些类的
     def get_table_3_all_data(self, well_names=[], file_path={}, curve_names=[]):
@@ -199,3 +208,7 @@ class LOGGING_PROJECT:
         data_final = self.data_vertical_cohere(data_list=data_logging_type_list, well_names=well_names)
         # print(data_final.head(10))
         return data_final
+
+    def save_data(self, well_name=[''], file_path={'':['', '']}, ):
+
+        pass

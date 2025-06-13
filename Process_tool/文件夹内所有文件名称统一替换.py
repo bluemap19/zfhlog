@@ -143,8 +143,8 @@ def rename_paths_in_directory(folder_path, string_replace, string_target, backup
 # 高级用法 - 不创建备份
 rename_paths_in_directory(
     folder_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\珠80\Texture_File',
-    string_replace='Z80_Texture_ALL',
-    string_target='珠80_Texture_ALL_logging',
+    string_replace='Texture_ALL',
+    string_target='Texture_ALL_logging',
     backup=False
 )
 

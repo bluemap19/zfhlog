@@ -136,6 +136,12 @@ class WELL:
             table_value.read_data()
 
         return table_value.get_table_3(curve_names=curve_names)
+    def get_type_3_replaced(self, table_key='', curve_names=[], replace_dict={}, new_col=''):
+        table_3 = self.get_type_3(table_key=table_key, curve_names=curve_names)
+        table_3.replace(replace_dict, inplace=True)
+        table_3[new_col] = table_3[curve_names].apply(lambda x: x.sum(), axis=1)
+        return table_3
+
 
     # 获得depth，type类型的表格数据
     def get_type_2(self, table_key='', curve_names=[]):
@@ -186,6 +192,7 @@ class WELL:
         well_value = self.get_default_dict(self.logging_dict, well_key)
         well_value._data_with_type = df
 
+    # dataframe文件保存
     def data_save(self, path='', new_sheet_name='', df=pd.DataFrame()):
         if path.endswith('.xlsx'):
             if df.shape[0] > 0:
@@ -264,7 +271,7 @@ class WELL:
         resolution_default = self.get_default_dict(dict=self.resolution, key_default=well_key)
         return resolution_default
 
-
+    # 表格数据更新
     def table_replace_update(self, table_key='', replace_dict={}, new_col=''):
         if table_key == '':
             table_key = list(self.table_dict.keys())[0]
@@ -292,10 +299,12 @@ class WELL:
                 value_default = dict[key_default]
         return value_default
 
-    def get_table_replace_dict(self, table_key=''):
-        table_value = self.get_default_dict(self.table_dict, table_key)
+    # 获得井的替换词典replace_dict
+    def get_table_replace_dict(self, well_name=''):
+        table_value = self.get_default_dict(self.table_dict, well_name)
         return table_value.replace_dict
 
+    # 获得曲线名称
     def get_curve_names(self, well_key=''):
         return self.get_default_dict(self.curve_names, well_key)
 
