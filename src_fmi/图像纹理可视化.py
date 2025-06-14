@@ -7,7 +7,8 @@ from src_fmi.image_operation import get_glcm_sub, show_Pic, get_glcm_xy, get_glc
 
 if __name__ == '__main__':
 
-    path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
+    # path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
+    path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
     list_path_texture = get_all_file_paths(path_folder)
 
 
@@ -31,21 +32,22 @@ if __name__ == '__main__':
             feature_all = [texture_average.ravel(), texture_x.ravel(), texture_y.ravel(), texture_sub.ravel()]
             print(np.array(feature_all))
             IMG_LIST = [img_data, glcm_map_average, glcm_map_x, glcm_map_y]
-            show_Pic(IMG_LIST, pic_order='14', figure=(12, 5), pic_str=['Img', 'GLCM_Mean', 'GLCM_X', 'GLCM_Y'])
+            show_Pic(IMG_LIST, pic_order='14', figure=(12, 5), pic_str=['Img', 'GLCM_Mean', 'GLCM_X', 'GLCM_Y'], title='')
 
 
         if i.__contains__('stat'):
             img_data = cv2.resize(img_data, [128, 128], interpolation=cv2.INTER_NEAREST)
             IMG_LIST.append(256-img_data)
 
-            texture_sub = get_glcm_sub(img_data)
-            texture_x, texture_y, glcm_map_x, glcm_map_y = get_glcm_xy(img_data)
-            texture_average, glcm_map_average, _, _ = get_glcm_Features(img_data)
+            distance = [4, 8]
+            texture_sub = get_glcm_sub(img_data, distance=distance)
+            texture_x, texture_y, glcm_map_x, glcm_map_y = get_glcm_xy(img_data, distance=distance)
+            texture_average, glcm_map_average, _, _ = get_glcm_Features(img_data, distance=distance)
 
             print(texture_sub.shape, texture_x.shape, texture_y.shape, glcm_map_x.shape, glcm_map_y.shape, texture_average.shape, glcm_map_average.shape)
 
             feature_all = [texture_average.ravel(), texture_x.ravel(), texture_y.ravel(), texture_sub.ravel()]
             print(np.array(feature_all))
             IMG_LIST = [img_data, glcm_map_average, glcm_map_x, glcm_map_y]
-            show_Pic(IMG_LIST, pic_order='14', figure=(12, 5), pic_str=['Img', 'GLCM_Mean', 'GLCM_X', 'GLCM_Y'])
+            show_Pic(IMG_LIST, pic_order='14', figure=(24, 5), pic_str=['Img', 'GLCM_Mean', 'GLCM_X', 'GLCM_Y'], title='')
             exit(0)

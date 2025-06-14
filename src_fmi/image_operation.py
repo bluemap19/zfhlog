@@ -111,10 +111,12 @@ def show_Pic(pic_list, pic_order='12', pic_str=[], save_pic=False, path_save='',
     num = int(pic_order[0]) * int(pic_order[1])
     if num != len(pic_list):
         print('pic order num is not equal to pic_list num:{},{}'.format(len(pic_list), pic_order))
+        exit(0)
 
     while(len(pic_str) < len(pic_list)):
         pic_str.append('pic_str'+str(len(pic_str)))
 
+    # 判断图像是否经过归一化了，如果图像经过了归一化那就将图像进行复原为[0, 255]的内容
     for i in range(len(pic_list)):
         if np.max(pic_list[i]) < 4.01:
             pic_list[i] = 255*pic_list[i]
@@ -131,11 +133,9 @@ def show_Pic(pic_list, pic_order='12', pic_str=[], save_pic=False, path_save='',
                 pic_temp = pic_temp.transpose(1, 2, 0)
                 # print(pic_temp.shape)
 
-        order_str = int(pic_order+str(i+1))
         a = int(pic_order[0])
         b = int(pic_order[1])
         c = i + 1
-        # print(order_str)
         # 当a,b,c大于等于10时 .add_subplot(a, b, c)
         ax = fig.add_subplot(a, b, c)
         # ax = fig.add_subplot(order_str)
@@ -153,6 +153,7 @@ def show_Pic(pic_list, pic_order='12', pic_str=[], save_pic=False, path_save='',
             plt.savefig('temp.png')
         else:
             plt.savefig(path_save)
+    plt.tight_layout()
     plt.show()
     plt.close()
 
