@@ -7,8 +7,8 @@ from src_fmi.image_operation import get_glcm_sub, show_Pic, get_glcm_xy, get_glc
 
 if __name__ == '__main__':
 
-    # path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
-    path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
+    path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
+    # path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
     list_path_texture = get_all_file_paths(path_folder)
 
 
@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
         if i.__contains__('stat'):
             img_data = cv2.resize(img_data, [128, 128], interpolation=cv2.INTER_NEAREST)
-            IMG_LIST.append(256-img_data)
+            IMG_LIST.append(255-img_data)
 
             texture_average_d1, glcm_map_average_d1, _, _ = get_glcm_Features(img_data, distance=[2])
             texture_average_d2, glcm_map_average_d2, _, _ = get_glcm_Features(img_data, distance=[4])
