@@ -964,6 +964,116 @@ def cal_pic_generate_effect(pic_org, pic_repair):
 # pic_seg_by_kai_bi()
 
 
+import numpy as np
+
+
+
+def cal_glcm_features(glcm_map, features):
+    """
+    手动实现GLCM特征计算函数
+
+    参数:
+    glcm_map: np.array类型灰度共生矩阵，四维张量，形状为(level, level, distances_len, angles_len)
+    features: list, 包含需要计算的纹理特征名称
+
+    返回:
+    np.array 特征矩阵，形状为(len(features), distances_len, angles_len)
+    """
+    # 获取矩阵的形状参数
+    level = glcm_map.shape[0]
+    num_distances = glcm_map.shape[2]
+    num_angles = glcm_map.shape[3]
+    num_features = len(features)
+
+    # 初始化结果矩阵
+    feature_matrix = np.zeros((num_features, num_distances, num_angles))
+
+    # 创建i和j的网格坐标（用于特征计算）
+    i, j = np.meshgrid(np.arange(level), np.arange(level), indexing='ij')
+
+    # 遍历所有距离和角度组合
+    for d_idx in range(num_distances):
+        for a_idx in range(num_angles):
+            # 提取当前GLCM矩阵
+            P = glcm_map[:, :, d_idx, a_idx]
+
+            # 确保矩阵归一化（元素和为1）
+            total = np.sum(P)
+            if total > 0:
+                P = P / total
+            else:
+                # 处理全零矩阵（避免除以零）
+                feature_matrix[:, d_idx, a_idx] = np.nan
+                continue
+
+            # 初始化特征值字典
+            feature_vals = {}
+
+            # 计算基本统计量（在多个特征中复用）
+            # 行和：p_i = Σ_j P(i,j)
+            p_i = np.sum(P, axis=1)
+            # 列和：p_j = Σ_i P(i,j)
+            p_j = np.sum(P, axis=0)
+
+            # 均值
+            mu_i = np.sum(i * p_i)
+            mu_j = np.sum(j * p_j)
+
+            # 方差
+            sigma_i = np.sqrt(np.sum((i - mu_i) ** 2 * p_i))
+            sigma_j = np.sqrt(np.sum((j - mu_j) ** 2 * p_j))
+
+            # 计算请求的特征
+            for feature_name in features:
+                if feature_name == 'contrast':
+                    # 对比度: Σ_iΣ_j |i-j|² P(i,j)
+                    feature_vals['contrast'] = np.sum((i - j) ** 2 * P)
+
+                elif feature_name == 'dissimilarity':
+                    # 相异性: Σ_iΣ_j |i-j| P(i,j)
+                    feature_vals['dissimilarity'] = np.sum(np.abs(i - j) * P)
+
+                elif feature_name == 'homogeneity':
+                    # 同质性: Σ_iΣ_j P(i,j) / (1 + |i-j|)
+                    feature_vals['homogeneity'] = np.sum(P / (1 + np.abs(i - j)))
+
+                elif feature_name == 'energy' or feature_name == 'ASM':
+                    # 能量/角二阶矩: Σ_iΣ_j P(i,j)²
+                    asm_value = np.sum(P ** 2)
+                    feature_vals['energy'] = np.sqrt(asm_value)
+                    feature_vals['ASM'] = asm_value
+
+                elif feature_name == 'correlation':
+                    # 相关性: [Σ_iΣ_j (i-mu_i)(j-mu_j) P(i,j)] / (sigma_i * sigma_j)
+                    if sigma_i > 0 and sigma_j > 0:
+                        correlation = np.sum((i - mu_i) * (j - mu_j) * P) / (sigma_i * sigma_j)
+                    else:
+                        correlation = 0  # 处理常值图像
+                    feature_vals['correlation'] = correlation
+
+                elif feature_name == 'entropy':
+                    # 熵: -Σ_iΣ_j P(i,j) log(P(i,j))
+                    entropy = 0
+                    # 仅处理非零概率元素
+                    non_zero_mask = P > 0
+                    non_zero_probs = P[non_zero_mask]
+                    entropy = -np.sum(non_zero_probs * np.log2(non_zero_probs))
+                    feature_vals['entropy'] = entropy
+
+                else:
+                    # 处理未知特征
+                    feature_vals[feature_name] = np.nan
+
+            # 将计算的特征值填充到结果矩阵中
+            for feat_idx, feature_name in enumerate(features):
+                feature_matrix[feat_idx, d_idx, a_idx] = feature_vals.get(feature_name, np.nan)
+
+    return feature_matrix
+
+
+
+
+
 # 计算GLCM矩阵的熵值，输入的是GLCM矩阵，16*16*M*N或者是32*32*M*N、64*64*M*N等
 def glcm_entropy(glcm):
     """
@@ -1013,17 +1123,19 @@ def get_glcm_Features(IMG_gray, level=16, distance=[1, 2], angles=[0, np.pi / 4,
     :return: 返回四个矩阵，分别是，原始GLCM矩阵特诊参数，原始GLCM矩阵，平均GLCM矩阵特征参数，平均GLCM特征矩阵
     其中平均GLCM特征矩阵一般为七个，分别是，总的GLCM特征，两个不同distance特征矩阵（四个角度下的均值），四个不同angle特征矩阵（两个距离下的均值）
     """
-    input = copy.deepcopy(IMG_gray)
-    scale_data = 256/level
-    # input = (input/scale_data).astype(np.int32)
-
-    # 确保缩放后数值严格小于level
-    input = np.floor_divide(input, scale_data).astype(np.uint8)  # 使用整数除法
-    input = np.clip(input, 0, level - 1)  # 强制限制范围
+    img = copy.deepcopy(IMG_gray).astype(np.int32)
+    # 灰度压缩（确保处理一致）
+    img = np.floor_divide(img, 256 / level).astype(np.uint8)
+    img = np.clip(img, 0, level - 1)
 
     # 得到共生矩阵，参数：图像矩阵，距离，方向，灰度级别，是否对称，是否标准化
-    glcm = graycomatrix(input, distance, angles,
-                        levels=level, symmetric=True, normed=True)      # 100x100的灰度图像  ---> 16*16*2*4 不同 level * level * distance * angle  的灰度共生矩阵
+    glcm = graycomatrix(img,
+                        distances=distance,
+                        angles=angles,
+                        levels=level,
+                        symmetric=False,
+                        normed=True)      # 100x100的灰度图像  ---> 16*16*2*4 不同 level * level * distance * angle  的灰度共生矩阵
+    # print(glcm.shape)                 ####### 16*16*2*4 即：level * level * distance * angle
 
     # 总的glcm平均矩阵
     glcm_mean = [glcm.reshape((level, level, -1)).mean(axis=2)]         # 16*16*1
@@ -1035,35 +1147,23 @@ def get_glcm_Features(IMG_gray, level=16, distance=[1, 2], angles=[0, np.pi / 4,
         glcm_mean.append(glcm[:, :, :, i].mean(axis=2))
 
     glcm_mean = np.array(glcm_mean)                                                                   # ---> 7*16*16
-    glcm_mean = glcm_mean.transpose(1, 2, 0).reshape((level, level, len(distance)+len(angles)+1, 1))    # 转换形状7*16*16--->16*16*7*1
+    glcm_mean = glcm_mean.transpose(1, 2, 0)                    # 转换形状7*16*16--->16*16*7
+    glcm_mean = np.expand_dims(glcm_mean, axis=-1)              # 转换形状16*16*7--->16*16*7*1
 
     # 得到共生矩阵的特征统计值，官方文档
     # http://tonysyu.github.io/scikit-image/api/skimage.feature.html#skimage.feature.greycoprops
-    feature = []
-    feature_mean = []
-    ### ‘contrast’, ‘dissimilarity’, ‘homogeneity’, ‘energy’, ‘correlation’, ‘ASM’, ‘mean’, ‘variance’, ‘std’, ‘entropy’
-    # feature_descrip = {'contrast', 'dissimilarity', 'homogeneity', 'energy', 'correlation', 'ASM', 'std', 'entropy'}
-    feature_descrip = {'contrast', 'dissimilarity', 'homogeneity', 'energy', 'correlation', 'ASM'}
+    features = []
+    # feature_descrip = {'contrast', 'dissimilarity', 'homogeneity', 'energy', 'correlation', 'ASM', 'entropy'}
+    feature_descrip = ['contrast', 'dissimilarity', 'homogeneity', 'energy', 'correlation', 'ASM']
 
-    # #### 这个返回的是  原始矩阵特征参数、原始矩阵信息、七个平均矩阵特征参数、七个平均矩阵信息
-    # for prop in feature_descrip:
-    #     temp = graycoprops(glcm, prop)
-    #     feature.append(temp)
-    #     temp = graycoprops(glcm_mean, prop)
-    #     feature_mean.append(temp)
-    # return np.array(feature), glcm, np.array(feature_mean), glcm_mean
-
+    # features = cal_glcm_features(glcm_mean, feature_descrip)
 
     ###### 这个返回的是： 总的平均矩阵特征参数、总的平均GLCM矩阵、六个平均矩阵（分别是2个距离上的，4个角度上的）
     for prop in feature_descrip:
-        temp = graycoprops(glcm_mean[:, :, 1:, 0].reshape((level, level, -1, 1)), prop)
-        feature.append(temp)
-
-        temp = graycoprops(glcm_mean[:, :, 0, 0].reshape((level, level, -1, 1)), prop)
-        feature_mean.append(temp)
-
-    feature.append(glcm_entropy(glcm_mean[:, :, 1:, 0]))
-    feature_mean.append(glcm_entropy(glcm_mean[:, :, 0, 0]))
+        temp = graycoprops(glcm_mean, prop)
+        # print(temp.ravel())
+        features.append(temp)
+    features.append(glcm_entropy(glcm_mean))
 
     # feature_mean ---> (7, 1, 1)
     # glcm_mean ---> (16, 16)
@@ -1071,7 +1171,7 @@ def get_glcm_Features(IMG_gray, level=16, distance=[1, 2], angles=[0, np.pi / 4,
     # print(np.array(feature).shape, glcm_mean.shape)
     # glcm_mean  ---> (16, 16, 4(len(distance)+len(angles)+1), 1)
 
-    return np.array(feature_mean), glcm_mean[:, :, 0, 0], np.array(feature), glcm_mean
+    return np.array(features)[:, 0, 0], glcm_mean[:, :, 0, 0], np.array(features), glcm_mean
 
 
 def get_glcm_sub(IMG_gray, level=16, distance=[1,2]):  # 传入灰度图像
@@ -1138,8 +1238,8 @@ def ele_stripes_delete(Pic, shape_target=(100, 8), delete_pix = 0):
 
 
 
-if __name__ == '__main__':
-    pic_temp = np.random.random((100, 100))*256
+# if __name__ == '__main__':
+#     pic_temp = np.random.random((100, 100))*256
 #     glcm, map, glcm_average, map_average = get_glcm_sixFeature(pic_temp)
 #     print('glcm matrix shape:{},{}'.format(glcm.shape, glcm_average.shape))
 #     print('glcm map shape:{},{}'.format(map.shape, map_average.shape))

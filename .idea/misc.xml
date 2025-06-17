@@ -4,5 +4,5 @@
     <option name="executionMode" value="BINARY" />
     <option name="sdkName" value="Py38" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="PY38" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Py38" project-jdk-type="Python SDK" />
 </project>

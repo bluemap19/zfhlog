@@ -8,7 +8,8 @@ from src_fmi.image_operation import get_glcm_sub, show_Pic, get_glcm_xy, get_glc
 if __name__ == '__main__':
 
     # path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
-    path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
+    # path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
+    path_folder = r'C:\Users\ZFH\Desktop\收集的成像特征数据集'
     list_path_texture = get_all_file_paths(path_folder)
 
 
@@ -19,8 +20,8 @@ if __name__ == '__main__':
         CHAR_TEMP = i.split('/')[-1].split('\\')[-1].split('.txt')[0]
         print('{} image shape is:{}'.format(CHAR_TEMP, img_data.shape))
 
-        if i.__contains__('dyna'):
-            img_data = cv2.resize(img_data, [128, 128], interpolation=cv2.INTER_NEAREST)
+        if i.__contains__('DYNA'):
+            img_data = cv2.resize(img_data, [256, 256], interpolation=cv2.INTER_NEAREST)
             IMG_LIST.append(256-img_data)
 
             texture_sub = get_glcm_sub(img_data)
@@ -35,8 +36,8 @@ if __name__ == '__main__':
             show_Pic(IMG_LIST, pic_order='14', figure=(12, 5), pic_str=['Img', 'GLCM_Mean', 'GLCM_X', 'GLCM_Y'], title='')
 
 
-        if i.__contains__('stat'):
-            img_data = cv2.resize(img_data, [128, 128], interpolation=cv2.INTER_NEAREST)
+        if i.__contains__('STAT'):
+            img_data = cv2.resize(img_data, [256, 256], interpolation=cv2.INTER_NEAREST)
             IMG_LIST.append(256-img_data)
 
             distance = [4, 8]
