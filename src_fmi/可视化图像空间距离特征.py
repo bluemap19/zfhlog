@@ -47,28 +47,28 @@ if __name__ == '__main__':
             else:
                 GLCM_FEATURE_LIST_VS = np.vstack((GLCM_FEATURE_LIST_VS, texture_all_vs))
 
-            # IMG_LIST = [255-img_data, glcm_map_average_mean, EMPTY_PIC, glcm_map_average_d1, EMPTY_PIC, glcm_map_average_d2, EMPTY_PIC]
-            # show_Pic(IMG_LIST, pic_order='17', figure=(37, 5), pic_str=['STAT', 'GLCM_Mean', 'Radar_Mean', 'GLCM_D1', 'Radar1', 'GLCM_D2', 'Radar2'], title='')
-            #
-            #
-            # RADAR_LIST = [(texture_average_mean.ravel()-RADIA_MIN)/(RADIA_MAX-RADIA_MIN),
-            #               (texture_average_d1.ravel()-RADIA_MIN)/(RADIA_MAX-RADIA_MIN),
-            #               (texture_average_d2.ravel()-RADIA_MIN)/(RADIA_MAX-RADIA_MIN)]
-            # attributes = ['CON', 'DIS', 'HOM', 'ENG', 'COR', 'ASM', 'ENT']
-            # sub_titles = ['MEAN', 'D1', 'D2']
-            #
-            # from matplotlib import pyplot as plt
-            # fig2, axes2 = draw_radar_chart(
-            #     data_list=RADAR_LIST,
-            #     radar_str=attributes,
-            #     pic_order='13',
-            #     figure=(17, 5),
-            #     pic_str=sub_titles,
-            #     title='',
-            #     norm=False
-            # )
-            # plt.show()
-            # # exit(0)
+            IMG_LIST = [255-img_data, glcm_map_average_mean, EMPTY_PIC, glcm_map_average_d1, EMPTY_PIC, glcm_map_average_d2, EMPTY_PIC]
+            show_Pic(IMG_LIST, pic_order='17', figure=(37, 5), pic_str=['STAT', 'GLCM_Mean', 'Radar_Mean', 'GLCM_D1', 'Radar1', 'GLCM_D2', 'Radar2'], title='')
+
+
+            RADAR_LIST = [(texture_average_mean.ravel()-RADIA_MIN)/(RADIA_MAX-RADIA_MIN),
+                          (texture_average_d1.ravel()-RADIA_MIN)/(RADIA_MAX-RADIA_MIN),
+                          (texture_average_d2.ravel()-RADIA_MIN)/(RADIA_MAX-RADIA_MIN)]
+            attributes = ['CON', 'DIS', 'HOM', 'ENG', 'COR', 'ASM', 'ENT']
+            sub_titles = ['MEAN', 'D1', 'D2']
+
+            from matplotlib import pyplot as plt
+            fig2, axes2 = draw_radar_chart(
+                data_list=RADAR_LIST,
+                radar_str=attributes,
+                pic_order='13',
+                figure=(17, 5),
+                pic_str=sub_titles,
+                title='',
+                norm=False
+            )
+            plt.show()
+            # exit(0)
 
 
 

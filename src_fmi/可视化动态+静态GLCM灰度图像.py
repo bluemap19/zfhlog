@@ -91,7 +91,7 @@ if __name__ == '__main__':
                 norm=True
             )
             plt.show()
-            exit(0)
+            # exit(0)
 
     GLCM_STAT = np.array(GLCM_STAT_LIST)
     GLCM_SUB_STAT = np.array(GLCM_SUB_STAT_LIST)

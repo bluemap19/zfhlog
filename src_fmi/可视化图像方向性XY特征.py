@@ -53,26 +53,26 @@ if __name__ == '__main__':
 
             # print(texture_sub.shape, texture_x.shape, texture_y.shape, glcm_map_x.shape, glcm_map_y.shape, texture_average.shape, glcm_map_average.shape)
 
-            # IMG_LIST = [255-img_data, glcm_map_average, EMPTY_PIC, glcm_map_x, EMPTY_PIC, glcm_map_y, EMPTY_PIC, EMPTY_PIC]
-            # show_Pic(IMG_LIST, pic_order='18', figure=(42, 5), pic_str=['Img', 'GLCM_Mean', 'Radar', 'GLCM_X', 'Radar', 'GLCM_Y', 'Radar', 'Radar'], title='')
-            #
-            # RADAR_LIST = [(texture_average.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
-            #               (texture_x.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
-            #               (texture_y.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
-            #               (texture_sub.ravel() - RADIA_SUB_MIN)/(RADIA_SUB_MAX - RADIA_SUB_MIN)]
-            # attributes = ['CON', 'DIS', 'HOM', 'ENG', 'COR', 'ASM', 'ENT']
-            # sub_titles = ['MEAN', 'X', 'Y', 'SUB']
-            # from matplotlib import pyplot as plt
-            # fig2, axes2 = draw_radar_chart(
-            #     data_list=RADAR_LIST,
-            #     radar_str=attributes,
-            #     pic_order='14',
-            #     figure=(22, 5),
-            #     pic_str=sub_titles,
-            #     title='',
-            #     norm=True
-            # )
-            # plt.show()
+            IMG_LIST = [255-img_data, glcm_map_average, EMPTY_PIC, glcm_map_x, EMPTY_PIC, glcm_map_y, EMPTY_PIC, EMPTY_PIC]
+            show_Pic(IMG_LIST, pic_order='18', figure=(42, 5), pic_str=['Img', 'GLCM_Mean', 'Radar', 'GLCM_X', 'Radar', 'GLCM_Y', 'Radar', 'Radar'], title='')
+
+            RADAR_LIST = [(texture_average.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
+                          (texture_x.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
+                          (texture_y.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
+                          (texture_sub.ravel() - RADIA_SUB_MIN)/(RADIA_SUB_MAX - RADIA_SUB_MIN)]
+            attributes = ['CON', 'DIS', 'HOM', 'ENG', 'COR', 'ASM', 'ENT']
+            sub_titles = ['MEAN', 'X', 'Y', 'SUB']
+            from matplotlib import pyplot as plt
+            fig2, axes2 = draw_radar_chart(
+                data_list=RADAR_LIST,
+                radar_str=attributes,
+                pic_order='14',
+                figure=(22, 5),
+                pic_str=sub_titles,
+                title='',
+                norm=True
+            )
+            plt.show()
 
 
     GLCM_FEATURE_VS = np.array(GLCM_FEATURE_LIST_VS)
