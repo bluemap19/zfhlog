@@ -1,5 +1,4 @@
 import pandas as pd
-
 from src_logging.curve_preprocess import get_resolution_by_depth, data_Normalized
 
 
@@ -69,8 +68,6 @@ class data_logging:
             pass
 
         return self._data_normed
-
-
 
     def input_cols_mapping(self, input_cols=[], target_cols=[]):
         if target_cols == []:

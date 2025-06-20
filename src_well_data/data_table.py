@@ -6,7 +6,9 @@ from src_table.table_process import table_2_to_3, get_replace_dict, table_3_to_2
 class data_table:
     def __init__(self, path='', well_name='', resolution=-1):
         self._table_2 = pd.DataFrame()
+        self._table_2_replaced = pd.DataFrame()
         self._table_3 = pd.DataFrame()
+        self._table_3_replaced = pd.DataFrame()
         self._table_resolution = resolution
         self._file_path = path
         self._well_name = well_name
@@ -82,9 +84,18 @@ class data_table:
             self.table_2_to_3()
         if len(curve_names) == 3:
             return self._table_3[curve_names]
-        if self._table_2.shape[1] > 3:
-            return self._table_2.iloc[:, [0, 1, -1]]
+        if self._table_3.shape[1] > 3:
+            return self._table_3.iloc[:, [0, 1, -1]]
         return self._table_3
+    def get_table_3_replaced(self, curve_names=[]):
+        if self._table_3_replaced.shape[0] == 0:
+            self.table_2_to_3()
+            self.table_type_replace()
+        if len(curve_names) >= 3:
+            return self._table_3_replaced[curve_names]
+        elif curve_names == []:
+            return self._table_3.iloc[:, [0, 1, -1]]
+        return self._table_3_replaced
 
     def get_table_2(self, curve_names=[]):
         if self._table_2.shape[0] == 0:
@@ -94,6 +105,16 @@ class data_table:
         if self._table_2.shape[1] > 2:
             return self._table_2.iloc[:, [0, -1]]
         return self._table_2
+    def get_table_2_replaced(self, curve_names=[]):
+        if self._table_2_replaced.shape[0] == 0:
+            self.table_3_to_2()
+            self.table_type_replace()
+        if len(curve_names) >= 3:
+            return self._table_2_replaced[curve_names]
+        elif curve_names == []:
+            return self._table_2_replaced.iloc[:, [0, -1]]
+        return self._table_2_replaced
+
 
     def set_table_resolution(self, resolution):
         if resolution > 0:
@@ -103,11 +124,14 @@ class data_table:
         if replace_dict == {}:
             replace_dict = self._replace_dict
 
-        print('current replace dict: {}'.format(replace_dict))
+        # print('current replace dict: {}'.format(replace_dict))
         if new_col == '':
             new_col = 'Type'
-        self._table_2[new_col] = self._table_2.iloc[:, -1].map(replace_dict)
-        self._table_3[new_col] = self._table_3.iloc[:, -1].map(replace_dict)
+
+        self._table_2_replaced = self._table_2.copy()
+        self._table_2_replaced[new_col] = self._table_2.iloc[:, -1].map(replace_dict)
+        self._table_3_replaced = self._table_3.copy()
+        self._table_3_replaced[new_col] = self._table_3.iloc[:, -1].map(replace_dict)
 
         # print(replace_dict)
         # print(self.table_2)

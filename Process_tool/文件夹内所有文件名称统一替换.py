@@ -133,29 +133,30 @@ def rename_paths_in_directory(folder_path, string_replace, string_target, backup
         return processed_count
 
 
-# # 基本用法 - 替换路径中的关键字
-# rename_paths_in_directory(
-#     folder_path=r'C:\Project\AA_Data',
-#     string_replace='AA',
-#     string_target='BB'
-# )
+if __name__ == '__main__':
+    # # 基本用法 - 替换路径中的关键字
+    # rename_paths_in_directory(
+    #     folder_path=r'C:\Project\AA_Data',
+    #     string_replace='AA',
+    #     string_target='BB'
+    # )
 
-# 高级用法 - 不创建备份
-rename_paths_in_directory(
-    folder_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\珠80\Texture_File',
-    string_replace='Texture_ALL',
-    string_target='Texture_ALL_logging',
-    backup=False
-)
+    # 高级用法 - 不创建备份
+    rename_paths_in_directory(
+        folder_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\城96\Texture_File',
+        string_replace='Texture_ALL',
+        string_target='Texture_ALL_logging',
+        backup=False
+    )
 
-# # 带自定义日志记录器
-# import logging
-# logger = logging.getLogger('MyApp')
-# logger.setLevel(logging.DEBUG)
-#
-# rename_paths_in_directory(
-#     folder_path=r'D:\Documents\AA_Reports',
-#     string_replace='AA',
-#     string_target='BB',
-#     logger=logger
-# )
+    # # 带自定义日志记录器
+    # import logging
+    # logger = logging.getLogger('MyApp')
+    # logger.setLevel(logging.DEBUG)
+    #
+    # rename_paths_in_directory(
+    #     folder_path=r'D:\Documents\AA_Reports',
+    #     string_replace='AA',
+    #     string_target='BB',
+    #     logger=logger
+    # )

@@ -559,8 +559,8 @@ def data_Normalized(curve_org, DEPTH_USE=True, local_normalized=False, logging_r
 
     curve_normalize_fully, extreme_list = data_normalized(curve_normalize, DEPTH_USE=DEPTH_USE, logging_range=logging_range, max_ratio=max_ratio)
     extreme_list = np.array(extreme_list)
-    np.set_printoptions(precision=4)
-    print('curve normalized shape is :{}, extreme list:\n{}'.format(curve_normalize_fully.shape, extreme_list))
+    # np.set_printoptions(precision=4)
+    # print('curve normalized shape is :{}, extreme list:\n{}'.format(curve_normalize_fully.shape, extreme_list))
 
     return curve_normalize_fully
 

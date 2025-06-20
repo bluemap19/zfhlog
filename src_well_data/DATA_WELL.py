@@ -45,6 +45,8 @@ class WELL:
 
         # 初始化之后，直接初始化本地路径下目标文件
         self.search_data_file()
+        # self.data_logging_init()
+        # self.data_table_init()
 
     # 初始化self.file_path_dict字典，存在四种key，分别是‘logging’，‘table’，‘FMI’，‘NMR’每一个key对应一个list，list里面装的是对应目标测井文件格式的数据路径
     def search_data_file(self):
@@ -98,8 +100,7 @@ class WELL:
                 table_data.set_table_resolution(self.get_logging_resolution())
             self.table_dict[path] = table_data
 
-    # 获取测井数据，根据文件路径+曲线名称，返回dataframe格式的测井数据
-    def get_logging_data(self, well_key='', curve_names=[], Norm=False):
+    def check_logging_files(self):
         # 如果测井资料为空，初始化测井资料
         if not self.logging_dict:
             # 判断是否存在合适的测井数据文件
@@ -111,6 +112,10 @@ class WELL:
                 self.search_data_file()
                 return pd.DataFrame()
 
+    # 获取测井数据，根据文件路径+曲线名称，返回dataframe格式的测井数据
+    def get_logging_data(self, well_key='', curve_names=[], Norm=False):
+        self.check_logging_files()
+
         # 如果不为空的话，就要取第一个文件作为数据输出文件了
         well_value = self.get_default_dict(dict=self.logging_dict, key_default=well_key)
         if Norm:
@@ -120,8 +125,7 @@ class WELL:
         return data_temp
 
 
-    # 获得dep-s，dep-e，type类型的表格数据
-    def get_type_3(self, table_key='', curve_names=[]):
+    def check_table_files(self):
         # 如果字典表格数据为空，初始化表格数据字典
         if not self.table_dict:
             if len(self.file_path_dict['table']) > 0:
@@ -131,34 +135,47 @@ class WELL:
                 self.search_data_file()
                 return pd.DataFrame()
 
+
+    # 获得dep-s，dep-e，type类型的表格数据
+    def get_type_3(self, table_key='', curve_names=[]):
+        self.check_table_files()
+
         table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
-        if table_value._data.shape[0] == 0:
+        if table_value._data.empty:
             table_value.read_data()
 
         return table_value.get_table_3(curve_names=curve_names)
     def get_type_3_replaced(self, table_key='', curve_names=[], replace_dict={}, new_col=''):
-        table_3 = self.get_type_3(table_key=table_key, curve_names=curve_names)
-        table_3.replace(replace_dict, inplace=True)
-        table_3[new_col] = table_3[curve_names].apply(lambda x: x.sum(), axis=1)
-        return table_3
+        self.check_table_files()
+
+        table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
+        if table_value._data.empty:
+            table_value.read_data()
+
+        table_value.table_type_replace(replace_dict=replace_dict, new_col=new_col)
+
+        return table_value.get_table_3_replaced(curve_names=curve_names)
 
 
     # 获得depth，type类型的表格数据
     def get_type_2(self, table_key='', curve_names=[]):
-        # 如果字典表格数据为空，初始化表格数据字典
-        if not self.table_dict:
-            if len(self.file_path_dict['table']) > 0:
-                for path in self.file_path_dict['table']:
-                    self.data_table_init(path=path)
-            else:
-                self.search_data_file()
-                return pd.DataFrame()
+        self.check_table_files()
 
         table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
-        if table_value._data.shape[0] == 0:
+        if table_value._data.empty:
             table_value.read_data()
 
         return table_value.get_table_2(curve_names=curve_names)
+    def get_type_2_replaced(self, table_key='', curve_names=[], replace_dict={}, new_col=''):
+        self.check_table_files()
+
+        table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
+        if table_value._data.empty:
+            table_value.read_data()
+
+        table_value.table_type_replace(replace_dict=replace_dict, new_col=new_col)
+
+        return table_value.get_table_2_replaced(curve_names=curve_names)
 
     # 根据测井数据路径+测井数据表格头 表格数据路径+表格数据头 表格数据类型对应的replace_dict 来进行 测井数据与表格数据的合并 用来进行分类任务输入数据获取
     def combine_logging_table(self, well_key='', curve_names_logging=[],
@@ -171,11 +188,14 @@ class WELL:
 
         logging_value = self.get_logging_data(well_key=well_key, curve_names=curve_names_logging, Norm=Norm)
 
-        # 现根据replace_dict更新表格数据table_value
-        self.table_replace_update(table_key=table_key, replace_dict=replace_dict, new_col=new_col)
+        # # 现根据replace_dict更新表格数据table_value
+        # self.table_replace_update(table_key=table_key, replace_dict=replace_dict, new_col=new_col)
 
         # 再获得table_value，进行测井数据-表格数据的合并
-        table_value = self.get_type_2(table_key=table_key, curve_names=curve_names_table)
+        table_value = self.get_type_2_replaced(table_key=table_key, curve_names=curve_names_table, new_col=new_col)
+
+        # print(table_value.columns)
+        # exit(0)
 
         logging_columns = list(logging_value.columns)
         table_columns = list(table_value.columns)
@@ -273,8 +293,11 @@ class WELL:
 
     # 表格数据更新
     def table_replace_update(self, table_key='', replace_dict={}, new_col=''):
+        self.check_table_files()
+
         if table_key == '':
             table_key = list(self.table_dict.keys())[0]
+
         table_value = self.table_dict[table_key]
         table_value.table_type_replace(replace_dict=replace_dict, new_col=new_col)
 
