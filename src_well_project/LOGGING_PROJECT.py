@@ -173,9 +173,10 @@ class LOGGING_PROJECT:
         return data_vertical_combined
 
     # 获得所有数据的合并table3，并利用table3计算replace_dict
-    def get_all_table_replace_dict(self, well_names=[]):
-        table_value = self.get_table_3_all_data(well_names=well_names)
-        self.replace_dict_all = get_replace_dict(table_value['Type'])
+    def get_all_table_replace_dict(self, well_names=[], file_path={}, curve_names=[]):
+        table_value = self.get_table_3_all_data(well_names=well_names, file_path=file_path, curve_names=curve_names)
+        print(table_value)
+        self.replace_dict_all = get_replace_dict(table_value.iloc[:, -1])
         return self.replace_dict_all
     # 设置replace_dict
     def set_all_table_replace_dict(self, dict={}):

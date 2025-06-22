@@ -20,6 +20,7 @@ def get_replace_dict(df):
     if type_data.shape[0] == 0:
         print('Empty table replace data:{}'.format(df))
         return np.array([])
+
     # 构建表格属性替换字典
     type_replace_dict = {}
     Type_unique = np.unique(type_data)

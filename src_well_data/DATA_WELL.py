@@ -15,12 +15,14 @@ class WELL:
         self.describe_FMI = {}
         self.describe_NMR = {}
         self.describe_table = {}
+
         # 初始化四种类型数据（测井数据、电成像数据、核磁数据、表格分类数据）的 数据实体存放，默认保存成{路径：dataframe}的字典格式
         # 存放格式为{logging_path1:dataframe1, logging_path2:dataframe2}
         self.logging_dict = {}
         self.table_dict = {}
         self.FMI_dict = {}
         self.NMR_dict = {}
+
         # 初始化 测井数据+表格数据 的保存，依旧是{路径：dataframe}的字典格式保存
         self.logging_table = {}
         # 数据的分辨率保存，默认以九十{路径：float}字典格式
@@ -37,6 +39,7 @@ class WELL:
             self.WELL_NAME = path_folder.split('/')[-1].split('\\')[-1].split('.')[0]
         else:
             self.WELL_NAME = WELL_NAME
+
         # 配置四种格式文件的关键字，分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据路径关键词NMR
         self.file_charter_dict = {'logging':['_logging'], 'FMI':['FMI_dyna', 'FMI_stat'], 'NMR':['NMR'], 'table':['_LITHO_TYPE']} # 保存目标文件关键字,分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据NMR
         # 保存目标文件路径,分别存放 测井数据文件路径键logging，表格数据路径键table，电成像数据路径键FMI， 核磁数据路径键NMR
@@ -103,7 +106,7 @@ class WELL:
     def check_logging_files(self):
         # 如果测井资料为空，初始化测井资料
         if not self.logging_dict:
-            # 判断是否存在合适的测井数据文件
+            # 判断是否存在 目标测井数据文件
             if len(self.file_path_dict['logging']) > 0:
                 for path in self.file_path_dict['logging']:
                     self.data_logging_init(path=path)
@@ -352,30 +355,33 @@ class WELL:
     def get_NMR_path_list(self):
         return self.file_path_dict['NMR']
 
-# a = WELL(path_folder=r'C:\Users\Administrator\Desktop\算法测试-长庆数据收集\Code_input-O', well_charter='白75')
-# print(a.get_logging_data().describe())
 
 
-# WELL_TEST = WELL(path_folder=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\白75', WELL_NAME='白75')
-# a = WELL_TEST.get_logging_data(curve_names=['AC', 'CNL', 'DEN', 'GR'])
-# print(WELL_TEST.logging_dict)
-# b = WELL_TEST.get_type_2()
-# print(WELL_TEST.table_dict)
-# print(b.head(10))
-# c = WELL_TEST.get_type_3()
-# print(c.head(10))
-# # # print(WELL_TEST.get_logging_resolution())
-# # # print(WELL_TEST.get())
-# e = WELL_TEST.get_logging_data_normed(curve_names=['AC', 'CNL', 'DEN', 'GR'])
-# print(e.head(10), '\n', a.head(10), '\n', e.describe())
-#
-# d = WELL_TEST.combine_logging_table(curve_names_logging=['AC', 'CNL', 'DEN'],
-#     replace_dict={'中GR长英黏土质（泥岩）': 4, '中低GR长英质（砂岩）': 3, '富有机质长英质': 2, '富有机质黏土质': 1, '高GR富凝灰长英质（沉凝灰岩）': 1},
-#                                     Norm=True)
-# print(d.describe())
+if __name__ == '__main__':
+    WELL_TEST = WELL(path_folder=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\城96', WELL_NAME='城96')
 
+    print(WELL_TEST.file_path_dict)
 
-# print(WELL_TEST.get_table_replace_dict())
-# print(WELL_TEST.resolution)
-# print(WELL_TEST.get_curve_names())
-# WELL_TEST.save_logging_data()
+    # a = WELL_TEST.get_logging_data(curve_names=['AC', 'CNL', 'DEN', 'GR'])
+    # print(WELL_TEST.logging_dict)
+    # b = WELL_TEST.get_type_2()
+    # print(WELL_TEST.table_dict)
+    # print(b.head(10))
+    # c = WELL_TEST.get_type_3()
+    # print(c.head(10))
+    # # # print(WELL_TEST.get_logging_resolution())
+    # # # print(WELL_TEST.get())
+    # e = WELL_TEST.get_logging_data_normed(curve_names=['AC', 'CNL', 'DEN', 'GR'])
+    # print(e.head(10), '\n', a.head(10), '\n', e.describe())
+    #
+    # d = WELL_TEST.combine_logging_table(curve_names_logging=['AC', 'CNL', 'DEN'],
+    #     replace_dict={'中GR长英黏土质（泥岩）': 4, '中低GR长英质（砂岩）': 3, '富有机质长英质': 2, '富有机质黏土质': 1, '高GR富凝灰长英质（沉凝灰岩）': 1},
+    #                                     Norm=True)
+    # print(d.describe())
+    #
+    #
+    # print(WELL_TEST.get_table_replace_dict())
+    # print(WELL_TEST.resolution)
+    # print(WELL_TEST.get_curve_names())
+    # WELL_TEST.save_logging_data()
+
