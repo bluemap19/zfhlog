@@ -25,6 +25,7 @@ class WELL:
 
         # 初始化 测井数据+表格数据 的保存，依旧是{路径：dataframe}的字典格式保存
         self.logging_table = {}
+
         # 数据的分辨率保存，默认以九十{路径：float}字典格式
         self.resolution = {}
 
@@ -65,7 +66,6 @@ class WELL:
             print('Successed searching logging file as:{}'.format(file_list))
             self.file_path_dict['logging'] = file_list
 
-
         # 搜寻表格数据所在文件
         file_list = search_files_by_criteria(self.well_path, name_keywords=[self.WELL_NAME]+self.file_charter_dict['table'], file_extensions=['.xlsx', '.csv'])
         if len(file_list) == 0:
@@ -83,19 +83,24 @@ class WELL:
         if path in list(self.logging_dict.keys()):
             return
         else:
+            if path == '':
+                path = self.file_path_dict['logging'][0]
             logging_data = data_logging(path=path, well_name=self.WELL_NAME)
             logging_data.read_data()
             # 井类型dataframe的data初始化
             self.logging_dict[path] = logging_data
-            # 井表头初始化
-            self.curve_names[path] = logging_data.get_curve_names()
-            self.resolution[path] = logging_data._resolution
+            ##### 井表头初始化，这个需要读取数据，比较慢
+            # self.curve_names[path] = logging_data.get_curve_names()
+
+            # self.resolution[path] = logging_data._resolution
 
     # 表格资料读取，table_data类型的初始化
     def data_table_init(self, path):
         if path in list(self.table_dict.keys()):
             return
         else:
+            if path == '':
+                path = self.file_path_dict['table'][0]
             table_data = data_table(path=path, well_name=self.WELL_NAME)
             table_data.read_data()
             # 如果是三线表的话，要初始化三线表的分辨率，分辨率就是用logging默认的分辨率
@@ -103,21 +108,32 @@ class WELL:
                 table_data.set_table_resolution(self.get_logging_resolution())
             self.table_dict[path] = table_data
 
-    def check_logging_files(self):
+    def check_logging_files(self, well_key=''):
         # 如果测井资料为空，初始化测井资料
         if not self.logging_dict:
-            # 判断是否存在 目标测井数据文件
-            if len(self.file_path_dict['logging']) > 0:
-                for path in self.file_path_dict['logging']:
-                    self.data_logging_init(path=path)
+            if well_key == '':
+                # 判断是否存在 目标测井数据文件
+                if len(self.file_path_dict['logging']) > 0:
+                    for path in self.file_path_dict['logging']:
+                        self.data_logging_init(path=path)
+                else:
+                    print('No Logging Data Found:{}'.format(self.file_path_dict['logging']))
+                    self.search_data_file()
+                    return pd.DataFrame()
             else:
-                print('No Logging Data Found:{}'.format(self.file_path_dict['logging']))
-                self.search_data_file()
-                return pd.DataFrame()
+                self.data_logging_init(path=well_key)
+        # logging data 类的存放器 dict 不为空
+        else:
+            # 已经初始化过了
+            if well_key in list(self.logging_dict.keys()):
+                return
+            # 还没有初始化，则重新进行初始化
+            if well_key in self.file_path_dict['logging']:
+                self.data_logging_init(path=well_key)
 
     # 获取测井数据，根据文件路径+曲线名称，返回dataframe格式的测井数据
     def get_logging_data(self, well_key='', curve_names=[], Norm=False):
-        self.check_logging_files()
+        self.check_logging_files(well_key)
 
         # 如果不为空的话，就要取第一个文件作为数据输出文件了
         well_value = self.get_default_dict(dict=self.logging_dict, key_default=well_key)
@@ -128,20 +144,31 @@ class WELL:
         return data_temp
 
 
-    def check_table_files(self):
+    def check_table_files(self, table_key=''):
         # 如果字典表格数据为空，初始化表格数据字典
         if not self.table_dict:
-            if len(self.file_path_dict['table']) > 0:
-                for path in self.file_path_dict['table']:
-                    self.data_table_init(path=path)
+            if table_key == '':
+                if len(self.file_path_dict['table']) > 0:
+                    for path in self.file_path_dict['table']:
+                        self.data_table_init(path=path)
+                else:
+                    self.search_data_file()
+                    return
             else:
-                self.search_data_file()
-                return pd.DataFrame()
+                self.data_table_init(path=table_key)
+        # table data 类的存放器 dict 不为空
+        else:
+            # 已经初始化过了
+            if table_key in list(self.table_dict.keys()):
+                return
+            # 还没有初始化，则重新进行初始化
+            if table_key in self.file_path_dict['table']:
+                self.data_table_init(path=table_key)
 
 
     # 获得dep-s，dep-e，type类型的表格数据
     def get_type_3(self, table_key='', curve_names=[]):
-        self.check_table_files()
+        self.check_table_files(table_key)
 
         table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
         if table_value._data.empty:
@@ -149,20 +176,19 @@ class WELL:
 
         return table_value.get_table_3(curve_names=curve_names)
     def get_type_3_replaced(self, table_key='', curve_names=[], replace_dict={}, new_col=''):
-        self.check_table_files()
+        self.check_table_files(table_key)
 
         table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
         if table_value._data.empty:
             table_value.read_data()
 
         table_value.table_type_replace(replace_dict=replace_dict, new_col=new_col)
-
         return table_value.get_table_3_replaced(curve_names=curve_names)
 
 
     # 获得depth，type类型的表格数据
     def get_type_2(self, table_key='', curve_names=[]):
-        self.check_table_files()
+        self.check_table_files(table_key)
 
         table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
         if table_value._data.empty:
@@ -170,14 +196,13 @@ class WELL:
 
         return table_value.get_table_2(curve_names=curve_names)
     def get_type_2_replaced(self, table_key='', curve_names=[], replace_dict={}, new_col=''):
-        self.check_table_files()
+        self.check_table_files(table_key)
 
         table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
         if table_value._data.empty:
             table_value.read_data()
 
         table_value.table_type_replace(replace_dict=replace_dict, new_col=new_col)
-
         return table_value.get_table_2_replaced(curve_names=curve_names)
 
     # 根据测井数据路径+测井数据表格头 表格数据路径+表格数据头 表格数据类型对应的replace_dict 来进行 测井数据与表格数据的合并 用来进行分类任务输入数据获取
@@ -185,20 +210,24 @@ class WELL:
                                     table_key='', curve_names_table=[],
                                     replace_dict={}, new_col='', Norm=False):
         if well_key == '':
+            if not self.logging_dict:
+                self.data_logging_init(path=well_key)
             well_key = list(self.logging_dict.keys())[0]
         if table_key == '':
+            if not self.table_dict:
+                self.data_table_init(path=table_key)
             table_key = list(self.table_dict.keys())[0]
 
         logging_value = self.get_logging_data(well_key=well_key, curve_names=curve_names_logging, Norm=Norm)
 
         # 现根据replace_dict更新表格数据table_value
-        self.table_replace_update(table_key=table_key, replace_dict=replace_dict, new_col=new_col)
+        self.reset_table_replace_dict(table_key=table_key, replace_dict=replace_dict, new_col=new_col)
 
         # 再获得table_value，进行测井数据-表格数据的合并
         table_value = self.get_type_2_replaced(table_key=table_key, curve_names=curve_names_table, new_col=new_col)
 
-        # print(table_value.columns)
-        # exit(0)
+        # # print(table_value)
+        # print(table_value.shape, logging_value.shape)
 
         logging_columns = list(logging_value.columns)
         table_columns = list(table_value.columns)
@@ -208,7 +237,6 @@ class WELL:
         df_new = pd.DataFrame(data_new, columns=data_columns)
         self.update_data_with_type(well_key=well_key, df=df_new)
         return df_new
-
 
     # 更新well_value._data_with_type数据到well_value类里面
     def update_data_with_type(self, well_key='', df=pd.DataFrame()):
@@ -268,13 +296,13 @@ class WELL:
                 self.data_save(path=path_combined, new_sheet_name=self.WELL_NAME, df=data_logging._data_with_type)
 
     # 根据目标字符串特征，搜索符合目标特征的文件，读取文件并返回目标数据
-    def get_well_data_by_charters(self, target_path_feature=[], target_file_type='logging', curve_names=[], Norm=False):
-        path_target = self.get_data_path_by_charters(target_path_feature, target_file_type)
+    def search_logging_data_by_charters(self, target_path_feature=[], target_file_type='logging', curve_names=[], Norm=False):
+        path_target = self.search_data_path_by_charters(target_path_feature, target_file_type)
         result = self.get_logging_data(well_key=path_target, curve_names=curve_names, Norm=Norm)
         return result
 
     # 根据目标字符串特征，搜索符合目标特征的文件路径
-    def get_data_path_by_charters(self, target_path_feature=[], target_file_type='logging'):
+    def search_data_path_by_charters(self, target_path_feature=[], target_file_type='logging'):
         if target_path_feature == []:
             target_path_feature = ['logging_', 'csv']
 
@@ -294,8 +322,8 @@ class WELL:
         resolution_default = self.get_default_dict(dict=self.resolution, key_default=well_key)
         return resolution_default
 
-    # 表格数据更新
-    def table_replace_update(self, table_key='', replace_dict={}, new_col=''):
+    # 表格数据更新,根据替换词典进行替换后的表格数据
+    def reset_table_replace_dict(self, table_key='', replace_dict={}, new_col=''):
         self.check_table_files()
 
         if table_key == '':
@@ -326,9 +354,9 @@ class WELL:
         return value_default
 
     # 获得井的替换词典replace_dict
-    def get_table_replace_dict(self, well_name=''):
-        table_value = self.get_default_dict(self.table_dict, well_name)
-        return table_value.replace_dict
+    def get_table_replace_dict(self, table_key=''):
+        table_value = self.get_default_dict(self.table_dict, table_key)
+        return table_value._replace_dict_local
 
     # 获得曲线名称
     def get_curve_names(self, well_key=''):
@@ -362,26 +390,30 @@ if __name__ == '__main__':
 
     print(WELL_TEST.file_path_dict)
 
-    # a = WELL_TEST.get_logging_data(curve_names=['AC', 'CNL', 'DEN', 'GR'])
-    # print(WELL_TEST.logging_dict)
-    # b = WELL_TEST.get_type_2()
-    # print(WELL_TEST.table_dict)
-    # print(b.head(10))
-    # c = WELL_TEST.get_type_3()
-    # print(c.head(10))
-    # # # print(WELL_TEST.get_logging_resolution())
-    # # # print(WELL_TEST.get())
-    # e = WELL_TEST.get_logging_data_normed(curve_names=['AC', 'CNL', 'DEN', 'GR'])
-    # print(e.head(10), '\n', a.head(10), '\n', e.describe())
-    #
-    # d = WELL_TEST.combine_logging_table(curve_names_logging=['AC', 'CNL', 'DEN'],
-    #     replace_dict={'中GR长英黏土质（泥岩）': 4, '中低GR长英质（砂岩）': 3, '富有机质长英质': 2, '富有机质黏土质': 1, '高GR富凝灰长英质（沉凝灰岩）': 1},
-    #                                     Norm=True)
-    # print(d.describe())
-    #
-    #
-    # print(WELL_TEST.get_table_replace_dict())
-    # print(WELL_TEST.resolution)
-    # print(WELL_TEST.get_curve_names())
-    # WELL_TEST.save_logging_data()
+    # print(WELL_TEST.get_type_3())
+    print(WELL_TEST.get_type_2())
+
+    # print(WELL_TEST.get_type_3_replaced())
+    print(WELL_TEST.get_type_2_replaced())
+
+    path_logging = WELL_TEST.search_data_path_by_charters(target_path_feature=['logging_', '_110_'], target_file_type='logging')
+    path_table = WELL_TEST.search_data_path_by_charters(target_path_feature=['litho_'], target_file_type='table')
+    print(path_logging)
+    print(path_table)
+
+    WELL_TEST.reset_table_replace_dict(path_table,
+                                       replace_dict={'中GR长英黏土质': 0, '中低GR长英质': 1, '富有机质长英质页岩': 2,
+                                                     '富有机质黏土质页岩': 4, '高GR富凝灰长英质': 3})
+    print('current table {} replace dict is :{}'.format(path_table, WELL_TEST.get_table_replace_dict(table_key=path_table)))
+
+    # print(WELL_TEST.get_type_3_replaced())
+    print(WELL_TEST.get_type_2_replaced())
+
+    data_combined = WELL_TEST.combine_logging_table(well_key=path_logging, table_key=path_table, Norm=False,
+                                                    replace_dict={'中GR长英黏土质': 0, '中低GR长英质': 1,
+                                                                  '富有机质长英质页岩': 2, '富有机质黏土质页岩': 2, '高GR富凝灰长英质': 1})
+    print(data_combined.describe())
+
+    data_logging = WELL_TEST.get_logging_data(well_key=path_logging, curve_names=[])
+    print(data_logging)
 

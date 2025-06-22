@@ -122,13 +122,16 @@ class data_logging:
         return input_mapping_cols
 
     def get_curve_names(self):
+        if len(self._curve_names) == 0:
+            self.read_data()
         return self._curve_names
 
 
     def load_config(self, config_name):
         print(sys.argv[0], os.getcwd())
         """从 XML 文件加载配置"""
-        path_current = os.getcwd()
+        # path_current = os.getcwd()
+        path_current = r'C:\Users\ZFH\Documents\GitHub\zfhlog\src_well_data'
         filepath = path_current + f"\{config_name}"
 
         if not os.path.exists(filepath):

@@ -138,8 +138,10 @@ class data_table:
             self._table_resolution = resolution
 
     def table_type_replace(self, replace_dict={}, new_col=''):
-        if replace_dict == {}:
+        if not replace_dict:
             replace_dict = self._replace_dict_local
+        else:
+            self._replace_dict_local = replace_dict
 
         # print('current replace dict: {}'.format(replace_dict))
         if new_col == '':

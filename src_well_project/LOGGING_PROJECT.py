@@ -30,7 +30,7 @@ class LOGGING_PROJECT:
         if not self.WELL_NAMES:
             self.WELL_NAMES = [os.path.basename(p) for p in path_all]
             self.WELL_PATH = {name: path for name, path in zip(self.WELL_NAMES, path_all)}
-        else:       # 如果self.WELL_NAMES不为空，就使用指定的文件夹作为初始路径
+        else:       # 如果 self.WELL_NAMES 不为空，就使用指定的文件夹作为初始路径
             valid_paths = {}
             WELL_NAMES = []
             for p in path_all:
@@ -74,7 +74,7 @@ class LOGGING_PROJECT:
         return value_default
 
     # 获取井数据，如果井名为空，就取第一个井名，如果文件路径为空，就取第一个文件路径，如果曲线名为空，就取第一个曲线名
-    def get_well_data(self, well_name='', file_path='', curve_names=[]):
+    def get_well_data(self, well_name='', file_path='', curve_names=[], Norm=False):
         # 判断传进来的井名是否在self.WELL_NAMES中，如果不在，判断是否为空，如果在，继续根据井名获取井数据
         if well_name not in self.WELL_NAMES:
             if len(well_name) == 0:
@@ -88,7 +88,7 @@ class LOGGING_PROJECT:
             print('current file path set as: {}'.format(file_path))
 
         WELL_temp = self.get_default_dict(self.WELL_DATA, well_name)
-        data = WELL_temp.get_logging_data(well_key=file_path, curve_names=curve_names)
+        data = WELL_temp.get_logging_data(well_key=file_path, curve_names=curve_names, Norm=Norm)
         return data
 
     # # 根据井名、文件路径关键字特征、目标文件类型 获得目标文件的数据dataframe
@@ -103,14 +103,15 @@ class LOGGING_PROJECT:
         :return:返回目标数据dataframe
         """
         WELL = self.get_default_dict(self.WELL_DATA, well_name)
-        target_file = WELL.get_well_data_by_charters(target_path_feature=target_path_feature, target_file_type=target_file_type,
-                                                          curve_names=curve_names, Norm=Norm)
+        target_file = WELL.search_logging_data_by_charters(target_path_feature=target_path_feature,
+                                                        target_file_type=target_file_type,
+                                                        curve_names=curve_names, Norm=Norm)
         return target_file
 
     # 根据井名、文件路径关键字特征、目标文件类型 获得目标文件的路径
     def search_target_file_path(self, well_name='', target_path_feature=['Texture_ALL', '_20_5'], target_file_type='logging'):
         WELL = self.get_default_dict(self.WELL_DATA, well_name)
-        path = WELL.get_data_path_by_charters(target_path_feature=target_path_feature, target_file_type=target_file_type)
+        path = WELL.search_data_path_by_charters(target_path_feature=target_path_feature, target_file_type=target_file_type)
         return path
 
     # 获取指定井的类别数据，
@@ -125,10 +126,16 @@ class LOGGING_PROJECT:
     def get_table_3_data_replaced(self, well_name='', file_path='', curve_names=[], replace_dict={}):
         if not replace_dict:
             replace_dict = self.replace_dict_all
-
         well_data = self.get_default_dict(self.WELL_DATA, well_name)
         data_logging_type = well_data.get_type_3_replaced
         return data_logging_type
+    def get_table_2_data_replaced(self, well_name='', file_path='', curve_names=[], replace_dict={}):
+        if not replace_dict:
+            replace_dict = self.replace_dict_all
+        well_data = self.get_default_dict(self.WELL_DATA, well_name)
+        data_logging_type = well_data.get_type_2_replaced
+        return data_logging_type
+
 
     # 获取指定井的3列类别数据，这个主要是用来统计工作区间都是包含那些类的
     def get_table_3_all_data(self, well_names=[], file_path={}, curve_names=[]):
@@ -137,7 +144,7 @@ class LOGGING_PROJECT:
 
         if not file_path:
             for well_name in well_names:
-                file_path[well_name] = self.well_table_path_dict[well_name][0]
+                file_path[well_name] = ''
 
         table_3_list = []
         for well_name in well_names:
@@ -173,26 +180,36 @@ class LOGGING_PROJECT:
         return data_vertical_combined
 
     # 获得所有数据的合并table3，并利用table3计算replace_dict
-    def get_all_table_replace_dict(self, well_names=[], file_path={}, curve_names=[]):
+    def get_all_table_replace_dict(self, well_names=[], file_path={}, curve_names=[], Type_col_name='Type'):
         table_value = self.get_table_3_all_data(well_names=well_names, file_path=file_path, curve_names=curve_names)
-        print(table_value)
-        self.replace_dict_all = get_replace_dict(table_value.iloc[:, -1])
+        self.replace_dict_all = get_replace_dict(table_value[Type_col_name])
         return self.replace_dict_all
+
     # 设置replace_dict
-    def set_all_table_replace_dict(self, dict={}):
+    def set_all_table_replace_dict(self, well_names=[], well_names_key={}, dict={}, type_new_col='Type'):
         if dict:
             self.replace_dict_all = dict
             print('set all table replace dict as:{}'.format(self.replace_dict_all))
         else:
             print('No replace dict')
-            exit(0)
+            dict = self.replace_dict_all
+
+        if not well_names_key:
+            for well_name in self.WELL_NAMES:
+                well_names_key[well_name] = ''
+
+        for well_name in well_names:
+            WELL_TEMP = self.get_default_dict(self.WELL_DATA, well_name)
+            WELL_TEMP.reset_table_replace_dict(table_key=well_names_key[well_name], replace_dict=dict, new_col=type_new_col)
+
+
 
     def combined_all_logging_with_type(self, well_names=[], file_path_logging={}, file_path_table={}, curve_names_logging=[], curve_names_type=[], replace_dict={}, type_new_col='', Norm=False):
         """
         :param well_names:          list [] 井名列表
         :param file_path_logging:   文件路径dict {} 每一个井名对应的测井数据文件路径
         :param file_path_table:     表格路径dict {} 每一个井名对应的分类表格文件路径
-        :param curve_names_logging: list [] 测井数据文件 要取的曲线list
+        :param curve_names_logging: list [] 测井数据文件 要取的曲线名称list
         :param curve_names_type:    list [] 分类表格文件 要取的分类头header
         :param replace_dict:        分类表格文件 分类资料如何进行映射
         :param type_new_col:        分类替换后的新列的名称
@@ -203,10 +220,10 @@ class LOGGING_PROJECT:
             well_names = self.WELL_NAMES
         if not file_path_logging:
             for well_name in well_names:
-                file_path_logging[well_name] = self.well_logging_path_dict[well_name][0]
+                file_path_logging[well_name] = ''
         if not file_path_table:
             for well_name in well_names:
-                file_path_table[well_name] = self.well_table_path_dict[well_name][0]
+                file_path_table[well_name] = ''
 
         if not replace_dict:
             replace_dict = self.replace_dict_all
@@ -214,6 +231,7 @@ class LOGGING_PROJECT:
         data_logging_type_list = []
         for well_name in well_names:
             well_data = self.get_default_dict(self.WELL_DATA, well_name)
+            print('current processing well data:{}'.format(well_name))
             data_logging_type = well_data.combine_logging_table(well_key=file_path_logging[well_name],
                                                                 curve_names_logging=curve_names_logging,
                                                                 table_key=file_path_table[well_name],
@@ -225,6 +243,55 @@ class LOGGING_PROJECT:
         # print(data_final.head(10))
         return data_final
 
-    def save_data(self, well_name=[''], file_path={'':['', '']}, ):
 
-        pass
+
+
+if __name__ == '__main__':
+    TEST_LOGGING_PROJECT = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV')
+
+    print(TEST_LOGGING_PROJECT.WELL_NAMES)
+
+    data_logging_test = TEST_LOGGING_PROJECT.get_well_data('城96', file_path='', curve_names=[], Norm=False)
+
+    print(data_logging_test.describe())
+
+    data_logging_target_test = TEST_LOGGING_PROJECT.get_well_data_by_charters(well_name='城96', target_path_feature=['Texture_ALL', '_80_5'],
+                                  target_file_type='logging', curve_names=['DYNA_CON', 'STAT_XY_ASM', 'STAT_XY_ENT'], Norm=False)
+    print(data_logging_target_test.describe())
+
+    path_logging_target = TEST_LOGGING_PROJECT.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', '_120_5'], target_file_type='logging')
+    print(path_logging_target)
+
+    path_table_target = TEST_LOGGING_PROJECT.search_target_file_path(well_name='城96',
+                                                                      target_path_feature=['litho'],
+                                                                      target_file_type='table')
+    print(path_table_target)
+
+    table_3_data = TEST_LOGGING_PROJECT.get_table_3_all_data(well_names=['元543', '元552', '城96', '悦235', '悦88', '悦92',
+                                                                         '珠201', '珠202', '珠23', '珠45', '珠74', '珠79',
+                                                                         '珠80', '白159', '白291', '白292', '白294', '白300', '白75'])
+    print(table_3_data.describe())
+
+    table_3_replace_dict = TEST_LOGGING_PROJECT.get_all_table_replace_dict(well_names=['元543', '元552', '城96', '悦235', '悦88', '悦92',
+                                                                         '珠201', '珠202', '珠23', '珠45', '珠74', '珠79',
+                                                                         '珠80', '白159', '白291', '白292', '白294', '白300', '白75'])
+    print(table_3_replace_dict)
+
+    # 更新替换目标井的replace_dict
+    TEST_LOGGING_PROJECT.set_all_table_replace_dict(well_names=['元543', '元552', '城96', '悦235', '悦88', '悦92',
+                                                                         '珠201', '珠202', '珠23', '珠45', '珠74', '珠79',
+                                                                         '珠80', '白159', '白291', '白292', '白294', '白300', '白75'],
+                                                    dict={'中GR长英黏土质': 0, '中GR长英黏土质（泥岩）': 1,
+                                                          '中低GR长英质': 0, '中低GR长英质（砂岩）': 2,
+                                                          '富有机质长英质': 0, '富有机质长英质页岩': 1,
+                                                          '富有机质黏土质': 0, '富有机质黏土质页岩': 2,
+                                                          '高GR富凝灰长英质': 0, '高GR富凝灰长英质（沉凝灰岩）': 1})
+    # 合并 目标井-目标测井数据 的 综合数据 镜柜replace_dict替换后的
+    logging_data_with_type_all = TEST_LOGGING_PROJECT.combined_all_logging_with_type(well_names=['元543', '元552', '城96', '悦235', '悦88', '悦92',
+                                                                         '珠201', '珠202', '珠23', '珠45', '珠74', '珠79',
+                                                                         '珠80', '白159', '白291', '白292', '白294', '白300', '白75'],
+                                                                         Norm=False,
+                                                                         curve_names_logging=['AC', 'GR', 'DEN', 'CNL'],
+                                                                         type_new_col='Type_litho')
+
+    print(logging_data_with_type_all.describe())

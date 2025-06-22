@@ -46,7 +46,7 @@ if __name__ == '__main__':
         for j in tree_num_list:
             path_logging_target = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', f'_{i}_5'], target_file_type='logging')
             path_table_target = LG.search_target_file_path(well_name='城96', target_path_feature=['litho_type'], target_file_type='table')
-            # print('get data from path:{}, get table from:{}'.format(path_logging_target, path_table_target))
+            print('get data from path:{}, get table from:{}'.format(path_logging_target, path_table_target))
 
             data_input = LG.combined_all_logging_with_type(well_names=['城96'],
                                                            file_path_logging={'城96': path_logging_target},

@@ -11,7 +11,7 @@ from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 
 if __name__ == '__main__':
     LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV')
-    path_logging = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', '_50_5'],
+    path_logging = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', '_240_5'],
                                                 target_file_type='logging')
     print(path_logging)
 
@@ -26,16 +26,18 @@ if __name__ == '__main__':
     #         '富有机质长英质': 2, '富有机质长英质页岩': 2, '富有机质黏土质': 3, '富有机质黏土质页岩': 3,
     #         '高GR富凝灰长英质': 4, '高GR富凝灰长英质（沉凝灰岩）': 4}
 
-    path_logging_target = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', '_200_5'],
+    path_logging_target = LG.search_target_file_path(well_name='城96',
+                                                     target_path_feature=['Texture_ALL', '_200_5'],
                                                      target_file_type='logging')
-    path_table_target = LG.search_target_file_path(well_name='城96', target_path_feature=['litho_type'],
+    path_table_target = LG.search_target_file_path(well_name='城96',
+                                                   target_path_feature=['litho_type'],
                                                    target_file_type='table')
     # print('get data from path:{}, get table from:{}'.format(path_logging_target, path_table_target))
 
     replace_dict = {'中GR长英黏土质': 0, '中低GR长英质': 1, '富有机质长英质页岩': 2, '富有机质黏土质页岩': 3, '高GR富凝灰长英质': 4}
     COL_NAMES = [
-        # 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
-        # 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
+        'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
+        'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
         'DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG', 'DYNA_COR', 'DYNA_ASM', 'DYNA_ENT', 'DYNA_XY_CON',
         'DYNA_XY_DIS', 'DYNA_XY_HOM', 'DYNA_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_ASM', 'DYNA_XY_ENT'
     ]
