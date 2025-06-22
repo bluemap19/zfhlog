@@ -143,3 +143,33 @@ def create_acc_heatmap(data_df, curve_columns, index_plot='窗长',
 
     plt.show()
     return ax
+
+
+if __name__ == '__main__':
+    import pandas as pd
+    import numpy as np
+    # 创建示例数据
+    data = {
+        '窗长': [200, 220, 240, 260, 280, 300],
+        '类别0': [0.85, 0.88, 0.90, 0.89, 0.87, 0.84],
+        '类别1': [0.78, 0.82, 0.85, 0.83, 0.80, 0.78],
+        '类别2': [0.92, 0.91, 0.93, 0.94, 0.92, 0.90],
+        '平均': [0.85, 0.87, 0.89, 0.88, 0.86, 0.84]
+    }
+    df = pd.DataFrame(data)
+
+    # 定义标签
+    plot_labels = {
+        'label': '不同窗长下的精度热力图',
+        'x': '窗长参数',
+        'y': '精度类别',
+        'heatmap_feature':'准确率'
+    }
+
+    # 创建热力图
+    create_acc_heatmap(
+        data_df=df,
+        curve_columns=['类别0', '类别1', '类别2', '平均'],
+        label_plot=plot_labels,
+        save_plot=False
+    )
