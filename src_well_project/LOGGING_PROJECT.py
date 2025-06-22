@@ -165,6 +165,10 @@ class LOGGING_PROJECT:
             # print('well_temp:\n{}'.format(well_temp))
 
         print('data vertical combined as shape:{}'.format(data_vertical_combined.shape))
+        # print(data_vertical_combined.describe())
+        # print(data_vertical_combined.shape)
+        # print(data_vertical_combined.head())
+        # exit(0)
         data_vertical_combined.reset_index(drop=True, inplace=True)
         return data_vertical_combined
 
@@ -182,7 +186,18 @@ class LOGGING_PROJECT:
             print('No replace dict')
             exit(0)
 
-    def combined_all_logging_with_type(self, well_names=[], file_path_logging={}, file_path_table={}, curve_names_logging=[], curve_names_type=[], replace_dict={}, type_col_name='', Norm=False):
+    def combined_all_logging_with_type(self, well_names=[], file_path_logging={}, file_path_table={}, curve_names_logging=[], curve_names_type=[], replace_dict={}, type_new_col='', Norm=False):
+        """
+        :param well_names:          list [] 井名列表
+        :param file_path_logging:   文件路径dict {} 每一个井名对应的测井数据文件路径
+        :param file_path_table:     表格路径dict {} 每一个井名对应的分类表格文件路径
+        :param curve_names_logging: list [] 测井数据文件 要取的曲线list
+        :param curve_names_type:    list [] 分类表格文件 要取的分类头header
+        :param replace_dict:        分类表格文件 分类资料如何进行映射
+        :param type_new_col:        分类替换后的新列的名称
+        :param Norm:                是否对测井数据进行归一化
+        :return:
+        """
         if well_names == []:
             well_names = self.WELL_NAMES
         if not file_path_logging:
@@ -202,7 +217,7 @@ class LOGGING_PROJECT:
                                                                 curve_names_logging=curve_names_logging,
                                                                 table_key=file_path_table[well_name],
                                                                 curve_names_table=curve_names_type,
-                                                                replace_dict=replace_dict, new_col=type_col_name, Norm=Norm)
+                                                                replace_dict=replace_dict, new_col=type_new_col, Norm=Norm)
             data_logging_type_list.append(data_logging_type)
             # print(data_logging_type.describe())
         data_final = self.data_vertical_cohere(data_list=data_logging_type_list, well_names=well_names)

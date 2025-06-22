@@ -31,8 +31,8 @@ if __name__ == '__main__':
 
     replace_dict = {'中GR长英黏土质': 0, '中低GR长英质': 1, '富有机质长英质页岩': 2, '富有机质黏土质页岩': 3, '高GR富凝灰长英质': 4}
     COL_NAMES = [
-                'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
-                'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
+                # 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
+                # 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
                 'DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG', 'DYNA_COR', 'DYNA_ASM', 'DYNA_ENT', 'DYNA_XY_CON',
                 'DYNA_XY_DIS', 'DYNA_XY_HOM', 'DYNA_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_ASM', 'DYNA_XY_ENT'
                 ]
@@ -51,8 +51,11 @@ if __name__ == '__main__':
             data_input = LG.combined_all_logging_with_type(well_names=['城96'],
                                                            file_path_logging={'城96': path_logging_target},
                                                            file_path_table={'城96': path_table_target},
-                                                           replace_dict=replace_dict, type_col_name='Type_litho',
+                                                           replace_dict=replace_dict, type_new_col=TARGET_NAME[0],
+                                                           curve_names_logging=COL_NAMES,
                                                            Norm=True)
+            # print(data_input.describe())
+            # exit(0)
 
             data_input = data_input[COL_NAMES+TARGET_NAME]
 

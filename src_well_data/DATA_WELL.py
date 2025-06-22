@@ -188,8 +188,8 @@ class WELL:
 
         logging_value = self.get_logging_data(well_key=well_key, curve_names=curve_names_logging, Norm=Norm)
 
-        # # 现根据replace_dict更新表格数据table_value
-        # self.table_replace_update(table_key=table_key, replace_dict=replace_dict, new_col=new_col)
+        # 现根据replace_dict更新表格数据table_value
+        self.table_replace_update(table_key=table_key, replace_dict=replace_dict, new_col=new_col)
 
         # 再获得table_value，进行测井数据-表格数据的合并
         table_value = self.get_type_2_replaced(table_key=table_key, curve_names=curve_names_table, new_col=new_col)
