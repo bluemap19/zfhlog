@@ -31,19 +31,22 @@ if __name__ == '__main__':
 
     # 1. 过滤数据：窗长220-280且随机森林参数3-9
     filtered_df = IMP_MATRIX[
-        (IMP_MATRIX['窗长'] >= 200) &
-        (IMP_MATRIX['窗长'] <= 300) &
+        (IMP_MATRIX['窗长'] >= 80) &
+        (IMP_MATRIX['窗长'] <= 150) &
         (IMP_MATRIX['随机森林参数'] >= 3) &
         (IMP_MATRIX['随机森林参数'] <= 9)
         ]
 
     # print(filtered_df.head())
     Curve_target_names = [
-        'STAT_CON', 'STAT_ENT', 'STAT_HOM', 'DYNA_DIS', 'STAT_XY_HOM', 'DYNA_HOM',     # 静态数据筛选出来的 6个
-        'STAT_XY_COR', 'STAT_ENG', 'DYNA_COR', 'DYNA_XY_ENT', 'DYNA_XY_DIS', 'DYNA_ENG'      # 动态数据筛选出来的 6个
-        # 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR',             # 整体数据筛选出来的 18个
-        # 'STAT_ENT', 'STAT_XY_CON', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR',
-        # 'STAT_XY_ASM', 'DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG'
+        # 'STAT_CON', 'STAT_ENT', 'STAT_HOM', 'DYNA_DIS', 'STAT_XY_HOM', 'DYNA_HOM',     # 静态数据筛选出来的 6个
+        # 'STAT_XY_COR', 'STAT_ENG', 'DYNA_COR', 'DYNA_XY_ENT', 'DYNA_XY_DIS', 'DYNA_ENG'      # 动态数据筛选出来的 6个
+        # 'STAT_CON', 'STAT_ENT', 'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_XY_HOM',      # 整体数据筛选出来的 18个
+        # 'STAT_DIS', 'DYNA_HOM', 'STAT_XY_COR', 'STAT_ENG',
+        # 'STAT_COR', 'DYNA_CON', 'DYNA_ENG', 'STAT_XY_ENG', 'STAT_XY_ASM'
+        'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON',
+        'DYNA_DIS', 'STAT_ENG', 'DYNA_CON', 'STAT_XY_COR', 'DYNA_HOM', 'STAT_XY_ENG',
+        'STAT_COR', 'DYNA_ENG', 'STAT_XY_ASM'
     ]
         # 'STAT_XY_HOM', 'STAT_HOM', 'STAT_ENT', 'STAT_ENG', 'STAT_CON', 'STAT_XY_COR',     # 静态数据筛选出来的 6个
         # 'DYNA_DIS', 'DYNA_HOM', 'DYNA_COR', 'DYNA_XY_DIS', 'DYNA_ENG', 'DYNA_XY_ENT'      # 动态数据筛选出来的 6个
@@ -62,7 +65,7 @@ if __name__ == '__main__':
     print(param_grouped)
     print(overall_mean)
 
-    # 1. 将Series转换为DataFrame并排序
+    # 1. 将平均值Series数据体 overall_mean 转换为DataFrame类型并排序
     df = overall_mean.to_frame(name='均值').reset_index()
     df.rename(columns={'index': '特征'}, inplace=True)
     # 按均值降序排序
@@ -75,14 +78,14 @@ if __name__ == '__main__':
     global_min = window_grouped[Curve_target_names].min().min()  # 获取所有数据的最小值[4,6](@ref)
     global_max = window_grouped[Curve_target_names].max().max()  # 获取所有数据的最大值[4,6](@ref)
     # 全局归一化
-    df_normalized = window_grouped
+    df_normalized = window_grouped.copy()
     df_normalized[Curve_target_names] = (window_grouped[Curve_target_names] - global_min) / (global_max - global_min)
     # print(df.describe())
 
 
     # 4.绘图, 创建热力图
     create_acc_heatmap(df_normalized, Curve_target_names,
-                       label_plot={'label': 'Heatmap of different windows length', 'x': 'Windows Length', 'y': 'Feature', 'heatmap_feature':'影响因子'}
+                       label_plot={'label': 'Heatmap of different windows length', 'x': 'Windows Length', 'y': 'Feature', 'heatmap_feature':'Influence Factor'}
                        )
 
 
