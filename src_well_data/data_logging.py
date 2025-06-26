@@ -32,7 +32,8 @@ class data_logging:
         if file_path == '':
             file_path = self._file_path
         if table_name == '':
-            table_name = self._logging_name
+            # table_name = self._logging_name
+            table_name = 0
 
         if file_path.endswith('.csv'):
             try:
@@ -57,7 +58,7 @@ class data_logging:
         pass
 
     # 数据直接读取
-    def get_data(self, curve_names=[]):
+    def get_data(self, curve_names=[], depth_delete=[]):
         # 判断数据体是否为空
         if self._data.empty:
             self.read_data()
@@ -69,7 +70,11 @@ class data_logging:
             curve_names = [self._curve_names[0]] + curve_names
 
         curve_names = self.input_cols_mapping(curve_names, self._curve_names)
-        return self._data[curve_names]
+        if len(depth_delete) == 0:
+            return self._data[curve_names]
+        else:
+            data_temp = self._data[curve_names]
+
 
     # 获得 归一化数据
     def get_data_normed(self, curve_names=[]):

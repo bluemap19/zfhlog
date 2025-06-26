@@ -156,3 +156,76 @@ def pdnads_data_drop(data_input: pd.DataFrame) -> pd.DataFrame:
 # # print(cleaned_df.head())
 #
 # a = pdnads_data_drop(test_df)
+
+def remove_static_depth_data(df, depth_col='DEPTH'):
+    """
+    删除测井数据中深度未变化的无效数据
+
+    参数:
+    df : pd.DataFrame - 包含测井数据的DataFrame
+    depth_col : str - 深度列的名称，默认为'DEPTH'
+
+    返回:
+    pd.DataFrame - 处理后的DataFrame，已删除深度未变化的行
+    """
+    # 确保深度列存在
+    if depth_col not in df.columns:
+        raise ValueError(f"列 {depth_col} 在DataFrame中不存在")
+
+    # 创建副本避免修改原始数据
+    df_clean = df.copy()
+
+    # 计算深度变化值
+    depth_diff = df_clean[depth_col].diff()
+
+    # 标记需要保留的行 - 保留第一个深度值和所有深度变化的值
+    mask = depth_diff.fillna(1) > 0
+
+    # 应用筛选条件
+    filtered_df = df_clean.loc[mask]
+
+    return filtered_df.reset_index(drop=True)
+
+
+# 测试用例
+def test_data():
+    # 创建示例数据（基于题目提供的数据）
+    data = {
+        'DEPTH': [995.1, 995.2, 995.3, 995.3, 995.3, 995.6, 995.7, 995.8, 995.9,
+                  996.0, 996.1, 996.1, 996.1, 996.4, 996.5, 996.6, 996.7, 996.8, 996.9, 997.0],
+        'AZI': [281.9487, 281.7962, 281.7486, 281.7045, 281.6114, 281.4754, 281.4118,
+                281.3925, 281.3158, 281.2673, 281.2582, 281.2489, 281.2819, 281.2676,
+                281.2012, 281.2884, 281.7045, 282.1904, 282.1065, 281.6518],
+        'DIP': [62.6915, 62.1646, 62.1213, 62.1200, 62.1200, 62.1200, 62.1200,
+                62.1200, 62.1200, 62.1200, 62.1200, 62.1200, 62.1200, 62.1200,
+                62.1200, 62.1200, 62.1200, 62.1200, 62.1200, 62.1200],
+        'GR': [43.6084, 43.6807, 43.8962, 44.1992, 44.5079, 44.7575, 44.9316,
+               45.0633, 45.2018, 45.3659, 45.5257, 45.6372, 45.6971, 45.7564,
+               45.8668, 46.0137, 46.1180, 46.1222, 46.0716, 46.0858]
+    }
+
+    # 创建DataFrame
+    df = pd.DataFrame(data)
+    print("原始数据:")
+    print(df)
+    print(f"\n原始数据行数: {len(df)}")
+
+    # 处理数据
+    cleaned_df = remove_static_depth_data(df, 'DEPTH')
+
+    print("\n处理后的数据:")
+    print(cleaned_df)
+    print(f"\n处理后数据行数: {len(cleaned_df)}")
+
+    # 验证处理结果
+    expected_depths = [995.1, 995.2, 995.3, 995.6, 995.7, 995.8, 995.9,
+                       996.0, 996.1, 996.4, 996.5, 996.6, 996.7, 996.8, 996.9, 997.0]
+
+    assert cleaned_df['DEPTH'].tolist() == expected_depths
+    assert len(cleaned_df) == 16  # 原始20行 - 删除4行深度未变化的数据
+
+    print("\n测试通过: 深度未变化的数据已被正确删除")
+
+
+if __name__ == "__main__":
+    test_data()
