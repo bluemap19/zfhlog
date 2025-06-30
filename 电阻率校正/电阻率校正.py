@@ -123,7 +123,7 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
 #
 #     window_work_length = 1000
 #     windows_step = 200
-#     windows_num = (df.shape[0] - window_work_length)//windows_step + 2
+#     windows_num = (df.shape[0] - window_work_length) // windows_step + 2
 #     windows_view = 1.1
 #     for i in range(windows_num):
 #         window_index = i*windows_step + window_work_length//2

@@ -43,7 +43,8 @@ if __name__ == '__main__':
         # 'STAT_CON', 'STAT_ENT', 'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_XY_HOM', 'STAT_DIS', 'DYNA_HOM'
 
         # windows = 100
-        'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_ENG',
+        'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON',
+        'DYNA_DIS', 'STAT_ENG',
 
         # 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
         # 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
@@ -61,13 +62,12 @@ if __name__ == '__main__':
     print(data_combined_all.describe())
 
     # 这里是整体上看一下ACC在 窗长-随机森林参数 上的分布特征
-
     TARGET_COL_NAMES = [
         # 'STAT_CON', 'STAT_ENT', 'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_XY_HOM', 'STAT_DIS', 'DYNA_HOM',
 
         # windows = 100
         'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON',
-        # 'DYNA_DIS', 'STAT_ENG',
+        'DYNA_DIS', 'STAT_ENG',
 
         # 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
         # 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
@@ -76,6 +76,7 @@ if __name__ == '__main__':
     ]
     # target_col_dict = {0:'中GR长英黏土质', 1:'中低GR长英质', 2:'富有机质长英质页岩', 3:'富有机质黏土质页岩', 4:'高GR富凝灰长英质'}
     target_col_dict = {0:'块状构造泥岩', 1:'薄层砂岩', 2:'富有机质粉砂级长英质页岩', 3:'富有机质富凝灰质页岩', 4:'沉凝灰岩'}
+    print(data_combined_all[TARGET_COL_NAMES].describe())
     plot_matrxi_scatter(df=data_combined_all, input_names=TARGET_COL_NAMES, target_col=TARGET_NAME[0],
                         plot_string='输入属性分布',
                         target_col_dict = target_col_dict
