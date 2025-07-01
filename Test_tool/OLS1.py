@@ -46,14 +46,24 @@ def nonlinear_fitting(df, formula_func, initial_guess=(0, 0, 0), bounds=([-np.in
 
     for method in ['trf', 'dogbox', 'lm', ]:
         try:
-            # 执行非线性最小二乘拟合
-            result = least_squares(
-                fun=residuals,
-                x0=initial_guess,
-                method=method,
-                bounds=bounds,
-                verbose=0  # 查看优化过程
-            )
+            if method == 'lm':
+                # 执行非线性最小二乘拟合
+                result = least_squares(
+                    fun=residuals,
+                    x0=initial_guess,
+                    method=method,
+                    verbose=0  # 查看优化过程
+                )
+
+            else:
+                # 执行非线性最小二乘拟合
+                result = least_squares(
+                    fun=residuals,
+                    x0=initial_guess,
+                    method=method,
+                    bounds=bounds,
+                    verbose=0  # 查看优化过程
+                )
 
             if result.success:
                 return result

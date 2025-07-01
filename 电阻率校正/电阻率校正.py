@@ -1,22 +1,17 @@
 import csv
 from datetime import datetime
-
-import matplotlib.pyplot as plt
 import numpy as np
-
+import pandas as pd
 from Test_tool.OLS1 import nonlinear_fitting
 from src_data_process.data_filter import remove_static_depth_data
-from src_data_process.data_gauss_correction import scale_gaussian, scale_gaussian_by_config
-from src_plot.plot_logging import visualize_well_logs
-from src_plot.plot_scatter_or_line import plot_dataframe
-from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
-
+from src_data_process.data_gauss_correction import scale_gaussian, scale_gaussian_by_config, scale_gaussian_by_quantiles
+from src_file_op.dir_operation import search_files_by_criteria
+from scipy import stats
 
 # 温度影响偏移 指数函数
 def temp_influence_power_formula(df, A, B):
     return (A*np.power(df['TEMP'], B) - df['R_temp'])/df['R_temp']
-    # return (A*np.power(df['TEMP'], B) - df['R_temp'])/(df['R_temp']*df['TEMP'])
-    # return (A*np.power(df['TEMP'], B) - df['R_temp'])
+
 
 # 温度影响偏移 线性函数
 def temp_influence_linear_formula(df, A, B):
@@ -27,7 +22,7 @@ def temp_influence_linear_formula(df, A, B):
 # 偏移量剔除
 def offset_linear(df):
     fit_result = nonlinear_fitting(df, temp_influence_linear_formula, initial_guess=(200, -5000),
-                                   bounds=([50, -np.inf], [350, np.inf]))
+                                   bounds=([0.1, -np.inf], [350, np.inf]))
     A, B = fit_result.x
     df['R_temp_sub'] = df['R_temp'] - A * df['TEMP'] - B
     print(f"Linear formular success as: A = {A:.4f}, B = {B:.4f}, 残差平方和: {fit_result.cost:.4f}")
@@ -36,12 +31,62 @@ def offset_linear(df):
 # 偏移量剔除
 def offset_power(df):
     # A:[0.2, 5], B:[1.5, 3]
-    fit_result = nonlinear_fitting(df, temp_influence_power_formula, initial_guess=(0.5, 2.5), bounds=([0.2, 1.5], [5, 3]))
+    fit_result = nonlinear_fitting(df, temp_influence_power_formula, initial_guess=(0.5, 2.5), bounds=([0.2, 0.003], [200, 30]))
     # fit_result = nonlinear_fitting(df, temp_influence_power_formula, initial_guess=(0.5, 2.5), bounds=([0.2, 1.5], [5, 3]))
     A, B = fit_result.x
-    df['R_temp_sub'] = df['R_temp'] - A * np.power(df['TEMP'], B)
+    df['R_temp_sub'] = df['R_temp'] / (A * np.power(df['TEMP'], B))
     print(f"Power formular success as: A = {A:.4f}, B = {B:.4f}, 残差平方和: {fit_result.cost:.4f}")
     return df
+
+
+
+
+def calculate_r2(df, col_names):
+    """
+    计算DataFrame中两列数据的相关性系数R²
+
+    参数:
+    df (pd.DataFrame): 包含目标列的DataFrame
+    col_names (list): 包含两个列名的列表，例如['col1', 'col2']
+
+    返回:
+    r2 (float): 两列数据的R²值
+    """
+    # 验证输入参数
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("df必须是pandas DataFrame")
+
+    if not isinstance(col_names, list) or len(col_names) != 2:
+        raise ValueError("col_names必须是包含两个列名的列表")
+
+    # 检查列是否存在
+    for col in col_names:
+        if col not in df.columns:
+            raise ValueError(f"列 '{col}' 不在DataFrame中")
+
+    # 提取目标列数据
+    x = df[col_names[0]].astype(float)
+    y = df[col_names[1]].astype(float)
+
+    # 处理缺失值（删除有NaN的行）
+    mask = ~(x.isna() | y.isna())
+    x_clean = x[mask]
+    y_clean = y[mask]
+
+    # 检查是否有足够的数据点
+    n = len(x_clean)
+    if n < 3:
+        raise ValueError(f"有效数据点不足({n})，无法计算相关性")
+
+    # 计算皮尔逊相关系数
+    r, p_value = stats.pearsonr(x_clean, y_clean)
+
+    # 计算R²值
+    r2 = r ** 2
+
+    return r2
+
+
 
 
 def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
@@ -62,10 +107,25 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
     elif offset_function.lower() == 'power':
         try:
             df = offset_power(df)
+            print('R_real middle:{:.4f},R_sub middle{:.4f}; R_real std {:.4f}, R_sub std{:.4f}'.format(np.median(df['R_real']), np.median(df['R_temp_sub']), np.std(df['R_real']), np.std(df['R_temp_sub'])))
         except Exception as e:
             print(f"Method power failed: {str(e)}, now try linear formula")
             df = offset_linear(df)
+    elif offset_function.lower() == 'all':
+        df_linear = df.copy()
+        df_power = df.copy()
 
+        df_power = offset_power(df_power)
+        df_linear = offset_linear(df_linear)
+
+        # 计算皮尔逊相关系数
+        r2_power = calculate_r2(df_power, col_names=['R_real', 'R_temp_sub'])
+        r2_linear = calculate_r2(df_power, col_names=['R_real', 'R_temp_sub'])
+
+        if r2_power > r2_linear:
+            df = df_power.copy()
+        else:
+            df = df_linear.copy()
 
     # print(f"状态: {fit_result.message}")
     # plot_dataframe(df, 'R_temp_sub', 'R_real', title=None, X_ticks=None, Y_ticks=None, figure_type='scatter')
@@ -73,20 +133,8 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
     if PRED_GAUSS_SETTING:
         df['R_gauss'], stats = scale_gaussian_by_config(source_data=df['R_temp_sub'], target_data_config=PRED_GAUSS_SETTING, return_stats=True)
     else:
-        df['R_gauss'], stats  = scale_gaussian(source_data=df['R_temp_sub'], target_data=df['R_real'], return_stats=True)
-    # """"source_mean": μ_source,
-    # "source_std": σ_source,
-    # "source_range": get_range(source_data),
-    # "target_mean": μ_target,
-    # "target_std": σ_target,
-    # "target_range": get_range(target_data),
-    # "scaled_mean": np.median(scaled_data),
-    # "scaled_std": np.std(scaled_data),
-    # "scaled_range": get_range(scaled_data),"""
-
-    # source_mean, source_std = stats['source_mean'], stats['source_std']
-    # target_mean, target_std = stats['target_mean'], stats['target_std']
-    # print(f'data org as:μ {source_mean:.4f}, σ {source_std:.4f} --> data target:μ {target_mean:.4f}, σ {target_std:.4f}')
+        # df['R_gauss']  = scale_gaussian(source_data=df['R_temp_sub'], target_data=df['R_real'])
+        df['R_gauss'] = scale_gaussian_by_quantiles(source_data=df['R_temp_sub'], target_data=df['R_real'], quantile=0.1)
 
     return df
 
@@ -159,18 +207,10 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
 
 
 if __name__ == '__main__':
-    LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\20250623')
-
-    print(LG.WELL_NAMES)
-
-    path_logging = LG.search_target_file_path(well_name='02-第9井次  坨73-斜13井',
-                                              target_path_feature=['DATA_ALL'],
-                                              target_file_type='logging')
-    print(f'current work path :{path_logging}')
-
-    df = LG.get_well_data(well_name='02-第9井次  坨73-斜13井',
-                          file_path=path_logging,
-                          Norm=False)
+    path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\25.06.29\UPDATE-9',
+                                            name_keywords=['data_all_logging'], file_extensions=['csv'])
+    path_logging = path_logging[0]
+    df = pd.read_csv(path_logging, encoding='gbk')
     print(df.describe())
     print(list(df.columns))
 
@@ -178,9 +218,8 @@ if __name__ == '__main__':
     column_mapping = {
         '#DEPTH':'DEPTH',
         'TEMP':'TEMP',
-        'ResFar':'R_temp',
-        'RT_X12':'R_real',
-        # 'RT_X12_LOG':'R_real',
+        'GVK':'R_temp',
+        'MSFL_F':'R_real',
     }
     column_mapping_inverted = {value: key for key, value in column_mapping.items()}
     df.rename(columns=column_mapping, inplace=True)
@@ -193,8 +232,8 @@ if __name__ == '__main__':
     print(f'df remove depth error after:{df.shape}')
 
 
-    window_work_length = df.shape[0]
-    windows_step = 200
+    window_work_length = 400
+    windows_step = 100
     windows_num = (df.shape[0] - window_work_length)//windows_step + 2
     windows_view = 1.1
     for i in range(windows_num):
@@ -225,8 +264,9 @@ if __name__ == '__main__':
         df.iloc[window_work_start:window_work_end] = df_window.iloc[window_work_start-window_view_start:window_work_start-window_view_start+EFFECTIVE_LENGTH]
 
     df.rename(columns=column_mapping_inverted, inplace=True)
-    time_str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    df.to_csv(path_logging.replace('02-第9井次  坨73-斜13井--DATA_ALL_logging.csv', f'坨73-斜13井-{time_str}.csv'), index=False, float_format='%.4f', quoting=csv.QUOTE_NONE)
+    time_str = datetime.now().strftime("%m-%d-%H-%M")
+    df.to_csv(path_logging.replace('data_all_logging', f'data_pred_{time_str}_{window_work_length}_{windows_step}'),
+              index=False, float_format='%.4f', quoting=csv.QUOTE_NONE)
 
     # # 调用可视化接口
     # visualize_well_logs(
