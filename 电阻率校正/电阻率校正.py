@@ -134,7 +134,7 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
         df['R_gauss'], stats = scale_gaussian_by_config(source_data=df['R_temp_sub'], target_data_config=PRED_GAUSS_SETTING, return_stats=True)
     else:
         # df['R_gauss']  = scale_gaussian(source_data=df['R_temp_sub'], target_data=df['R_real'])
-        df['R_gauss'] = scale_gaussian_by_quantiles(source_data=df['R_temp_sub'], target_data=df['R_real'], quantile=0.1)
+        df['R_gauss'] = scale_gaussian_by_quantiles(source_data=df['R_temp_sub'], target_data=df['R_real'], quantile=0.05)
 
     return df
 

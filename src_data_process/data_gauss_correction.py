@@ -81,10 +81,10 @@ def scale_gaussian_by_quantiles(source_data, target_data, quantile=0.2):
 
     # 计算源数据和目标数据的20%分位数
     source_lower = np.percentile(source_data, quantile * 100)
-    source_upper = np.percentile(source_data, (1 - quantile) * 100)
+    source_upper = np.percentile(source_data, (1 - 2*quantile) * 100)
 
     target_lower = np.percentile(target_data, quantile * 100)
-    target_upper = np.percentile(target_data, (1 - quantile) * 100)
+    target_upper = np.percentile(target_data, (1 - 2*quantile) * 100)
 
     # 计算源数据和目标数据的范围
     source_range = source_upper - source_lower
