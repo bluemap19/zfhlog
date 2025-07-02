@@ -56,7 +56,6 @@ def scale_gaussian(source_data, target_data, return_stats=False):
     else:
         return scaled_data
 
-
 import numpy as np
 
 
@@ -252,66 +251,7 @@ def test_trimmed_gaussian_scaling():
     )
 
     print(scaled_data)
-    # # 输出统计信息
-    # print("\n== 处理统计 ==")
-    # print(f"源数据 - 原始数量: {stats['source_trim_info']['original_size']}, "
-    #       f"筛选后数量: {stats['source_trim_info']['trimmed_size']}")
-    # print(f"目标数据 - 原始数量: {stats['target_trim_info']['original_size']}, "
-    #       f"筛选后数量: {stats['target_trim_info']['trimmed_size']}")
-    #
-    # print("\n== 源数据参数 ==")
-    # print(f"筛选后均值: {stats['params']['μ_source']:.4f}")
-    # print(f"筛选后标准差: {stats['params']['σ_source']:.4f}")
-    #
-    # print("\n== 目标数据参数 ==")
-    # print(f"筛选后均值: {stats['params']['μ_target']:.4f}")
-    # print(f"筛选后标准差: {stats['params']['σ_target']:.4f}")
-    #
-    # print("\n== 缩放结果统计 ==")
-    # print(f"缩放后均值: {stats['scaled_data']['scaled_median']:.4f}")
-    # print(f"缩放后标准差: {stats['scaled_data']['scaled_std']:.4f}")
-    # scaled_range = stats['scaled_data']['scaled_range']
-    # print(f"缩放后95%范围: [{scaled_range[0]:.2f}, {scaled_range[1]:.2f}]")
-    #
-    # # 可视化结果
-    # import matplotlib.pyplot as plt
-    # plt.figure(figsize=(12, 10))
-    #
-    # # 原始源数据分布
-    # plt.subplot(221)
-    # plt.hist(source_data, bins=30, alpha=0.7, color='blue', edgecolor='black')
-    # plt.title('原始源数据分布')
-    # plt.xlabel('值')
-    # plt.ylabel('频数')
-    #
-    # # 原始目标数据分布
-    # plt.subplot(222)
-    # plt.hist(target_data, bins=30, alpha=0.7, color='green', edgecolor='black')
-    # plt.title('原始目标数据分布')
-    # plt.xlabel('值')
-    # plt.ylabel('频数')
-    #
-    # # 筛选后的源数据分布
-    # plt.subplot(223)
-    # source_filtered = source_data[(source_data >= stats['source_trim_info']['lower_bound']) &
-    #                               (source_data <= stats['source_trim_info']['upper_bound'])]
-    # plt.hist(source_filtered, bins=30, alpha=0.7, color='red', edgecolor='black')
-    # plt.title('筛选后的源数据分布')
-    # plt.xlabel('值')
-    # plt.ylabel('频数')
-    #
-    # # 缩放后的数据分布
-    # plt.subplot(224)
-    # plt.hist(scaled_data, bins=30, alpha=0.7, color='purple', edgecolor='black')
-    # plt.title('缩放后的数据分布')
-    # plt.xlabel('值')
-    # plt.ylabel('频数')
-    #
-    # plt.tight_layout()
-    # plt.savefig('trimmed_gaussian_scaling_results.png', dpi=300)
-    # plt.show()
-    #
-    # return stats
+
 
 
 if __name__ == "__main__":

@@ -44,9 +44,10 @@ if __name__ == '__main__':
         # 'STAT_CON', 'STAT_ENT', 'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_XY_HOM',      # 整体数据筛选出来的 18个
         # 'STAT_DIS', 'DYNA_HOM', 'STAT_XY_COR', 'STAT_ENG',
         # 'STAT_COR', 'DYNA_CON', 'DYNA_ENG', 'STAT_XY_ENG', 'STAT_XY_ASM'
-        'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON',
-        'DYNA_DIS', 'STAT_ENG', 'DYNA_CON', 'STAT_XY_COR', 'DYNA_HOM', 'STAT_XY_ENG',
-        'STAT_COR', 'DYNA_ENG', 'STAT_XY_ASM'
+
+        # 'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON',
+        # 'DYNA_DIS', 'STAT_ENG', 'DYNA_CON', 'STAT_XY_COR', 'DYNA_HOM', 'STAT_XY_ENG',
+        # 'STAT_COR', 'DYNA_ENG', 'STAT_XY_ASM'
     ]
         # 'STAT_XY_HOM', 'STAT_HOM', 'STAT_ENT', 'STAT_ENG', 'STAT_CON', 'STAT_XY_COR',     # 静态数据筛选出来的 6个
         # 'DYNA_DIS', 'DYNA_HOM', 'DYNA_COR', 'DYNA_XY_DIS', 'DYNA_ENG', 'DYNA_XY_ENT'      # 动态数据筛选出来的 6个

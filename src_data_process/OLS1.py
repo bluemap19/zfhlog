@@ -109,22 +109,22 @@ def generate_sample_data(size=100, true_params=(25.0, 15.0), noise_level=0.1):
     })
 
 
-# # 测试示例
-# if __name__ == "__main__":
-#     # 生成模拟数据（真实参数 X1=25.0, X2=15.0）
-#     sample_df = generate_sample_data(size=500, true_params=(25.0, 15.0))
-#     print(sample_df.describe())
-#
-#     # 执行拟合
-#     fit_result = nonlinear_fitting(sample_df, target_formula, initial_guess=(20, 10, 1000))
-#
-#     # 打印结果
-#     print("\n拟合结果:")
-#     print(f"X1 = {fit_result.x[0]:.4f} (真值: 25.0)")
-#     print(f"X2 = {fit_result.x[1]:.4f} (真值: 15.0)")
-#     print(f"X3 = {fit_result.x[2]:.4f} (真值: 15.0)")
-#     print(f"残差平方和: {fit_result.cost:.6f}")
-#     print(f"状态: {fit_result.message}")
-#
-#     df_result = target_formula(sample_df, X1=fit_result.x[0], X2=fit_result.x[1], X3=fit_result.x[1])
-#     print(df_result.describe())
+# 测试示例
+if __name__ == "__main__":
+    # 生成模拟数据（真实参数 X1=25.0, X2=15.0）
+    sample_df = generate_sample_data(size=500, true_params=(25.0, 15.0))
+    print(sample_df.describe())
+
+    # 执行拟合
+    fit_result = nonlinear_fitting(sample_df, target_formula, initial_guess=(20, 10, 1000))
+
+    # 打印结果
+    print("\n拟合结果:")
+    print(f"X1 = {fit_result.x[0]:.4f} (真值: 25.0)")
+    print(f"X2 = {fit_result.x[1]:.4f} (真值: 15.0)")
+    print(f"X3 = {fit_result.x[2]:.4f} (真值: 15.0)")
+    print(f"残差平方和: {fit_result.cost:.6f}")
+    print(f"状态: {fit_result.message}")
+
+    df_result = target_formula(sample_df, X1=fit_result.x[0], X2=fit_result.x[1], X3=fit_result.x[1])
+    print(df_result.describe())

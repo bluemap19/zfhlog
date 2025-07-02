@@ -41,7 +41,6 @@ def analyze_correlation(df, col_names, method='pearson', figsize=(10, 8),
     if missing_cols:
         raise ValueError(f"以下列在DataFrame中不存在: {missing_cols}")
 
-
     # 设置样式# 1. 设置字体 - 使用终极方案
     chinese_font_prop = set_ultimate_chinese_font()
 

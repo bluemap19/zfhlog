@@ -2,9 +2,9 @@ import csv
 from datetime import datetime
 import numpy as np
 import pandas as pd
-from Test_tool.OLS1 import nonlinear_fitting
+from src_data_process.OLS1 import nonlinear_fitting
 from src_data_process.data_filter import remove_static_depth_data
-from src_data_process.data_gauss_correction import scale_gaussian, scale_gaussian_by_config, scale_gaussian_by_quantiles
+from src_data_process.data_gauss_correction import scale_gaussian_by_config, scale_gaussian_by_quantiles
 from src_file_op.dir_operation import search_files_by_criteria
 from scipy import stats
 

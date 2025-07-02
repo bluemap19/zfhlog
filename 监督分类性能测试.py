@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
+from src_data_process.data_correlation_pearsonr import analyze_correlation
 from src_file_op.dir_operation import search_files_by_criteria
 from src_plot.plot_heatmap import create_acc_heatmap
 from src_plot.plot_matrxi_scatter import plot_matrxi_scatter
@@ -12,8 +13,8 @@ from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 
 if __name__ == '__main__':
     LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV')
-    # path_logging = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', '_240_5'],
-    path_logging = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', '_100_5'],
+    path_logging = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', '_240_5'],
+    # path_logging = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', '_100_5'],
                                                 target_file_type='logging')
     print(path_logging)
 
@@ -44,7 +45,9 @@ if __name__ == '__main__':
 
         # windows = 100
         'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON',
-        'DYNA_DIS', 'STAT_ENG',
+        'DYNA_DIS', 'STAT_ENG'
+        # 'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON',
+        # 'DYNA_DIS', 'STAT_ENG', 'DYNA_CON', 'STAT_XY_COR', 'DYNA_HOM', 'STAT_XY_ENG'
 
         # 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
         # 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
@@ -52,6 +55,7 @@ if __name__ == '__main__':
         # 'DYNA_XY_DIS', 'DYNA_XY_HOM', 'DYNA_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_ASM', 'DYNA_XY_ENT'
     ]
     TARGET_NAME = ['LITHO']
+
 
     data_combined_all = LG.combined_all_logging_with_type(well_names=['城96'],
                                                    file_path_logging={'城96': path_logging_target},
@@ -61,23 +65,36 @@ if __name__ == '__main__':
                                                    Norm=True)
     print(data_combined_all.describe())
 
-    # 这里是整体上看一下ACC在 窗长-随机森林参数 上的分布特征
-    TARGET_COL_NAMES = [
-        # 'STAT_CON', 'STAT_ENT', 'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_XY_HOM', 'STAT_DIS', 'DYNA_HOM',
-
-        # windows = 100
-        'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON',
-        'DYNA_DIS', 'STAT_ENG',
-
-        # 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
-        # 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
-        # 'DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG', 'DYNA_COR', 'DYNA_ASM', 'DYNA_ENT', 'DYNA_XY_CON',
-        # 'DYNA_XY_DIS', 'DYNA_XY_HOM', 'DYNA_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_ASM', 'DYNA_XY_ENT'
-    ]
+    # # 这里是整体上看一下ACC在 窗长-随机森林参数 上的分布特征
+    # TARGET_COL_NAMES = [
+    #     # 'STAT_CON', 'STAT_ENT', 'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_XY_HOM', 'STAT_DIS', 'DYNA_HOM',
+    #
+    #     # windows = 100
+    #     'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON',
+    #     'DYNA_DIS', 'STAT_ENG', 'DYNA_CON', 'STAT_XY_COR', 'DYNA_HOM', 'STAT_XY_ENG'
+    #
+    #     # 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
+    #     # 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
+    #     # 'DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG', 'DYNA_COR', 'DYNA_ASM', 'DYNA_ENT', 'DYNA_XY_CON',
+    #     # 'DYNA_XY_DIS', 'DYNA_XY_HOM', 'DYNA_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_ASM', 'DYNA_XY_ENT'
+    # ]
     # target_col_dict = {0:'中GR长英黏土质', 1:'中低GR长英质', 2:'富有机质长英质页岩', 3:'富有机质黏土质页岩', 4:'高GR富凝灰长英质'}
     target_col_dict = {0:'块状构造泥岩', 1:'薄层砂岩', 2:'富有机质粉砂级长英质页岩', 3:'富有机质富凝灰质页岩', 4:'沉凝灰岩'}
-    print(data_combined_all[TARGET_COL_NAMES].describe())
-    plot_matrxi_scatter(df=data_combined_all, input_names=TARGET_COL_NAMES, target_col=TARGET_NAME[0],
+
+    # # 调用接口进行分析
+    # corr_matrix = analyze_correlation(
+    #     df=data_combined_all,
+    #     col_names=COL_NAMES,
+    #     method='pearson',  # 可以改为'spearman'或'kendall'
+    #     figsize=(12, 10),
+    #     annot=True,  # 在热力图中显示数值
+    #     # cmap='vlag',  # 使用不同的颜色映射
+    #     cmap='managua',  # 使用不同的颜色映射
+    #     plot_diag=True  # 在对角线上绘制分布图
+    # )
+    # print(corr_matrix)
+    print(data_combined_all[COL_NAMES].describe())
+    plot_matrxi_scatter(df=data_combined_all, input_names=COL_NAMES, target_col=TARGET_NAME[0],
                         plot_string='输入属性分布',
                         target_col_dict = target_col_dict
                         )

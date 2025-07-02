@@ -1,15 +1,11 @@
 import csv
 from datetime import datetime
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from Test_tool.OLS1 import nonlinear_fitting
+from src_data_process.OLS1 import nonlinear_fitting
 from src_data_process.data_filter import remove_static_depth_data
 from src_data_process.data_gauss_correction import scale_gaussian, scale_gaussian_by_config
 from src_file_op.dir_operation import search_files_by_criteria
-from src_plot.plot_logging import visualize_well_logs
-from src_plot.plot_scatter_or_line import plot_dataframe
-from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 
 
 # 温度影响偏移指数
