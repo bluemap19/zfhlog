@@ -107,11 +107,6 @@ def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
             spine.set_edgecolor('#7f8c8d')
             spine.set_linewidth(0.8)
 
-        if i == 0:
-            ax.set_ylabel(col_name, rotation=90, fontsize=16)
-        if i == n - 1:
-            ax.set_xlabel(col_name, rotation=0, fontsize=16)
-
     # 2. 上三角区域：相关系数热力图
     for i in range(n):
         for j in range(i + 1, n):
@@ -134,7 +129,6 @@ def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
             # 移除坐标轴
             ax.set_xticks([])
             ax.set_yticks([])
-
 
     # 3. 下三角区域：绘制二维核密度估计图（等高线+散点）
     for i in range(1, n):
@@ -176,15 +170,13 @@ def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
             # 设置坐标轴
             ax.set_xticks([])
             ax.set_yticks([])
-            print(i, j)
-            if j == 0:
-                ax.set_ylabel(col_y, rotation=90, fontsize=16)
-            if i == (n-1):
-                ax.set_xlabel(col_x, rotation=0, fontsize=16)
-
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_linewidth(0.5)
+            ax.spines['left'].set_linewidth(0.5)
 
     # 4. 添加颜色条
-    cax = fig.add_axes([0.92, 0.55, 0.02, 0.3])  # [left, bottom, width, height]
+    cax = fig.add_axes([0.92, 0.15, 0.02, 0.3])  # [left, bottom, width, height]
     norm = Normalize(vmin=vmin, vmax=vmax)
     sm = plt.cm.ScalarMappable(cmap=cmap_main, norm=norm)
     sm.set_array([])
@@ -192,7 +184,7 @@ def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
     cbar.set_label('相关系数', fontproperties=chinese_font_prop)
 
     # 添加密度图颜色条
-    cax_density = fig.add_axes([0.92, 0.15, 0.02, 0.3])
+    cax_density = fig.add_axes([0.92, 0.55, 0.02, 0.3])
     cbar_density = fig.colorbar(plt.cm.ScalarMappable(cmap=density_cmap), cax=cax_density)
     cbar_density.set_label('密度值', fontproperties=chinese_font_prop)
 
