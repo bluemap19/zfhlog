@@ -187,6 +187,6 @@ if __name__ == "__main__":
         data=sample_data,
         depth_col='Depth',
         curve_cols=['L1', 'L2', 'L3', 'L4'],
-        # type_cols=['Type1', 'Type2', 'Type3', 'Type4']
-        type_cols=[]
+        type_cols=['Type1', 'Type2'],
+        # type_cols=[],
     )

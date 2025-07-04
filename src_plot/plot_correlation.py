@@ -4,14 +4,15 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, Normalize, ListedColormap
 from matplotlib.font_manager import FontProperties
+from matplotlib.patches import FancyBboxPatch
 from scipy.stats import gaussian_kde, pearsonr
 import matplotlib.gridspec as gridspec
 
-from src_plot.plot_heatmap import set_ultimate_chinese_font
+from src_plot.plot_chinese_setting import set_ultimate_chinese_font
 
 
-def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
-                        return_matrix=True):
+def plot_correlation_analyze(df, col_names, method='pearson', figsize=(14, 14),
+                             return_matrix=True):
     """
     优化的相关性分析函数：
     - 对角线区域：绘制核密度估计图
@@ -53,6 +54,7 @@ def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
     # 计算相关系数矩阵
     if method in ['pearson', 'kendall', 'spearman']:
         correlation_matrix = target_df.corr(method=method)
+
         # 设置归一化范围确保负相关也能显示
         vmin = 0
         vmax = 1
@@ -92,7 +94,7 @@ def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
         # 添加核密度估计曲线
         kde = gaussian_kde(data)
         x = np.linspace(data.min(), data.max(), 10)
-        y = kde(x) * (len(data) * (data.max() - data.min()) / 10)  # 调整比例以匹配直方图
+        y = kde(x) * (len(data) * (data.max() - data.min()) / 15)  # 调整比例以匹配直方图
         ax.plot(x, y, color='#e74c3c', linewidth=2)
 
         # 设置标签
@@ -105,12 +107,15 @@ def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
         for spine in ax.spines.values():
             spine.set_visible(True)
             spine.set_edgecolor('#7f8c8d')
-            spine.set_linewidth(0.8)
+            spine.set_linewidth(0.9)
 
+        # 显示左上、右下角的标签数据
         if i == 0:
             ax.set_ylabel(col_name, rotation=90, fontsize=16)
         if i == n - 1:
             ax.set_xlabel(col_name, rotation=0, fontsize=16)
+
+
 
     # 2. 上三角区域：相关系数热力图
     for i in range(n):
@@ -118,22 +123,46 @@ def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
             ax = fig.add_subplot(gs[i, j])
             corr_value = correlation_matrix.iloc[i, j]
 
-            # 计算颜色值
+            # 移除背景和边框
+            ax.set_facecolor('none')
+            ax.set_axis_off()
+            # 计算颜色值（0-1范围内的归一化值）
             normalized_value = (abs(corr_value) - vmin) / (vmax - vmin)
             color = cmap_main(normalized_value)
-
-            # 设置背景颜色
-            ax.set_facecolor(color)
-
+            # 创建缩小的圆角矩形（box_size%大小）
+            box_size = 0.8  # 盒子大小（原始尺寸的百分比）
+            padding = (1 - box_size) / 2
+            box = FancyBboxPatch(
+                (padding, padding),  # 左下角坐标（在轴坐标中）
+                box_size, box_size,  # 宽度和高度
+                boxstyle=f"round,pad=0,rounding_size=0.1",  # 圆角设置
+                edgecolor='none',  # 无边框
+                facecolor=color,
+                transform=ax.transAxes  # 使用轴坐标
+            )
+            ax.add_patch(box)
             # 添加相关系数值
-            text_color = 'white' if abs(corr_value) > 0.6 else 'black'
+            text_color = 'white' if (normalized_value >= 0.85 or normalized_value <= 0.15) else 'black'
             ax.text(0.5, 0.5, f"{corr_value:.2f}",
-                    ha='center', va='center', fontsize=9,
-                    color=text_color)
+                    ha='center', va='center', fontsize=16,
+                    color=text_color, transform=ax.transAxes)
 
-            # 移除坐标轴
-            ax.set_xticks([])
-            ax.set_yticks([])
+            # # 计算颜色值
+            # normalized_value = (abs(corr_value) - vmin) / (vmax - vmin)
+            # color = cmap_main(normalized_value)
+            #
+            # # 设置背景颜色
+            # ax.set_facecolor(color)
+            #
+            # # 添加相关系数值
+            # text_color = 'white' if (normalized_value > 0.8 or normalized_value < 0.1) else 'black'
+            # ax.text(0.5, 0.5, f"{corr_value:.2f}",
+            #         ha='center', va='center', fontsize=16,
+            #         color=text_color)
+            #
+            # # 移除坐标轴
+            # ax.set_xticks([])
+            # ax.set_yticks([])
 
 
     # 3. 下三角区域：绘制二维核密度估计图（等高线+散点）
@@ -176,7 +205,6 @@ def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
             # 设置坐标轴
             ax.set_xticks([])
             ax.set_yticks([])
-            print(i, j)
             if j == 0:
                 ax.set_ylabel(col_y, rotation=90, fontsize=16)
             if i == (n-1):
@@ -234,7 +262,7 @@ if __name__ == '__main__':
                  'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_ENG']
 
     # 调用接口进行分析
-    corr_matrix = analyze_correlation(
+    corr_matrix = plot_correlation_analyze(
         df=df,
         col_names=COL_NAMES,
         method='pearson',

@@ -3,7 +3,7 @@ from src_data_process.data_balanace import smart_balance_dataset
 from src_data_process.data_correlation_analysis_old import data_correction_analyse_by_tree
 from src_data_process.data_filter import pdnads_data_drop, pandas_data_filtration
 from src_data_process.data_supervised import supervised_classification, model_predict
-from src_plot.plot_acc_heatmap import plot_clustering_heatmap
+from src_plot.plot_heatmap import plot_clustering_heatmap
 from src_plot.plot_matrxi_scatter import plot_matrxi_scatter
 from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 

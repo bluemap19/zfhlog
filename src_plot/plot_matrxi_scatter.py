@@ -191,7 +191,7 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
     plt.show()
 
 
-
-# logging_data = get_random_logging_dataframe(curve_name=['#DEPTH', 'SP', 'AC', 'CNL', 'DEN', 'Type'], logging_resolution=0.1, dep_start=100, dep_end=500)
-# print(logging_data.shape)           # ----->(4000, 6)
-# plot_matrxi_scatter(logging_data, ['AC', 'CNL', 'DEN', 'SP'], 'Type', target_col_dict={'中GR长英黏土质': 0, '中低GR长英质': 1, '富有机质长英质': 2, '富有机质黏土质': 3, '高GR富凝灰长英质': 4, 'asdadsadas':5})
+if __name__ == '__main__':
+    logging_data = get_random_logging_dataframe(curve_name=['#DEPTH', 'SP', 'AC', 'CNL', 'DEN', 'Type'], logging_resolution=0.1, dep_start=100, dep_end=500)
+    print(logging_data.shape)           # ----->(4000, 6)
+    plot_matrxi_scatter(logging_data, ['AC', 'CNL', 'DEN', 'SP'], 'Type', target_col_dict={'中GR长英黏土质': 0, '中低GR长英质': 1, '富有机质长英质': 2, '富有机质黏土质': 3, '高GR富凝灰长英质': 4, 'asdadsadas':5})

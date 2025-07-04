@@ -7,7 +7,7 @@ from matplotlib.font_manager import FontProperties
 from scipy.stats import gaussian_kde, pearsonr
 import matplotlib.gridspec as gridspec
 
-from src_plot.plot_heatmap import set_ultimate_chinese_font
+from src_plot.plot_chinese_setting import set_ultimate_chinese_font
 
 
 def analyze_correlation(df, col_names, method='pearson', figsize=(14, 14),
