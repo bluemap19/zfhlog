@@ -139,75 +139,11 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
     return df
 
 
-# if __name__ == '__main__':
-#     LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\20250623')
-#
-#     print(LG.WELL_NAMES)
-#
-#     path_logging = LG.search_target_file_path(well_name='01-第7井次  Tuo62-X215',
-#                                               target_path_feature=['第七次结果'],
-#                                               target_file_type='logging')
-#
-#     # print(path_logging)
-#
-#     df = LG.get_well_data(well_name='01-第7井次  Tuo62-X215',
-#                           file_path=path_logging,
-#                           Norm=False)
-#     # print(df.describe())
-#     # print(list(df.columns))
-#
-#     # 1. 定义映射关系（原始列名:新列名）
-#     column_mapping = {
-#         'RFOC': 'R_real',
-#         'TEMP': 'TEMP',
-#         'ResFar': 'R_temp',
-#     }
-#     df.rename(columns=column_mapping, inplace=True)
-#     print(df[['DEPTH', 'R_real', 'TEMP', 'R_temp']].describe())
-#     df['R_gauss'] = 0
-#     df['R_temp_sub'] = 0
-#
-#     df = remove_static_depth_data(df)
-#
-#     window_work_length = 1000
-#     windows_step = 200
-#     windows_num = (df.shape[0] - window_work_length) // windows_step + 2
-#     windows_view = 1.1
-#     for i in range(windows_num):
-#         window_index = i*windows_step + window_work_length//2
-#         window_work_start = np.max((0, window_index - window_work_length // 2))
-#         window_work_end = np.min((df.shape[0] - 1, window_index + window_work_length // 2 + 1))
-#
-#         window_view_length = int(windows_view * window_work_length)
-#         window_view_start = np.max((0, window_index - window_view_length // 2))
-#         window_view_end = np.min((df.shape[0] - 1, window_index + window_view_length // 2 + 1))
-#
-#
-#         print(f'windows index:{window_index}, '
-#               f'work window length:{window_work_length},'
-#               f'start:{window_work_start}, end:{window_work_end},'
-#               f'depth:{df.DEPTH[window_work_start]} to {df.DEPTH[window_work_end]}'
-#               # f'view window length:{window_view_length}, start:{window_view_start}, end:{window_view_end}'
-#               )
-#
-#         # df_window = df.iloc[window_work_start:window_work_end].copy()
-#         df_window = df.iloc[window_view_start:window_view_end].copy()
-#
-#         df_window = fit_r_pred(df_window)
-#         # df_window = fit_r_pred(df_window, PRED_GAUSS_SETTING={'μ_target': 2.5, 'σ_target': 0.4})
-#
-#         # df.iloc[window_work_start:window_work_end] = df_window
-#         EFFECTIVE_LENGTH = window_work_end - window_work_start
-#         df.iloc[window_work_start:window_work_end] = df_window.iloc[window_work_start-window_view_start:window_work_start-window_view_start+EFFECTIVE_LENGTH]
-#
-#
-#     time_str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-#     df.to_csv(path_logging.replace('01-第7井次  Tuo62-X215-第七次结果_logging_data.xlsx', f'Tuo62-X215-{time_str}.csv'), index=False, float_format='%.4f', quoting=csv.QUOTE_NONE)
-
 
 
 if __name__ == '__main__':
-    path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\25.06.29\UPDATE-9',
+    # path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\25.06.29\UPDATE-13',
+    path_logging = search_files_by_criteria(search_root=r'C:\Users\ZFH\Desktop\25.06.29\UPDATA-13',
                                             name_keywords=['data_all_logging'], file_extensions=['csv'])
     path_logging = path_logging[0]
     df = pd.read_csv(path_logging, encoding='gbk')
