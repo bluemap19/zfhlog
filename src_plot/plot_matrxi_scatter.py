@@ -10,7 +10,8 @@ plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'Arial Unicode MS', 'DejaV
 plt.rcParams['axes.unicode_minus'] = False
 
 
-
+# 这个函数主要功能是，绘制不同类别数据，输入属性的散布图
+# 即，可视化输入属性对分类类别的影响能力
 def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
                         input_names: list = [],
                         target_col='',
