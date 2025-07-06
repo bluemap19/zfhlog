@@ -17,8 +17,8 @@ def get_ele_data_from_path(filepath_FMI =r'D:\Data\target\107S\YS107_FMI_BorEID_
             depth_data = np.linspace(100,104,img_data.shape[0]).reshape((img_data.shape[0], 1))
         else:
             # print(strname.split('\\')[-1].split('_')[1], strname.split('_')[1], strname.split('\\')[-1])
-            startdep = float(filepath_FMI.split('\\')[-1].split('/')[-1].split('_')[2])
-            enddep = float(filepath_FMI.split('\\')[-1].split('/')[-1].split('_')[3].split('.pn')[0].split('.jp')[0])
+            startdep = float(filepath_FMI.split('\\')[-1].split('/')[-1].split('_')[-2])
+            enddep = float(filepath_FMI.split('\\')[-1].split('/')[-1].split('_')[-1].split('.png')[0].split('.jpg')[0])
             # print(startdep, enddep)
             Step = (enddep-startdep)/img_data.shape[0]
             for i in range(img_data.shape[0]):

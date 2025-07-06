@@ -3,6 +3,9 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+
+from src_data_process.data_unsupervised import ClusteringPipeline, evaluate_clustering, \
+    evaluate_clustering_performance_with_label
 from src_file_op.dir_operation import search_files_by_criteria
 from src_plot.plot_correlation import plot_correlation_analyze
 from src_plot.plot_matrxi_scatter import plot_matrxi_scatter
@@ -54,10 +57,10 @@ if __name__ == '__main__':
     # target_col_dict = {0:'中GR长英黏土质', 1:'中低GR长英质', 2:'富有机质长英质页岩', 3:'富有机质黏土质页岩', 4:'高GR富凝灰长英质'}
     target_col_dict = {0:'块状构造泥岩', 1:'薄层砂岩', 2:'富有机质粉砂级长英质页岩', 3:'富有机质富凝灰质页岩', 4:'沉凝灰岩'}
 
-    # 调用接口进行相关性分析，主要功能是，可视化输入属性之间的相关系数R²
-    plot_correlation_analyze(data_combined_all, COL_NAMES,
-                             method='pearson', figsize=(14, 14),
-                             return_matrix=True)
+    # # 调用接口进行相关性分析，主要功能是，可视化输入属性之间的相关系数R²
+    # plot_correlation_analyze(data_combined_all, COL_NAMES,
+    #                          method='pearson', figsize=(14, 14),
+    #                          return_matrix=True)
 
     # # 可视化输入属性对类别的散布图，分析输入属性对类别的影响力
     # print(data_combined_all[COL_NAMES].describe())
@@ -69,4 +72,32 @@ if __name__ == '__main__':
 
     # 进行数据的无监督聚类
 
+    # 2. 初始化接口
+    Unsupervised_Pipeline = ClusteringPipeline(cluster_num=8, scale_data=True)
+    # 3. 模型训练
+    Unsupervised_Pipeline.fit(data_combined_all[COL_NAMES])
+    # 4. 获取结果
+    results = Unsupervised_Pipeline.get_results()
+    print('无监督聚类结果：')
+    print(results.describe())
+
+    # pred_result = Unsupervised_Pipeline.predict(data_combined_all[COL_NAMES],
+    #                                             algorithm=['KMeans', 'DBSCAN', 'Hierarchical', 'Spectral', 'GMM', ])
+    # print(pred_result.describe())
+
+    # 无监督聚类的评价标准Silhouette、CH、DBI、DVI计算
+    unsupervised_evluate_result = evaluate_clustering(data_combined_all[COL_NAMES], results[['KMeans', 'Hierarchical', 'Spectral', 'GMM']])
+    print(unsupervised_evluate_result)
+
+    df_result_all = pd.concat([data_combined_all[TARGET_NAME], results[['KMeans', 'Hierarchical', 'Spectral', 'GMM']]], axis=1)
+    df_type_result_new, acc_df, acc_num_df, replace_dict_dict = evaluate_clustering_performance_with_label(
+        df_result_all, true_col=TARGET_NAME[0])
+
+    print(df_type_result_new.describe())
+
+    print(acc_df)
+
+    print(acc_num_df)
+
+    print(replace_dict_dict)
 

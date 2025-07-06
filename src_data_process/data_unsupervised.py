@@ -11,7 +11,8 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering, SpectralClustering
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
-
+# 在 Windows 系统上使用 MKL（Intel Math Kernel Library）时，KMeans 可能存在内存泄漏问题，特别是当数据划分的块数少于可用线程数时。
+os.environ["OMP_NUM_THREADS"] = "4"  # 4 是一个保守值，可根据 CPU 核心数调整
 
 class ClusteringPipeline:
     def __init__(self,
@@ -105,7 +106,7 @@ class ClusteringPipeline:
                 continue
 
             if config['type'] == 'kmeans':
-                self.algorithms[name] = KMeans(n_clusters=self.cluster_num, random_state=42)
+                self.algorithms[name] = KMeans(n_clusters=self.cluster_num, random_state=42, n_init=10)
             elif config['type'] == 'hierarchical':
                 self.algorithms[name] = AgglomerativeClustering(n_clusters=self.cluster_num)
             elif config['type'] == 'spectral':
@@ -447,7 +448,7 @@ def evaluate_clustering(X, cluster_df):
     :return: Y1，Y2.....Yn对应的无监督聚类结果评价标准Silhouette、CH、DBI、DVI
     """
     results = pd.DataFrame(index=cluster_df.columns,
-                           columns=['Silhouette', 'CH', 'DBI', 'DVI'])
+                           columns=['Silhouette', 'CH', 'DBI', 'DVI', 'UIndex'])
 
     for algo in cluster_df.columns:
         labels = cluster_df[algo].values
@@ -466,6 +467,12 @@ def evaluate_clustering(X, cluster_df):
             results.loc[algo, 'CH'] = calinski_harabasz_score(X_valid, labels_valid)
             results.loc[algo, 'DBI'] = davies_bouldin_score(X_valid, labels_valid)
             results.loc[algo, 'DVI'] = calculate_dunn_index(X_valid, labels_valid)
+            # 避免除以零
+            if results.loc[algo, 'DBI'] <= 0:
+                results.loc[algo, 'UIndex'] = float('nan')
+            else:
+                # 修正公式：使用科学运算（** 表示幂运算，* 表示乘法）
+                results.loc[algo, 'UIndex'] = ((100**results.loc[algo, 'DVI'])*results.loc[algo, 'Silhouette'])/(results.loc[algo, 'DBI'])
 
         except Exception as e:
             print(f"{algo}评估失败：{str(e)}")
@@ -576,8 +583,7 @@ def evaluate_clustering_performance_with_label(df, true_col='Type_native'):
 
 
 
-def get_random_data_with_type(attributes = ['STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM',
-                  'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_ENG'], class_col = 'Type'):
+def get_random_data_with_type(attributes = ['STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_ENG'], class_col = 'Type'):
     # 创建一个具有多个类别的分类数据集
     X, y = make_classification(
         n_samples=1000,  # 样本数量
@@ -608,7 +614,6 @@ def get_random_data_with_type(attributes = ['STAT_ENT', 'STAT_DIS', 'STAT_CON', 
     # 添加分类列'Type'
     df_class = pd.DataFrame({class_col: y % 3 + 1})  # 转换为1-3的类别标签
 
-    # 1.初始化数据，合并属性列和分类列
     df = pd.concat([df_attributes, df_class], axis=1)
 
     return df
@@ -620,14 +625,13 @@ if __name__ == '__main__':
     attributes = ['STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM',
                   'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_ENG']
     class_col = 'Type'
-    df = get_random_data_with_type(attributes, class_col)
 
+    # 1.初始化数据，合并属性列和分类列
+    df = get_random_data_with_type(attributes, class_col)
 
     # 显示数据摘要
     print("数据摘要:")
     print(df.head())
-    # print("\n类别分布:")
-    # print(df['Type'].value_counts())
 
     # 2. 初始化接口
     Unsupervised_Pipeline = ClusteringPipeline(cluster_num=5, scale_data=True)
