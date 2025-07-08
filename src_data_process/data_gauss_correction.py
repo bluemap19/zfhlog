@@ -56,10 +56,8 @@ def scale_gaussian(source_data, target_data, return_stats=False):
     else:
         return scaled_data
 
-import numpy as np
 
-
-def scale_gaussian_by_quantiles(source_data, target_data, quantile=0.2):
+def scale_by_quantiles_old(source_data, target_data, quantile=0.2):
     """
     将源数据缩放到目标数据的分布范围，使源数据的20%分位数与目标数据的20%分位数对齐
 
@@ -71,9 +69,7 @@ def scale_gaussian_by_quantiles(source_data, target_data, quantile=0.2):
 
     返回:
     scaled_data (np.array): 缩放后的数据
-    stats (dict): 缩放前后的统计信息（仅当return_stats=True时返回）
     """
-
     μ_target = np.median(target_data)  # 使用中位数更稳定
     μ_source = np.median(source_data)
     source_data = source_data + (μ_target - μ_source)
@@ -104,69 +100,112 @@ def scale_gaussian_by_quantiles(source_data, target_data, quantile=0.2):
 
     return scaled_data
 
+def scale_by_quantiles(source_data, target_data, quantile=0.2):
+    """
+    将源数据缩放到目标数据的分布范围，使源数据的20%分位数与目标数据的20%分位数对齐
 
-# def scale_gaussian(source_data, target_data, trim_percent=0.01):
-#     """
-#     将源数据缩放到目标数据的分布范围，同时保持高斯分布特性
-#     包含对输入数据的5%极值剔除处理
-#
-#     参数:
-#     source_data (np.array): 要缩放的数据 (n2)
-#     target_data (np.array): 目标数据范围 (n1)
-#     return_stats (bool): 是否返回统计信息
-#     trim_percent (float): 要剔除的极值比例 (默认5%)
-#
-#     返回:
-#     scaled_data (np.array): 缩放后的数据 (保持原始顺序和长度)
-#     stats (dict): 缩放前后的统计信息（仅当return_stats=True时返回）
-#     """
-#     # 保存原始数据的完整副本和索引
-#     source_full = source_data.copy()
-#     target_full = target_data.copy()
-#
-#     # 计算分位数位置
-#     low_percentile = trim_percent * 100
-#     high_percentile = 100 - trim_percent * 100
-#
-#     # 处理源数据：剔除最小5%和最大5%
-#     source_lower = np.percentile(source_data, low_percentile)
-#     source_upper = np.percentile(source_data, high_percentile)
-#     source_filtered = source_data[(source_data >= source_lower) & (source_data <= source_upper)]
-#
-#     # 处理目标数据：剔除最小5%和最大5%
-#     target_lower = np.percentile(target_data, low_percentile)
-#     target_upper = np.percentile(target_data, high_percentile)
-#     target_filtered = target_data[(target_data >= target_lower) & (target_data <= target_upper)]
-#
-#     # 检查筛选后数据是否足够
-#     if len(source_filtered) < 2:
-#         raise ValueError("筛选后的源数据太少，无法计算统计参数")
-#
-#     if len(target_filtered) < 2:
-#         raise ValueError("筛选后的目标数据太少，无法计算统计参数")
-#
-#     # 计算筛选后源数据的统计参数
-#     μ_source = np.median(source_filtered)
-#     σ_source = np.std(source_filtered)
-#
-#     # 计算筛选后目标数据的统计参数
-#     μ_target = np.median(target_filtered)
-#     σ_target = np.std(target_filtered)
-#
-#     # 防止标准差为零
-#     if σ_source < 1e-10:
-#         σ_source = 1e-10
-#     if σ_target < 1e-10:
-#         σ_target = 1e-10
-#
-#     # 对整个源数据进行Z-score标准化
-#     z_scores = (source_full - μ_source) / σ_source
-#
-#     # 缩放到目标分布
-#     scaled_data = z_scores * σ_target + μ_target
-#
-#
-#     return scaled_data
+    参数:
+    source_data (np.array): 要缩放的数据 (n2)
+    target_data (np.array): 目标数据范围 (n1)
+    quantile (float): 使用的分位数 (默认为0.2，即20%)
+    return_stats (bool): 是否返回统计信息
+
+    返回:
+    scaled_data (np.array): 缩放后的数据
+    """
+    # 计算源数据的对称分位数范围
+    source_lower = np.percentile(source_data, quantile * 100)
+    source_upper = np.percentile(source_data, (1 - quantile) * 100)
+    source_mid = (source_lower + source_upper) / 2
+
+    # 计算目标数据的对称分位数范围
+    target_lower = np.percentile(target_data, quantile * 100)
+    target_upper = np.percentile(target_data, (1 - quantile) * 100)
+    target_mid = (target_lower + target_upper) / 2
+
+    # 计算范围并避免零范围
+    source_range = source_upper - source_lower
+    if source_range < 1e-5:
+        source_range = 1e-5
+    target_range = target_upper - target_lower
+    if target_range < 1e-5:
+        target_range = 1e-5
+
+    # 计算缩放因子和中点偏移
+    scale_factor = target_range / source_range
+    offset = target_mid - source_mid
+
+    # 两步变换：先居中偏移，然后缩放
+    scaled_data = (source_data + offset) * scale_factor
+
+    # 调整到正确的分位数位置
+    final_offset = target_lower - (source_lower + offset) * scale_factor
+    scaled_data += final_offset
+
+    return scaled_data
+
+def scale_gaussian_drop_extrem(source_data, target_data, trim_percent=0.01):
+    """
+    将源数据缩放到目标数据的分布范围，同时保持高斯分布特性
+    包含对输入数据的5%极值剔除处理
+
+    参数:
+    source_data (np.array): 要缩放的数据 (n2)
+    target_data (np.array): 目标数据范围 (n1)
+    return_stats (bool): 是否返回统计信息
+    trim_percent (float): 要剔除的极值比例 (默认5%)
+
+    返回:
+    scaled_data (np.array): 缩放后的数据 (保持原始顺序和长度)
+    stats (dict): 缩放前后的统计信息（仅当return_stats=True时返回）
+    """
+    # 保存原始数据的完整副本和索引
+    source_full = source_data.copy()
+    target_full = target_data.copy()
+
+    # 计算分位数位置
+    low_percentile = trim_percent * 100
+    high_percentile = 100 - trim_percent * 100
+
+    # 处理源数据：剔除最小5%和最大5%
+    source_lower = np.percentile(source_data, low_percentile)
+    source_upper = np.percentile(source_data, high_percentile)
+    source_filtered = source_data[(source_data >= source_lower) & (source_data <= source_upper)]
+
+    # 处理目标数据：剔除最小5%和最大5%
+    target_lower = np.percentile(target_data, low_percentile)
+    target_upper = np.percentile(target_data, high_percentile)
+    target_filtered = target_data[(target_data >= target_lower) & (target_data <= target_upper)]
+
+    # 检查筛选后数据是否足够
+    if len(source_filtered) < 2:
+        raise ValueError("筛选后的源数据太少，无法计算统计参数")
+
+    if len(target_filtered) < 2:
+        raise ValueError("筛选后的目标数据太少，无法计算统计参数")
+
+    # 计算筛选后源数据的统计参数
+    μ_source = np.median(source_filtered)
+    σ_source = np.std(source_filtered)
+
+    # 计算筛选后目标数据的统计参数
+    μ_target = np.median(target_filtered)
+    σ_target = np.std(target_filtered)
+
+    # 防止标准差为零
+    if σ_source < 1e-10:
+        σ_source = 1e-10
+    if σ_target < 1e-10:
+        σ_target = 1e-10
+
+    # 对整个源数据进行Z-score标准化
+    z_scores = (source_full - μ_source) / σ_source
+
+    # 缩放到目标分布
+    scaled_data = z_scores * σ_target + μ_target
+
+
+    return scaled_data
 
 
 

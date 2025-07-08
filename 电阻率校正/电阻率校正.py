@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from src_data_process.OLS1 import nonlinear_fitting
 from src_data_process.data_filter import remove_static_depth_data
-from src_data_process.data_gauss_correction import scale_gaussian_by_config, scale_gaussian_by_quantiles
+from src_data_process.data_gauss_correction import scale_gaussian_by_config, scale_by_quantiles_old, scale_gaussian
 from src_file_op.dir_operation import search_files_by_criteria
 from scipy import stats
 
@@ -37,8 +37,6 @@ def offset_power(df):
     df['R_temp_sub'] = df['R_temp'] / (A * np.power(df['TEMP'], B))
     print(f"Power formular success as: A = {A:.4f}, B = {B:.4f}, 残差平方和: {fit_result.cost:.4f}")
     return df
-
-
 
 
 def calculate_r2(df, col_names):
@@ -87,8 +85,6 @@ def calculate_r2(df, col_names):
     return r2
 
 
-
-
 def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
     # 确保输入包含所需列
     if PRED_GAUSS_SETTING:
@@ -111,21 +107,6 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
         except Exception as e:
             print(f"Method power failed: {str(e)}, now try linear formula")
             df = offset_linear(df)
-    elif offset_function.lower() == 'all':
-        df_linear = df.copy()
-        df_power = df.copy()
-
-        df_power = offset_power(df_power)
-        df_linear = offset_linear(df_linear)
-
-        # 计算皮尔逊相关系数
-        r2_power = calculate_r2(df_power, col_names=['R_real', 'R_temp_sub'])
-        r2_linear = calculate_r2(df_power, col_names=['R_real', 'R_temp_sub'])
-
-        if r2_power > r2_linear:
-            df = df_power.copy()
-        else:
-            df = df_linear.copy()
 
     # print(f"状态: {fit_result.message}")
     # plot_dataframe(df, 'R_temp_sub', 'R_real', title=None, X_ticks=None, Y_ticks=None, figure_type='scatter')
@@ -133,8 +114,8 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
     if PRED_GAUSS_SETTING:
         df['R_gauss'], stats = scale_gaussian_by_config(source_data=df['R_temp_sub'], target_data_config=PRED_GAUSS_SETTING, return_stats=True)
     else:
-        # df['R_gauss']  = scale_gaussian(source_data=df['R_temp_sub'], target_data=df['R_real'])
-        df['R_gauss'] = scale_gaussian_by_quantiles(source_data=df['R_temp_sub'], target_data=df['R_real'], quantile=0.05)
+        df['R_gauss']  = scale_gaussian(source_data=df['R_temp_sub'], target_data=df['R_real'])
+        # df['R_gauss'] = scale_by_quantiles_old(source_data=df['R_temp_sub'], target_data=df['R_real'], quantile=0.05)
 
     return df
 
@@ -143,7 +124,7 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
 
 if __name__ == '__main__':
     # path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\25.06.29\UPDATE-13',
-    path_logging = search_files_by_criteria(search_root=r'C:\Users\ZFH\Desktop\25.06.29\UPDATA-13',
+    path_logging = search_files_by_criteria(search_root=r'C:\Users\ZFH\Desktop\电阻率校正-坨73-斜13井',
                                             name_keywords=['data_all_logging'], file_extensions=['csv'])
     path_logging = path_logging[0]
     df = pd.read_csv(path_logging, encoding='gbk')
@@ -154,8 +135,8 @@ if __name__ == '__main__':
     column_mapping = {
         '#DEPTH':'DEPTH',
         'TEMP':'TEMP',
-        'GVK':'R_temp',
-        'MSFL_F':'R_real',
+        'ResFar':'R_temp',
+        'RT_X12_LOG':'R_real',
     }
     column_mapping_inverted = {value: key for key, value in column_mapping.items()}
     df.rename(columns=column_mapping, inplace=True)
@@ -166,7 +147,6 @@ if __name__ == '__main__':
     print(f'df remove depth error before:{df.shape}')
     df = remove_static_depth_data(df)
     print(f'df remove depth error after:{df.shape}')
-
 
     window_work_length = 400
     windows_step = 100
