@@ -124,7 +124,7 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
 
 if __name__ == '__main__':
     # path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\25.06.29\UPDATE-13',
-    path_logging = search_files_by_criteria(search_root=r'C:\Users\ZFH\Desktop\电阻率校正-坨73-斜13井',
+    path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\坨128-侧48',
                                             name_keywords=['data_all_logging'], file_extensions=['csv'])
     path_logging = path_logging[0]
     df = pd.read_csv(path_logging, encoding='gbk')
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         '#DEPTH':'DEPTH',
         'TEMP':'TEMP',
         'ResFar':'R_temp',
-        'RT_X12_LOG':'R_real',
+        'RT':'R_real',
     }
     column_mapping_inverted = {value: key for key, value in column_mapping.items()}
     df.rename(columns=column_mapping, inplace=True)
@@ -179,6 +179,7 @@ if __name__ == '__main__':
         EFFECTIVE_LENGTH = window_work_end - window_work_start
         df.iloc[window_work_start:window_work_end] = df_window.iloc[window_work_start-window_view_start:window_work_start-window_view_start+EFFECTIVE_LENGTH]
 
+    df['DEPTH'] = df['DEPTH']-0.5
     df.rename(columns=column_mapping_inverted, inplace=True)
     time_str = datetime.now().strftime("%m-%d-%H-%M")
     df.to_csv(path_logging.replace('data_all_logging', f'data_pred_{time_str}_{window_work_length}_{windows_step}'),
