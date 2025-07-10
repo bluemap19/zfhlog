@@ -9,6 +9,7 @@ from src_data_process.data_unsupervised import ClusteringPipeline, evaluate_clus
 from src_file_op.dir_operation import search_files_by_criteria
 from src_plot.plot_correlation import plot_correlation_analyze
 from src_plot.plot_matrxi_scatter import plot_matrxi_scatter
+from src_table.table_process import table_2_to_3
 from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 
 
@@ -73,7 +74,7 @@ if __name__ == '__main__':
     # 进行数据的无监督聚类
 
     # 2. 初始化接口
-    Unsupervised_Pipeline = ClusteringPipeline(cluster_num=8, scale_data=True)
+    Unsupervised_Pipeline = ClusteringPipeline(cluster_num=5, scale_data=True)
     # 3. 模型训练
     Unsupervised_Pipeline.fit(data_combined_all[COL_NAMES])
     # 4. 获取结果
@@ -93,11 +94,26 @@ if __name__ == '__main__':
     df_type_result_new, acc_df, acc_num_df, replace_dict_dict = evaluate_clustering_performance_with_label(
         df_result_all, true_col=TARGET_NAME[0])
 
+    df_result_save = pd.concat([data_combined_all[['DEPTH', TARGET_NAME[0]]], df_type_result_new], axis=1)
+    print(df_result_save.describe())
+    # df_result_save.to_csv('target_cluster_result.csv', index=False, encoding='utf-8')
+    result_kmeans = table_2_to_3(df_result_save[['DEPTH', 'KMeans']].values)
+    df_kmeans = pd.DataFrame(result_kmeans, columns=['DEPTH_START', 'DEPTH_END', 'KMeans'])
+    df_kmeans.to_csv('df_kmeans.csv', index=True)
+    result_hierarchical = table_2_to_3(df_result_save[['DEPTH', 'Hierarchical']].values)
+    df_hierarchical = pd.DataFrame(result_hierarchical, columns=['DEPTH_START', 'DEPTH_END', 'Hierarchical'])
+    df_hierarchical.to_csv('df_hierarchical.csv', index=True)
+    result_spectral = table_2_to_3(df_result_save[['DEPTH', 'Spectral']].values)
+    df_spectral = pd.DataFrame(result_spectral, columns=['DEPTH_START', 'DEPTH_END', 'Spectral'])
+    df_spectral.to_csv('df_spectral.csv', index=True)
+    result_gmm = table_2_to_3(df_result_save[['DEPTH', 'GMM']].values)
+    df_gmm = pd.DataFrame(result_gmm, columns=['DEPTH_START', 'DEPTH_END', 'GMM'])
+    df_gmm.to_csv('df_gmm.csv', index=True)
+    result_gmm = table_2_to_3(df_result_save[['DEPTH', 'LITHO']].values)
+    df_org = pd.DataFrame(result_gmm, columns=['DEPTH_START', 'DEPTH_END', 'LITHO'])
+    df_org.to_csv('df_org.csv', index=True)
+
     print(df_type_result_new.describe())
-
     print(acc_df)
-
     print(acc_num_df)
-
     print(replace_dict_dict)
-
