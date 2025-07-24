@@ -1,3 +1,5 @@
+import math
+from minisom import MiniSom
 import pandas as pd
 import numpy as np
 from sklearn.datasets import make_blobs
@@ -41,9 +43,9 @@ class ClusteringPipeline:
         # 加载预训练模型
         if saved_model_path:
             self.load_model(saved_model_path)
-        else:
-            # 初始化算法配置
-            self._init_algorithm_config(None)
+        # else:
+        #     # 初始化算法配置
+        #     self._init_algorithm_config(None)
 
     def _default_algorithm_config(self):
         """ 默认算法配置（只保存配置，不初始化实例）"""
@@ -52,7 +54,9 @@ class ClusteringPipeline:
             'DBSCAN': {'type': 'dbscan', 'eps': None, 'min_samples': None},
             'Hierarchical': {'type': 'hierarchical'},
             'Spectral': {'type': 'spectral'},
-            'GMM': {'type': 'gmm'}
+            'GMM': {'type': 'gmm'},
+            'SOM': {'type': 'som', 'grid_rows': None, 'grid_cols': None,
+                    'sigma': 0.5, 'learning_rate': 0.5, 'num_iteration': 1000}
         }
 
     def _init_algorithm_config(self, X):
@@ -98,6 +102,34 @@ class ClusteringPipeline:
                 eps=config.get('eps', 0.5),
                 min_samples=config.get('min_samples', 10)
             )
+
+        if 'SOM' in self.algorithm_config:
+            config = self.algorithm_config['SOM']
+
+            # 自动确定网格大小（如果未指定）
+            grid_rows = config.get('grid_rows')
+            grid_cols = config.get('grid_cols')
+
+            # 基于聚类数和数据维度自动确定网格大小
+            if grid_rows is None or grid_cols is None:
+                # SOM网格尺寸的经验公式：基于聚类数的平方根
+                grid_size = max(3, int(math.sqrt(self.cluster_num)))
+                grid_rows = grid_size
+                grid_cols = math.ceil(self.cluster_num / grid_rows)
+                config['grid_rows'] = grid_rows
+                config['grid_cols'] = grid_cols
+                print(f"SOM: 自动设置网格大小: {grid_rows}x{grid_cols}")
+
+            # 创建SOM实例
+            self.algorithms['SOM'] = MiniSom(
+                grid_rows,
+                grid_cols,
+                X.shape[1] if X is not None else 1,  # 特征维度
+                sigma=config.get('sigma', 0.5),
+                learning_rate=config.get('learning_rate', 0.5),
+                random_seed=42
+            )
+        # ===========================================
 
 
         # 初始化其他算法实例
@@ -148,6 +180,34 @@ class ClusteringPipeline:
                 if name == 'GMM':
                     algo.fit(self.X_scaled_)
                     labels = algo.predict(self.X_scaled_)
+
+                # ============== 添加SOM处理 ==============
+                elif name == 'SOM':
+                    config = self.algorithm_config['SOM']
+
+                    # 训练SOM
+                    algo.train(self.X_scaled_, config.get('num_iteration', 1000), verbose=False)
+
+                    # 获取获胜神经元位置
+                    winners = np.array([algo.winner(x) for x in self.X_scaled_])
+
+                    # 将位置转换为单一簇标签
+                    win_map = winners[:, 0] * algo._weights.shape[1] + winners[:, 1]
+                    labels, unique_labels = pd.factorize(win_map)
+
+                    # 保存模型和结果
+                    self.models_[name] = algo
+                    self.results_[f'{name}'] = labels
+
+                    # 评估聚类质量
+                    if len(unique_labels) > 1:
+                        self.evaluation_[name] = silhouette_score(self.X_scaled_, labels)
+                    else:
+                        self.evaluation_[name] = float('nan')
+
+                    print(f"SOM: 发现 {len(unique_labels)} 个簇")
+                # ===========================================
+
                 else:
                     labels = algo.fit_predict(self.X_scaled_)
 
@@ -261,6 +321,18 @@ class ClusteringPipeline:
                 # 根据算法类型进行预测
                 if algo == 'GMM':
                     labels = model.predict(X_scaled)
+                # ============== 添加SOM预测处理 ==============
+                elif algo == 'SOM':
+                    # 获取每个样本的获胜神经元位置
+                    winners = np.array([model.winner(x) for x in X_scaled])
+
+                    # 将位置转换为簇标签
+                    win_map = winners[:, 0] * model._weights.shape[1] + winners[:, 1]
+                    labels = win_map.astype(int)
+
+                    results[f'{algo}'] = labels
+                # ===========================================
+
                 elif algo in ['DBSCAN', 'Spectral', 'Hierarchical']:
                     # 这些算法不支持直接预测，需要训练集作为参考
                     labels = model.fit_predict(X_scaled)  # 直接在新数据上训练预测
@@ -638,12 +710,12 @@ if __name__ == '__main__':
     # 3. 模型训练
     Unsupervised_Pipeline.fit(df[attributes])
 
-    # 获取结果
-    results = Unsupervised_Pipeline.get_results()
-    print('无监督聚类结果：')
-    print(results.describe())
+    # # 获取结果
+    # results = Unsupervised_Pipeline.get_results()
+    # print('无监督聚类结果：')
+    # print(results.describe())
 
-    pred_result = Unsupervised_Pipeline.predict(df[attributes], algorithm=['KMeans', 'DBSCAN','Hierarchical','Spectral','GMM',])
+    pred_result = Unsupervised_Pipeline.predict(df[attributes], algorithm=['KMeans', 'DBSCAN','Hierarchical','Spectral','GMM', 'SOM'])
     print(pred_result.describe())
 
     # 无监督聚类的评价标准Silhouette、CH、DBI、DVI计算

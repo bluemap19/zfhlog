@@ -153,7 +153,7 @@ def data_normalized_locally(logging_data, windows_length=500, max_ratio=0.1, log
 
 # 测井曲线归一化
 def data_Normalized(curve_org, DEPTH_USE=True, local_normalized=False, logging_range=[-99, 9999], max_ratio=0.1):
-    curve_normalize = curve_org.copy(deep=True)
+    curve_normalize = curve_org.copy()
 
     curve_normalize_fully, extreme_list = data_normalized(curve_normalize, DEPTH_USE=DEPTH_USE, logging_range=logging_range, max_ratio=max_ratio)
     extreme_list = np.array(extreme_list)

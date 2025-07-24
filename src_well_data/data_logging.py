@@ -136,7 +136,8 @@ class data_logging:
         print(sys.argv[0], os.getcwd())
         """从 XML 文件加载配置"""
         # path_current = os.getcwd()
-        path_current = r'C:\Users\ZFH\Documents\GitHub\zfhlog\src_well_data'
+        # path_current = r'C:\Users\ZFH\Documents\GitHub\zfhlog\src_well_data'
+        path_current = r'D:\GitHubProj\zfhlog\src_well_data'
         # path_current = r'D:\GitHubProject\zfhlog\src_well_data'
         filepath = path_current + f"\{config_name}"
 
