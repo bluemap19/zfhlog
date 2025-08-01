@@ -97,7 +97,6 @@ def scale_by_quantiles_old(source_data, target_data, quantile=0.2):
 
     # 应用线性变换
     scaled_data = source_data * scale_factor + offset
-
     return scaled_data
 
 def scale_by_quantiles(source_data, target_data, quantile=0.2):
@@ -116,12 +115,10 @@ def scale_by_quantiles(source_data, target_data, quantile=0.2):
     # 计算源数据的对称分位数范围
     source_lower = np.percentile(source_data, quantile * 100)
     source_upper = np.percentile(source_data, (1 - quantile) * 100)
-    source_mid = (source_lower + source_upper) / 2
 
     # 计算目标数据的对称分位数范围
     target_lower = np.percentile(target_data, quantile * 100)
     target_upper = np.percentile(target_data, (1 - quantile) * 100)
-    target_mid = (target_lower + target_upper) / 2
 
     # 计算范围并避免零范围
     source_range = source_upper - source_lower
@@ -133,16 +130,21 @@ def scale_by_quantiles(source_data, target_data, quantile=0.2):
 
     # 计算缩放因子和中点偏移
     scale_factor = target_range / source_range
-    offset = target_mid - source_mid
 
-    # 两步变换：先居中偏移，然后缩放
-    scaled_data = (source_data + offset) * scale_factor
+    # 线性变换
+    scaled_data = target_lower + (source_data - source_lower) * scale_factor
+    return scaled_data, [target_lower, source_lower, scale_factor]
 
-    # 调整到正确的分位数位置
-    final_offset = target_lower - (source_lower + offset) * scale_factor
-    scaled_data += final_offset
 
+def scale_by_quantiles_use_config(source_data, config={'target_lower':0, 'source_lower':0, 'scale_factor':0}):
+    target_lower = config['target_lower']
+    source_lower = config['source_lower']
+    scale_factor = config['scale_factor']
+
+    # 线性变换
+    scaled_data = target_lower + (source_data - source_lower) * scale_factor
     return scaled_data
+
 
 def scale_gaussian_drop_extrem(source_data, target_data, trim_percent=0.01):
     """
@@ -296,11 +298,3 @@ def test_trimmed_gaussian_scaling():
 if __name__ == "__main__":
     # 运行测试
     test_stats = test_trimmed_gaussian_scaling()
-
-    # 保存统计信息
-    import json
-
-    with open('scaling_stats.json', 'w') as f:
-        json.dump(test_stats, f, indent=4)
-
-    print("测试完成! 结果已保存到 trimmed_gaussian_scaling_results.png 和 scaling_stats.json")

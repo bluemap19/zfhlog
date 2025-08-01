@@ -1,5 +1,7 @@
 import os
 from datetime import datetime
+
+import numpy as np
 import pandas as pd
 from src_file_op.dir_operation import search_files_by_criteria, search_target_path
 from src_logging.curve_preprocess import get_resolution_by_depth, data_combine_new, data_combine_table2col
@@ -55,7 +57,7 @@ class WELL:
     # 初始化self.file_path_dict字典，存在四种key，分别是‘logging’，‘table’，‘FMI’，‘NMR’每一个key对应一个list，list里面装的是对应目标测井文件格式的数据路径
     def search_data_file(self):
         # 搜寻测井数据所在文件
-        file_list = search_files_by_criteria(self.well_path, name_keywords=[self.WELL_NAME]+self.file_charter_dict['logging'], file_extensions=['.xlsx', '.csv'])
+        file_list = search_files_by_criteria(self.well_path, name_keywords=self.file_charter_dict['logging'], file_extensions=['.xlsx', '.csv'])
         if len(file_list) == 0:
             file_list = search_files_by_criteria(self.well_path, name_keywords=['Logging_ALL'], file_extensions=['.xlsx', '.csv'])
 
@@ -67,7 +69,7 @@ class WELL:
             self.file_path_dict['logging'] = file_list
 
         # 搜寻表格数据所在文件
-        file_list = search_files_by_criteria(self.well_path, name_keywords=[self.WELL_NAME]+self.file_charter_dict['table'], file_extensions=['.xlsx', '.csv'])
+        file_list = search_files_by_criteria(self.well_path, name_keywords=self.file_charter_dict['table'], file_extensions=['.xlsx', '.csv'])
         if len(file_list) == 0:
             file_list = search_files_by_criteria(self.well_path, name_keywords=['_LITHO_TYPE'], file_extensions=['.xlsx', '.csv'])
 
@@ -75,7 +77,7 @@ class WELL:
             print('successed searching table file as:{}'.format(file_list))
             self.file_path_dict['table'] = file_list
         else:
-            print('No table file found,in path:{}, by charter:{}'.format(self.well_path, [self.WELL_NAME]+self.file_charter_dict['table']))
+            print('No table file found,in path:{}, by charter:{}'.format(self.well_path, self.file_charter_dict['table']))
             self.file_path_dict['table'] = []
 
     # 测井文件读取，data_logging类型的初始化
@@ -225,16 +227,20 @@ class WELL:
 
         # 再获得table_value，进行测井数据-表格数据的合并
         table_value = self.get_type_2_replaced(table_key=table_key, curve_names=curve_names_table, new_col=new_col)
+        # print(table_value.shape)
+        # print(table_value.dtypes)
 
         # # print(table_value)
         # print(table_value.shape, logging_value.shape)
 
         logging_columns = list(logging_value.columns)
         table_columns = list(table_value.columns)
-        data_new = data_combine_table2col(logging_value.values, table_value.values, drop=True)
+        array_table = table_value.values.astype(np.float32)
+        data_new = data_combine_table2col(logging_value.values, array_table, drop=True)
 
         data_columns = logging_columns + [table_columns[-1]]
         df_new = pd.DataFrame(data_new, columns=data_columns)
+        df_new[table_columns[-1]] = df_new[table_columns[-1]].astype(int)
         self.update_data_with_type(well_key=well_key, df=df_new)
         return df_new
 
@@ -308,8 +314,15 @@ class WELL:
 
         target_path_list = search_target_path(path_list=self.file_path_dict[target_file_type], target_path_feature=target_path_feature)
         if len(target_path_list) != 1:
-            print('error searching in {} result as:{}, with charter:{}'.format(self.WELL_NAME, target_path_list, target_path_feature))
-            return None
+            if len(target_path_list) == 0:
+                print('\033[1;32m empty searching result in:{}, with charter{} \033[0m'.format(self.WELL_NAME, target_path_feature))
+                return None
+            elif len(target_path_list) > 1:
+                print('\033[1;31m multi searching result in:{}, with charter{}, result is{} \033[0m'.format(target_path_feature, target_path_feature, target_path_list))
+                return target_path_list[0]
+            else:
+                print('\033[1;31m error searching in {} result as:{}, with charter:{} \033[0m'.format(self.WELL_NAME, target_path_list, target_path_feature))
+                return None
         else:
             return target_path_list[0]
 

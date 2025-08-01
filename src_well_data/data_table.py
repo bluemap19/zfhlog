@@ -1,5 +1,6 @@
 import warnings
 
+import numpy as np
 import pandas as pd
 from src_logging.curve_preprocess import get_resolution_by_depth
 from src_table.table_process import table_2_to_3, get_replace_dict, table_3_to_2

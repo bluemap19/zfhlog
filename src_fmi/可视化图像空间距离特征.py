@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     # path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
     # path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
-    path_folder = r'C:\Users\ZFH\Desktop\收集的成像特征数据集'
+    path_folder = r'E:\桌面\收集的成像特征数据集'
     list_path_texture = get_all_file_paths(path_folder)
     distance = [2, 4]
     RADIA_MAX = np.array([16.4384, 2.3578, 0.9706, 0.9413, 0.9352, 0.8860, 6.3028]) * 1.1

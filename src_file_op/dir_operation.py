@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 from typing import Union, Iterable, List
 
@@ -174,8 +175,6 @@ def search_files_by_criteria(
 
 # 根据关键字list：target_path_feature=[]在文件路径list：path_list中进行搜索，只有满足所有target_path_feature的文件路径才能被筛选出来，筛选出所有的path并返回
 def search_target_path(path_list=[], target_path_feature=[]):
-    # print(path_list)
-    # print(target_path_feature)
     matched_paths = []
     for path in path_list:
         # 将路径拆分为组件
@@ -187,6 +186,61 @@ def search_target_path(path_list=[], target_path_feature=[]):
             matched_paths.append(path)
 
     return matched_paths
+# def search_target_path(path_list=None, target_path_feature=None):
+#     """
+#     改进版路径搜索函数：基于特征词精确匹配文件路径
+#
+#     参数:
+#     path_list: 待搜索路径列表 (默认空列表)
+#     target_path_feature: 路径特征词列表 (默认空列表)
+#
+#     返回:
+#     匹配的路径列表
+#     """
+#     # 初始化参数
+#     path_list = path_list or []
+#     target_path_feature = target_path_feature or []
+#
+#     # 规范化特征词：小写+去除空格
+#     norm_features = [feat.strip().lower() for feat in target_path_feature]
+#     if not norm_features:
+#         return path_list  # 无特征时返回所有路径
+#
+#     matched_paths = []
+#
+#     for path in path_list:
+#         # 1. 路径规范化处理
+#         norm_path = os.path.normcase(path)  # 系统兼容的大小写处理
+#         norm_path = norm_path.replace('\\', '/')  # 统一分隔符
+#
+#         # 2. 提取纯文件名（不含扩展名）
+#         filename = os.path.splitext(os.path.basename(norm_path))[0].lower()
+#
+#         # 3. 组合检查范围：文件名 + 父目录名
+#         check_components = [filename]
+#         parent_dirs = os.path.dirname(norm_path).split('/')
+#         check_components.extend([d for d in parent_dirs if d])  # 过滤空目录名
+#
+#         # 4. 特征词精确匹配（词边界限定）
+#         match_all = True
+#         for feature in norm_features:
+#             feature_found = any(
+#                 # 精确匹配文件名组件（支持带下划线的特征）
+#                 feature == comp_part or
+#                 # 词边界匹配完整路径
+#                 re.search(rf'\b{re.escape(feature)}\b', comp, re.IGNORECASE)
+#                 for comp in check_components
+#                 for comp_part in comp.split('_')  # 拆分文件名中的下划线
+#             )
+#             if not feature_found:
+#                 match_all = False
+#                 break
+#
+#         if match_all:
+#             matched_paths.append(path)
+#
+#     return matched_paths
+
 
 # if __name__ == '__main__':
 #     save_dir = r'C:\Users\Administrator\Desktop\算法测试-长庆数据收集'

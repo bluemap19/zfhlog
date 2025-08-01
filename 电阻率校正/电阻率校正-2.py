@@ -6,8 +6,9 @@ import pandas as pd
 
 from src_data_process.OLS1 import nonlinear_fitting
 from src_data_process.data_filter import remove_static_depth_data
-from src_data_process.data_gauss_correction import scale_gaussian, scale_gaussian_by_config
+from src_data_process.resistivity_correction import scale_gaussian, scale_gaussian_by_config
 from src_file_op.dir_operation import search_files_by_criteria
+from Remove_temp_influence import correction_by_tempture
 
 
 # 温度影响偏移指数
@@ -79,6 +80,12 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear', LOG_USE=Fals
         except Exception as e:
             print(f"Method power failed: {str(e)}, now try linear formula")
             df = offset_linear(df, LOG_USE)
+    elif offset_function.lower() == 'tempture':
+        try:
+            df = correction_by_tempture(df)
+        except Exception as e:
+            print(f"Method power failed: {str(e)}, now try linear formula")
+
 
 
     # print(f"状态: {fit_result.message}")

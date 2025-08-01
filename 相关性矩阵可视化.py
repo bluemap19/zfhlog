@@ -4,11 +4,12 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
+from src_data_process.data_correlation_analysis import random_forest_correlation_analysis
 from src_file_op.dir_operation import search_files_by_criteria
-from src_plot.plot_chinese_setting import create_acc_heatmap
+from src_plot.plot_heatmap import plot_clustering_heatmap
 
 if __name__ == '__main__':
-    path_folder = r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV'
+    path_folder = r'C:\Users\ZFH\Desktop\simulated-dyna\IMP_win-20-220_tree-3-11.xlsx'
     path_file_list = search_files_by_criteria(search_root=path_folder, name_keywords=['IMP', 'ALL'], file_extensions=['csv', 'xlsx'])
     Curve_IMP_List = [
         'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
@@ -18,23 +19,25 @@ if __name__ == '__main__':
     ]
     print(path_file_list)
 
+    path_file_list = [r'C:\Users\ZFH\Desktop\simulated-dyna\IMP_win-20-220_tree-3-11.xlsx']
+
     IMP_MATRIX = pd.read_excel(path_file_list[0], sheet_name=0)
     print(IMP_MATRIX.head())
 
     # 这里是整体上看一下ACC在 窗长-随机森林参数 上的分布特征
     # 0. 按窗长分组计算均值
     window_stats = IMP_MATRIX.groupby('窗长')[Curve_IMP_List].mean().reset_index()
-    print(window_stats)
+    print(window_stats.head())
     # 0. 按 随机森林参数 分组计算所有Curve_ACC_List选项的均值
     tree_stats = IMP_MATRIX.groupby('随机森林参数')[Curve_IMP_List].mean().reset_index()
-    print(tree_stats)
+    print(tree_stats.head())
 
     # 1. 过滤数据：窗长220-280且随机森林参数3-9
     filtered_df = IMP_MATRIX[
-        (IMP_MATRIX['窗长'] >= 80) &
-        (IMP_MATRIX['窗长'] <= 150) &
+        (IMP_MATRIX['窗长'] >= 40) &
+        (IMP_MATRIX['窗长'] <= 120) &
         (IMP_MATRIX['随机森林参数'] >= 3) &
-        (IMP_MATRIX['随机森林参数'] <= 9)
+        (IMP_MATRIX['随机森林参数'] <= 12)
         ]
 
     # print(filtered_df.head())
@@ -45,15 +48,12 @@ if __name__ == '__main__':
         # 'STAT_DIS', 'DYNA_HOM', 'STAT_XY_COR', 'STAT_ENG',
         # 'STAT_COR', 'DYNA_CON', 'DYNA_ENG', 'STAT_XY_ENG', 'STAT_XY_ASM'
 
-        # 'STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON',
-        # 'DYNA_DIS', 'STAT_ENG', 'DYNA_CON', 'STAT_XY_COR', 'DYNA_HOM', 'STAT_XY_ENG',
-        # 'STAT_COR', 'DYNA_ENG', 'STAT_XY_ASM'
+
+        'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
+        'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
+        'DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG', 'DYNA_COR', 'DYNA_ASM', 'DYNA_ENT', 'DYNA_XY_CON',
+        'DYNA_XY_DIS', 'DYNA_XY_HOM', 'DYNA_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_ASM', 'DYNA_XY_ENT'
     ]
-        # 'STAT_XY_HOM', 'STAT_HOM', 'STAT_ENT', 'STAT_ENG', 'STAT_CON', 'STAT_XY_COR',     # 静态数据筛选出来的 6个
-        # 'DYNA_DIS', 'DYNA_HOM', 'DYNA_COR', 'DYNA_XY_DIS', 'DYNA_ENG', 'DYNA_XY_ENT'      # 动态数据筛选出来的 6个
-    # 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM',  # 整体数据筛选出来的 18个
-    # 'STAT_ENT', 'STAT_XY_CON', 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR',
-    # 'STAT_XY_ASM', 'STAT_XY_ENT', 'DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG'
 
     # 2. 计算所需特征的均值
     # 按 窗长 分组计算均值
@@ -85,9 +85,7 @@ if __name__ == '__main__':
 
 
     # 4.绘图, 创建热力图
-    create_acc_heatmap(df_normalized, Curve_target_names,
-                       label_plot={'label': 'Heatmap of different windows length', 'x': 'Windows Length', 'y': 'Feature', 'heatmap_feature':'Influence Factor'}
-                       )
+    plot_clustering_heatmap(df_normalized, )
 
 
     # # 文件路径设置

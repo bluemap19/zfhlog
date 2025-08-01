@@ -12,16 +12,14 @@ from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 
 
 if __name__ == '__main__':
-    LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV')
+    LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\simulated-dyna')
     print(LG.WELL_NAMES)
 
-    windows_length = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
-                    210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400,
-                    410, 420, 430, 440, 450, 460, 470, 480, 490, 500, 510, 520, 530, 540, 550, 560, 570, 580, 590, 600]
-    tree_num_list = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    windows_length = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220]
+    tree_num_list = [3, 4, 5, 6, 7, 8, 9, 10, 11]
     # windows_length = [140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340]
     # tree_num_list = [8, 9, 10, 11, 12]
-    # windows_length = [240, 260, 280]
+    # windows_length = [40, 60, 80]
     # tree_num_list = [10, 12]
 
     ACC_windows_length_dict = {}  # 所有的正确率结果 字典   正确率np.array([n,]),每一个类别的正确率 + 平均正确率
@@ -29,32 +27,34 @@ if __name__ == '__main__':
     Imp_windows_length_dict = {}  # 所有的Importance结果 字典    np.array([24,]) 24项纹理特征影响因子数组
     # 这三个字点都是字典含字典的格式,两个索引分别是 窗长-树个数
 
-    replace_dict = {'中GR长英黏土质': 0, '中低GR长英质': 1, '富有机质长英质页岩': 2, '富有机质黏土质页岩': 3, '高GR富凝灰长英质': 4}
+    print(LG.get_table_3_all_data(well_names=['simu1'], file_path={'simu1':'C:\\Users\\ZFH\\Desktop\\simulated-dyna\\simu1\\SIMU_LITHO_TYPE_2.xlsx'}))
+    replace_dict = {'高密度层理': 0, '低密度层理': 1, '孔洞': 2, '高密度低角度层理': 0, '高密度高角度层理': 1, '低密度低角度层理': 2, '低密度高角度层理': 3, '高阻块状': 4, '低阻块状':5}
     COL_NAMES = [
                 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
                 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
                 'DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG', 'DYNA_COR', 'DYNA_ASM', 'DYNA_ENT', 'DYNA_XY_CON',
                 'DYNA_XY_DIS', 'DYNA_XY_HOM', 'DYNA_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_ASM', 'DYNA_XY_ENT'
                 ]
-    TARGET_NAME = ['Type_litho']
+    TARGET_NAME = ['Type']
 
     Type_Y = []
     for i in windows_length:
         ACC_tree_num_dict = {}
         AUC_tree_num_dict = {}
         Imp_tree_num_dict = {}
-        for j in tree_num_list:
-            path_logging_target = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', f'_{i}_5'], target_file_type='logging')
-            path_table_target = LG.search_target_file_path(well_name='城96', target_path_feature=['litho_type'], target_file_type='table')
-            print('get data from path:{}, get table from:{}'.format(path_logging_target, path_table_target))
+        path_logging_target = LG.search_target_file_path(well_name='simu1', target_path_feature=['Texture_ALL', f'_{i}_5'], target_file_type='logging')
+        path_table_target = LG.search_target_file_path(well_name='simu1', target_path_feature=['LITHO_TYPE'], target_file_type='table')
+        print('get data from path:{}, get table from:{}'.format(path_logging_target, path_table_target))
 
-            data_input = LG.combined_all_logging_with_type(well_names=['城96'],
-                                                           file_path_logging={'城96': path_logging_target},
-                                                           file_path_table={'城96': path_table_target},
-                                                           replace_dict=replace_dict, type_new_col=TARGET_NAME[0],
-                                                           curve_names_logging=COL_NAMES,
-                                                           Norm=True)
-            # print(data_input.describe())
+        data_input = LG.combined_all_logging_with_type(well_names=['simu1'],
+                                                       file_path_logging={'simu1': path_logging_target},
+                                                       file_path_table={'simu1': path_table_target},
+                                                       replace_dict=replace_dict, type_new_col=TARGET_NAME[0],
+                                                       curve_names_logging=COL_NAMES,
+                                                       Norm=True)
+        print(data_input.describe())
+
+        for j in tree_num_list:
             # exit(0)
 
             data_input = data_input[COL_NAMES+TARGET_NAME]
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     ACC_df = pd.DataFrame(accuracy_array, columns=columns)
     print(ACC_df.describe())
     ACC_df.to_excel(
-        r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV' + "\\ACC_win-{}-{}_tree-{}-{}.xlsx".format(
+        r'C:\Users\ZFH\Desktop' + "\\ACC_win-{}-{}_tree-{}-{}.xlsx".format(
             windows_length[0], windows_length[-1], tree_num_list[0], tree_num_list[-1]), index=False,
         sheet_name='sheet_temp')
 
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     IMP_df = pd.DataFrame(importance_array, columns=columns)
     print(IMP_df.describe())
     IMP_df.to_excel(
-        r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV' + "\\IMP_win-{}-{}_tree-{}-{}.xlsx".format(
+        r'C:\Users\ZFH\Desktop' + "\\IMP_win-{}-{}_tree-{}-{}.xlsx".format(
             windows_length[0], windows_length[-1], tree_num_list[0], tree_num_list[-1]), index=False,
         sheet_name='sheet_temp')
     # DF_ACC_ALL = pd.DataFrame(np.array(list(ACC_windows_length_dict.values())))

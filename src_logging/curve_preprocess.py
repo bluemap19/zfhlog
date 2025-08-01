@@ -386,9 +386,10 @@ def data_combine_table2col(data_main, table_vice, drop=True):
 
     data_final = np.array(data_final)
     # data_final[:, 0].astype(np.float64)
-    print('data logging:[{:.2f},{:.2f}] ＋ data table:[{},{}] --> data combined :{},[{}, {}]， '
-          'with resolution {:.4f}, success count:{}'.format(data_main[0, 0], data_main[-1, 0], table_vice.ravel()[0], table_vice.ravel()[-1],
-                                                        data_final.shape, data_final[0, 0], data_final[-1, 0], depth_resolution, combined_successfully))
+
+    # print('data logging:[{},{}] ＋ data table:[{},{}] --> data combined :{},[{}, {}]， '
+    #       'with resolution {}, success count:{}'.format(data_main[0, 0], data_main[-1, 0], table_vice.ravel()[0], table_vice.ravel()[-1],
+    #                                                     data_final.shape, data_final[0, 0], data_final[-1, 0], depth_resolution, combined_successfully))
 
     # # 直接获取首行第一列和末行第一列的值
     # print('data logging:[{:.2f},{:.2f}] ＋ data table:[{:.2f},{:.2f}] --> data combined :{},[{:.2f}, {:.2f}], '

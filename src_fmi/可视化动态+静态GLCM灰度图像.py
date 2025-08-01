@@ -12,7 +12,7 @@ np.set_printoptions(precision=4, suppress=True)
 if __name__ == '__main__':
     # path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
     # path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
-    path_folder = r'C:\Users\ZFH\Desktop\收集的成像特征数据集'
+    path_folder = r'E:\桌面\收集的成像特征数据集'
     list_path_texture = get_all_file_paths(path_folder)
 
     RADIA_STAT_MAX = np.array([12.2933, 1.9019, 0.965, 0.9353, 0.8958, 0.8747, 6.0645]) * 1.1

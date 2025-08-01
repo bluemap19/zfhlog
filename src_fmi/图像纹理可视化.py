@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     # path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
     # path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
-    path_folder = r'C:\Users\ZFH\Desktop\收集的成像特征数据集'
+    path_folder = r'E:\桌面\收集的成像特征数据集'
     list_path_texture = get_all_file_paths(path_folder)
 
 

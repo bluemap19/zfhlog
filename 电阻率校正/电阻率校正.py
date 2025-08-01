@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from src_data_process.OLS1 import nonlinear_fitting
 from src_data_process.data_filter import remove_static_depth_data
-from src_data_process.data_gauss_correction import scale_gaussian_by_config, scale_by_quantiles_old, scale_gaussian
+from src_data_process.resistivity_correction import scale_gaussian_by_config, scale_by_quantiles_old, scale_gaussian
 from src_file_op.dir_operation import search_files_by_criteria
 from scipy import stats
 
