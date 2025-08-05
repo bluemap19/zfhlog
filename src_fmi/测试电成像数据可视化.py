@@ -12,8 +12,8 @@ if __name__ == '__main__':
     RADIA_STAT_MIN = np.array([0.3824, 0.1034, 0.5858, 0.157, 0.4051, 0.0247, 0.6046]) * 0.8
     RADIA_DYNA_MIN = np.array([6.969, 1.6592, 0.3567, 0.0808, 0.5207, 0.0065, 6.9172]) * 0.8
 
-    path_dyna_test = r'C:\Users\ZFH\Desktop\DYNA_TEST_0_1.png'
-    path_stat_test = r'C:\Users\ZFH\Desktop\STAT_TEST_0_1.png'
+    path_dyna_test = r'E:\桌面\收集的成像特征数据集\Cheng96_FMI-Type-1-STAT-2046.25-2047-薄夹层砂岩-长英质页岩-中低GR长英质.txt'
+    path_stat_test = r'E:\桌面\收集的成像特征数据集\Cheng96_FMI-Type-1-STAT-2046.25-2047-薄夹层砂岩-长英质页岩-中低GR长英质.txt'
 
 
     img_dyna_data, _ = get_ele_data_from_path(path_dyna_test)
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     RADAR_LIST = [(dyna_texture_average.ravel() - RADIA_STAT_MIN) / (RADIA_STAT_MAX - RADIA_STAT_MIN),
                   (stat_texture_average.ravel() - RADIA_DYNA_MIN) / (RADIA_DYNA_MAX - RADIA_DYNA_MIN),]
     attributes = ['CON', 'DIS', 'HOM', 'ENG', 'COR', 'ASM', 'ENT']
-    sub_titles = ['DYNA', 'STAT']
+    sub_titles = ['', '']
 
     from matplotlib import pyplot as plt
     fig2, axes2 = draw_radar_chart(

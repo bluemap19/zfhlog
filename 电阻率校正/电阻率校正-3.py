@@ -35,12 +35,14 @@ def window_process_gauss_scaling(df, PRED_GAUSS_SETTING={}, window_work_length=5
                                                                 target_data_config=PRED_GAUSS_SETTING,
                                                                 return_stats=True)
         else:
+            # 使用高斯缩放，对数据范围进行处理
+            # df['R_gauss'], config = scale_gaussian(source_data=df['R_temp_sub'], target_data=df['R_real'], return_stats=True)
             df_window['R_gauss'], config = scale_by_quantiles(source_data=df_window['R_temp_sub'], target_data=df_window['R_real'])
 
-        config.append(df.at[window_index, 'TEMP'])
-        config_all.append(config)
-        dataframe_config = pd.DataFrame(config_all, columns=['target_lower', 'source_lower', 'scale_factor','TEMP'])
-        dataframe_config.to_csv('config_tempture.csv', index=False)
+        # config.append(df.at[window_index, 'TEMP'])
+        # config_all.append(config)
+        # dataframe_config = pd.DataFrame(config_all, columns=['target_lower', 'source_lower', 'scale_factor','TEMP'])
+        # dataframe_config.to_csv('config_tempture.csv', index=False)
 
         EFFECTIVE_LENGTH = window_work_end - window_work_start
         df.iloc[window_work_start:window_work_end] = df_window.iloc[
@@ -88,7 +90,7 @@ def fit_r_pred_window_gauss_scaling(df, PRED_GAUSS_SETTING={}, offset_function='
 
 if __name__ == '__main__':
     # path_logging = search_files_by_criteria(search_root=r'C:\Users\ZFH\Desktop\电阻率校正-坨73-斜13井',
-    path_logging = search_files_by_criteria(search_root=r'C:\Users\ZFH\Desktop\电阻率校正-07.31\2222',
+    path_logging = search_files_by_criteria(search_root=r'C:\Users\ZFH\Desktop\电阻率校正-07.31\SOF003',
                                             name_keywords=['logging_data'], file_extensions=['xlsx', 'csv'])
     path_logging = path_logging[0]
     if path_logging.endswith('xlsx'):
@@ -103,8 +105,8 @@ if __name__ == '__main__':
     # 1. 定义映射关系（原始列名:新列名）
     column_mapping = {
         '#DEPTH':'DEPTH',
-        '温度-MWD':'TEMP',
-        '电阻率-原始-近钻头':'R_temp',
+        'TEMP':'TEMP',
+        'ResFar-矫正':'R_temp',
         'ILD':'R_real',
     }
     df.rename(columns=column_mapping, inplace=True)
@@ -115,9 +117,9 @@ if __name__ == '__main__':
 
     df = remove_static_depth_data(df, depth_col='DEPTH')
 
-    gauss_windows = 100
-    # df = fit_r_pred_window_gauss_scaling(df, PRED_GAUSS_SETTING={}, offset_function='tempture', gauss_windows=gauss_windows)
-    df = fit_r_pred_window_gauss_scaling(df, PRED_GAUSS_SETTING={}, offset_function='linear', gauss_windows=gauss_windows)
+    gauss_windows = 200
+    df = fit_r_pred_window_gauss_scaling(df, PRED_GAUSS_SETTING={}, offset_function='tempture', gauss_windows=gauss_windows)
+    # df = fit_r_pred_window_gauss_scaling(df, PRED_GAUSS_SETTING={}, offset_function='linear', gauss_windows=gauss_windows)
 
     # # 创建筛选条件
     # condition = (df['TEMP'] < 27.5) | (df['TEMP'] > 47.6)

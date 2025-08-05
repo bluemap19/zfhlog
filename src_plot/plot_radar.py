@@ -117,7 +117,7 @@ def draw_radar_chart(data_list, radar_str, pic_order='12',
             ax = axes[idx]
 
             # 绘制雷达图边界
-            ax.set_thetagrids(np.degrees(angles[:-1]), radar_str, fontsize=18)
+            ax.set_thetagrids(np.degrees(angles[:-1]), radar_str, fontsize=28)
             ax.set_rlabel_position(30)  # 径向标签位置
 
             # 设置雷达图背景
