@@ -9,8 +9,8 @@ from src_file_op.dir_operation import search_files_by_criteria
 from src_plot.plot_heatmap import plot_clustering_heatmap
 
 if __name__ == '__main__':
-    path_folder = r'C:\Users\ZFH\Desktop\simulated-dyna\IMP_win-20-220_tree-3-11.xlsx'
-    path_file_list = search_files_by_criteria(search_root=path_folder, name_keywords=['IMP', 'ALL'], file_extensions=['csv', 'xlsx'])
+    path_folder = r'C:\Users\ZFH\Documents\simu-result'
+    path_file_list = search_files_by_criteria(search_root=path_folder, name_keywords=['IMP', 'win'], file_extensions=['csv', 'xlsx'])
     Curve_IMP_List = [
         'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
         'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     ]
     print(path_file_list)
 
-    path_file_list = [r'C:\Users\ZFH\Desktop\simulated-dyna\IMP_win-20-220_tree-3-11.xlsx']
+    # path_file_list = [r'C:\Users\ZFH\Desktop\simulated-dyna\IMP_win-20-220_tree-3-11.xlsx']
 
     IMP_MATRIX = pd.read_excel(path_file_list[0], sheet_name=0)
     print(IMP_MATRIX.head())
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     # 1. 过滤数据：窗长220-280且随机森林参数3-9
     filtered_df = IMP_MATRIX[
         (IMP_MATRIX['窗长'] >= 40) &
-        (IMP_MATRIX['窗长'] <= 120) &
+        (IMP_MATRIX['窗长'] <= 140) &
         (IMP_MATRIX['随机森林参数'] >= 3) &
         (IMP_MATRIX['随机森林参数'] <= 12)
         ]
@@ -44,15 +44,14 @@ if __name__ == '__main__':
     Curve_target_names = [
         # 'STAT_CON', 'STAT_ENT', 'STAT_HOM', 'DYNA_DIS', 'STAT_XY_HOM', 'DYNA_HOM',     # 静态数据筛选出来的 6个
         # 'STAT_XY_COR', 'STAT_ENG', 'DYNA_COR', 'DYNA_XY_ENT', 'DYNA_XY_DIS', 'DYNA_ENG'      # 动态数据筛选出来的 6个
-        # 'STAT_CON', 'STAT_ENT', 'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_XY_HOM',      # 整体数据筛选出来的 18个
-        # 'STAT_DIS', 'DYNA_HOM', 'STAT_XY_COR', 'STAT_ENG',
-        # 'STAT_COR', 'DYNA_CON', 'DYNA_ENG', 'STAT_XY_ENG', 'STAT_XY_ASM'
+        'DYNA_COR', 'DYNA_XY_DIS', 'STAT_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_CON', 'DYNA_CON',
+        'DYNA_ENG', 'DYNA_XY_HOM', 'DYNA_DIS', 'STAT_XY_ASM', 'STAT_XY_ENT', 'DYNA_XY_ENT'
 
 
-        'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
-        'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
-        'DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG', 'DYNA_COR', 'DYNA_ASM', 'DYNA_ENT', 'DYNA_XY_CON',
-        'DYNA_XY_DIS', 'DYNA_XY_HOM', 'DYNA_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_ASM', 'DYNA_XY_ENT'
+        # 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
+        # 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
+        # 'DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG', 'DYNA_COR', 'DYNA_ASM', 'DYNA_ENT', 'DYNA_XY_CON',
+        # 'DYNA_XY_DIS', 'DYNA_XY_HOM', 'DYNA_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_ASM', 'DYNA_XY_ENT'
     ]
 
     # 2. 计算所需特征的均值
@@ -62,9 +61,9 @@ if __name__ == '__main__':
     param_grouped = filtered_df.groupby('随机森林参数')[Curve_target_names].mean().reset_index()
     # 3. 计算 准确率 整体矩阵的均值
     overall_mean = filtered_df[Curve_target_names].mean()
-    print(window_grouped)
-    print(param_grouped)
-    print(overall_mean)
+    # print(window_grouped)
+    # print(param_grouped)
+    # print(overall_mean)
 
     # 1. 将平均值Series数据体 overall_mean 转换为DataFrame类型并排序
     df = overall_mean.to_frame(name='均值').reset_index()
@@ -85,7 +84,10 @@ if __name__ == '__main__':
 
 
     # 4.绘图, 创建热力图
-    plot_clustering_heatmap(df_normalized, )
+    import matplotlib.pyplot as plt
+    plot_clustering_heatmap(df_normalized, target_col=Curve_target_names,
+        title = "Feature Influence Result")
+    plt.show()
 
 
     # # 文件路径设置
@@ -130,7 +132,7 @@ if __name__ == '__main__':
     # create_acc_heatmap(window_grouped, Curve_ACC_List,
     #                    label_plot={'label': 'Heatmap of different windows length', 'x': 'Windows Length', 'y': 'Type'}
     #                    )
-    exit(0)
+
 
 
 

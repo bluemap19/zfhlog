@@ -12,7 +12,8 @@ from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 
 
 if __name__ == '__main__':
-    LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\simulated-dyna')
+    path_project = r'C:\Users\ZFH\Documents\simu-result'
+    LG = LOGGING_PROJECT(project_path=path_project)
     print(LG.WELL_NAMES)
 
     windows_length = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220]
@@ -27,8 +28,11 @@ if __name__ == '__main__':
     Imp_windows_length_dict = {}  # 所有的Importance结果 字典    np.array([24,]) 24项纹理特征影响因子数组
     # 这三个字点都是字典含字典的格式,两个索引分别是 窗长-树个数
 
-    print(LG.get_table_3_all_data(well_names=['simu1'], file_path={'simu1':'C:\\Users\\ZFH\\Desktop\\simulated-dyna\\simu1\\SIMU_LITHO_TYPE_2.xlsx'}))
-    replace_dict = {'高密度层理': 0, '低密度层理': 1, '孔洞': 2, '高密度低角度层理': 0, '高密度高角度层理': 1, '低密度低角度层理': 2, '低密度高角度层理': 3, '高阻块状': 4, '低阻块状':5}
+    path_table_target = LG.search_target_file_path(well_name='simu1', target_path_feature=['LITHO_TYPE'], target_file_type='table')
+    print(LG.get_table_3_all_data(well_names=['simu1'], file_path={'simu1':path_table_target}))
+    print(LG.get_all_table_replace_dict())
+
+    replace_dict = {'低阻多斑块': 0, '低阻少斑块': 1, '高阻多斑块': 2, '高阻少斑块': 3, '高阻层理': 4, '高阻纹理': 5, '低阻层理': 6, '低阻纹理': 7}
     COL_NAMES = [
                 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
                 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
@@ -102,7 +106,7 @@ if __name__ == '__main__':
     ACC_df = pd.DataFrame(accuracy_array, columns=columns)
     print(ACC_df.describe())
     ACC_df.to_excel(
-        r'C:\Users\ZFH\Desktop' + "\\ACC_win-{}-{}_tree-{}-{}.xlsx".format(
+        path_project + "\\ACC_win-{}-{}_tree-{}-{}.xlsx".format(
             windows_length[0], windows_length[-1], tree_num_list[0], tree_num_list[-1]), index=False,
         sheet_name='sheet_temp')
 
@@ -127,111 +131,8 @@ if __name__ == '__main__':
     IMP_df = pd.DataFrame(importance_array, columns=columns)
     print(IMP_df.describe())
     IMP_df.to_excel(
-        r'C:\Users\ZFH\Desktop' + "\\IMP_win-{}-{}_tree-{}-{}.xlsx".format(
+        path_project + "\\IMP_win-{}-{}_tree-{}-{}.xlsx".format(
             windows_length[0], windows_length[-1], tree_num_list[0], tree_num_list[-1]), index=False,
         sheet_name='sheet_temp')
-    # DF_ACC_ALL = pd.DataFrame(np.array(list(ACC_windows_length_dict.values())))
-    # DF_ACC_ALL.to_excel(
-    #     r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV' + "\\ACC_win-{}-{}_tree-{}-{}.xlsx".format(
-    #         windows_length[0], windows_length[-1], tree_num_list[0], tree_num_list[-1]), index=False,
-    #     sheet_name='sheet_temp')
-    #
-    # DF_IMP_ALL = pd.DataFrame(np.array(list(Imp_windows_length_dict.values())))
-    # DF_IMP_ALL.to_excel(
-    #     r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV' + "\\IMP_win-{}-{}_tree-{}-{}.xlsx".format(
-    #         windows_length[0], windows_length[-1], tree_num_list[0], tree_num_list[-1]), index=False,
-    #     sheet_name='sheet_temp')
-
-    # path_logging_target = LG.search_target_file_path(well_name='城96', target_path_feature=['Texture_ALL', '_50_5'], target_file_type='logging')
-    # print(path_logging_target)
-    #
-    # path_table_target = LG.search_target_file_path(well_name='城96', target_path_feature=['litho_type'], target_file_type='table')
-    # print(path_table_target)
-    #
-    # # LG.get_table_3_all_data(['城96'])
-    # # print(LG.get_all_table_replace_dict(well_names=['城96']))
-    # # replace_dict = {'中GR长英黏土质': 0, '中GR长英黏土质（泥岩）': 0, '中低GR长英质': 1, '中低GR长英质（砂岩）': 1,
-    # #         '富有机质长英质': 2, '富有机质长英质页岩': 2, '富有机质黏土质': 3, '富有机质黏土质页岩': 3, '高GR富凝灰长英质': 4, '高GR富凝灰长英质（沉凝灰岩）': 4}
-    #
-    #
-    # data_input = LG.combined_all_logging_with_type(well_names=['城96'], file_path_logging={'城96':path_logging_target},
-    #                                                file_path_table={'城96':path_table_target},
-    #                                                replace_dict=replace_dict, type_col_name='Type_litho', Norm=True)
-    # # print(data_input.describe())
-    # # print(data_input.columns)
-    # data_input = data_input[['STAT_CON', 'STAT_HOM', 'STAT_ENT', 'STAT_XY_HOM', 'Type_litho']]
-    # # data_input = data_input[['STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
-    # #                 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT', 'Type_litho']]
-    # # data_input = data_input[['DYNA_CON', 'DYNA_DIS', 'DYNA_HOM', 'DYNA_ENG', 'DYNA_COR', 'DYNA_ASM', 'DYNA_ENT', 'DYNA_XY_CON',
-    # #                 'DYNA_XY_DIS', 'DYNA_XY_HOM', 'DYNA_XY_ENG', 'DYNA_XY_COR', 'DYNA_XY_ASM', 'DYNA_XY_ENT', 'Type_litho']]
-    #
-    # scores, accuracies, auc_score, importances = random_forest_correlation_analysis(data_input, random_seed=44, plot_index=[2, 2], figsize=(16, 5), tree_num=10, Norm=False)
-    # # 输出结果
-    # print("交叉验证分数:", scores)
-    # print("类别准确率:", accuracies)
-    # print("AUC总分:", auc_score)
-    # print("特征重要性:", importances)
-
-
-
-    # data_combined_all = LG.combined_all_logging_with_type(well_names=['城96', '珠80'], file_path_logging={'城96':path_logging_target, '珠80':path_logging_1},
-    #                                                       file_path_table={'城96':path_table_target, '珠80':path_table_1}, curve_names_logging=['dy_con', 'dy_ASM', 'ss_cor', 'ss_ASM'],
-    #                                                       replace_dict=dict, type_col_name='Type_litho', Norm=True)
-    # print(data_combined_all.describe())
-
-    # LG.combined_all_logging_with_type_by_charters(  well_names=['城96', '珠80'], logging_charters=['Texture_ALL', '_50_5'], table_charters=['litho_type'],
-    #                                                 curve_names_logging=['DEPTH', 'dy_con', 'dy_ASM', 'ss_cor', 'ss_ASM'], curve_names_type=['DEPTH', '岩相'],
-    #                                                 replace_dict=dict, type_col_name='Type_num', Norm=True)
-
-    # # LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV')
-    # # curves_list = ['AC', 'CNL', 'GR', 'DEN', 'SP', 'RT', 'CAL']
-    # curves_list = ['CNL', 'GR', 'DEN', 'RT']
-    # # curves_list = ['AC', 'CNL', 'GR']
-
-
-    # LG.get_table_3_all_data()
-    # ALL_REPLACE_DICT = LG.get_all_table_replace_dict()
-    # print(ALL_REPLACE_DICT)
-    # dict = {'中GR长英黏土质': 0, '中GR长英黏土质（泥岩）': 0, '中低GR长英质': 1, '中低GR长英质（砂岩）': 1,
-    #                                    '富有机质长英质': 2, '富有机质长英质页岩': 2, '富有机质黏土质': 3, '富有机质黏土质页岩': 3,
-    #                                    '高GR富凝灰长英质': 4, '高GR富凝灰长英质（沉凝灰岩）': 4}
-    # LG.set_all_table_replace_dict(dict=dict)
-    #
-    # # '元543', '元552', '悦235', '珠23'
-    # # data_all = LG.combined_all_logging_with_type(well_names=['元543', '元552', '悦235', '珠23'],
-    # data_all = LG.combined_all_logging_with_type(well_names=['元543', '元552'],
-    # # data_all = LG.combined_all_logging_with_type(well_names=[],
-    #                                       curve_names_logging=curves_list, Norm=True)
-    # print(f'data_all:{data_all.shape}\n', data_all.head())
-    # data_all_dropped = pdnads_data_drop(data_all)
-    # print(f'data_all_dropped:{data_all_dropped.shape}\n', data_all_dropped.head())
-    # index_filter = pandas_data_filtration(data_all_dropped[curves_list])
-    # data_all_dropped_filted = data_all_dropped.iloc[index_filter]
-    # print(f'data_all_dropped_filted:{data_all_dropped_filted.shape}\n', data_all_dropped_filted.head())
-    #
-    # dict_rf = {'中GR长英黏土质': 0, '中低GR长英质': 1, '富有机质长英质': 2, '富有机质黏土质': 3, '高GR富凝灰长英质': 4}
-    # data_correction_analyse_by_tree(data_all_dropped_filted, curves_list, 'Type', 10,
-    #                                 y_replace_dict=dict_rf, title_string='fffffffffuck')
-    # data_all_dropped_filted_balanced = smart_balance_dataset(data_all_dropped_filted[curves_list+['Type']],
-    #                               target_col='Type', method='smote', Type_dict=dict_rf)
-    # # 进行数据的监督聚类分析 聚类分析的结果百分比
-    # df_result, classifiers = supervised_classification(data_all_dropped_filted_balanced[curves_list],
-    #                                                   data_all_dropped_filted_balanced['Type'],
-    #                                                    Type_str=dict_rf)
-    # print(df_result)
-    # # 使用监督模型进行输入数据的预测
-    # model_classify_result = model_predict(classifiers, data_all_dropped_filted[curves_list])
-    # # print(model_classify_result.shape, model_classify_result)
-    # plot_clustering_heatmap(
-    #     df_result,
-    #     title="Supervised Classify Result",
-    #     condition_formatter=lambda x: f"Model {x}",
-    #     font_scale=0.9
-    # )
-    # plt.show()
-    #
-    #
-    # plot_matrxi_scatter(df=data_all_dropped_filted, input_names=curves_list, target_col='Type', plot_string='分类相关性', target_col_dict=dict_rf)
-    # plot_matrxi_scatter(df=data_all_dropped_filted, input_names=curves_list, target_col='Well_Name', plot_string='分井')
 
 

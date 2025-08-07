@@ -9,6 +9,8 @@ plt.rcParams['axes.unicode_minus']=False
 
 def plot_clustering_heatmap(
         df: pd.DataFrame,
+        target_col: list = ['目标列'],
+        y_label: str = '数据',
         title: str = "Clustering Algorithm Accuracy Distribution",
         condition_formatter: Optional[Callable] = None,
         figsize: tuple = (10, 6),
@@ -32,13 +34,13 @@ def plot_clustering_heatmap(
 
     # 生成热力图核心逻辑
     heatmap = sns.heatmap(
-        df,
+        df[target_col],
         annot=True,
         fmt=".2f",
         cmap=cmap,
         linewidths=0.5,
         linecolor='white',
-        cbar_kws={'label': 'Accuracy Rate'},
+        cbar_kws={'label': 'Normed Influence'},
         annot_kws={"size": 12 * font_scale},
         vmin=0,
         vmax=1,
@@ -47,15 +49,16 @@ def plot_clustering_heatmap(
 
     # 设置标题
     ax.set_title(title, pad=20, fontsize=14 * font_scale)
-    ax.set_xlabel('Algorithms', fontsize=10 * font_scale)
-    ax.set_ylabel('Experimental Conditions', fontsize=10 * font_scale)
+    ax.set_xlabel('Features', fontsize=10 * font_scale)
+    ax.set_ylabel('Window Length', fontsize=10 * font_scale)
 
     # 格式化行标签
     if condition_formatter:
         y_labels = [condition_formatter(i) for i in df.index]
     else:
-        y_labels = [f"Condition {i}" for i in df.index]
-    x_labels = list(df.columns)
+        y_labels = [f"{i}" for i in df.窗长]
+
+    x_labels = list(df[target_col].columns)
     heatmap.set_yticklabels(y_labels, rotation=45)
     heatmap.set_xticklabels(x_labels, rotation=45, ha='right')
 

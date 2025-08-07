@@ -3,6 +3,7 @@ import pandas as pd
 
 from src_file_op.dir_operation import search_files_by_criteria
 
+# 长庆重新分层，这个主要作用是从原始的分类分层文件中截取合适的层段并进行保存
 if __name__ == '__main__':
     # path_config = r'C:\Users\ZFH\Desktop\长73数据调整\斜井110\Target_workspace.csv'
     # target_path = r'C:\Users\ZFH\Desktop\长73数据调整\斜井110\长73-筛选'
@@ -17,7 +18,6 @@ if __name__ == '__main__':
 
     data_df_depth_config['DEPTH_START_NEW'] = data_df_depth_config['DEPTH_START_NEW'].astype(float)
     data_df_depth_config['DEPTH_END_NEW'] = data_df_depth_config['DEPTH_END_NEW'].astype(float)
-
 
     print(data_df_depth_config)
     NOT_FIND_WELL_NAME = []
