@@ -28,8 +28,8 @@ if __name__ == '__main__':
     Imp_windows_length_dict = {}  # 所有的Importance结果 字典    np.array([24,]) 24项纹理特征影响因子数组
     # 这三个字点都是字典含字典的格式,两个索引分别是 窗长-树个数
 
-    path_table_target = LG.search_target_file_path(well_name='simu1', target_path_feature=['LITHO_TYPE'], target_file_type='table')
-    print(LG.get_table_3_all_data(well_names=['simu1'], file_path={'simu1':path_table_target}))
+    path_table_target = LG.search_target_file_path(well_name='simu2', target_path_feature=['LITHO_TYPE'], target_file_type='table')
+    print(LG.get_table_3_all_data(well_names=['simu2'], file_path={'simu2':path_table_target}))
     print(LG.get_all_table_replace_dict())
 
     replace_dict = {'低阻多斑块': 0, '低阻少斑块': 1, '高阻多斑块': 2, '高阻少斑块': 3, '高阻层理': 4, '高阻纹理': 5, '低阻层理': 6, '低阻纹理': 7}
@@ -46,13 +46,13 @@ if __name__ == '__main__':
         ACC_tree_num_dict = {}
         AUC_tree_num_dict = {}
         Imp_tree_num_dict = {}
-        path_logging_target = LG.search_target_file_path(well_name='simu1', target_path_feature=['Texture_ALL', f'_{i}_5'], target_file_type='logging')
-        path_table_target = LG.search_target_file_path(well_name='simu1', target_path_feature=['LITHO_TYPE'], target_file_type='table')
+        path_logging_target = LG.search_target_file_path(well_name='simu2', target_path_feature=['Texture_ALL', f'_{i}_5'], target_file_type='logging')
+        path_table_target = LG.search_target_file_path(well_name='simu2', target_path_feature=['LITHO_TYPE'], target_file_type='table')
         print('get data from path:{}, get table from:{}'.format(path_logging_target, path_table_target))
 
-        data_input = LG.combined_all_logging_with_type(well_names=['simu1'],
-                                                       file_path_logging={'simu1': path_logging_target},
-                                                       file_path_table={'simu1': path_table_target},
+        data_input = LG.combined_all_logging_with_type(well_names=['simu2'],
+                                                       file_path_logging={'simu2': path_logging_target},
+                                                       file_path_table={'simu2': path_table_target},
                                                        replace_dict=replace_dict, type_new_col=TARGET_NAME[0],
                                                        curve_names_logging=COL_NAMES,
                                                        Norm=True)

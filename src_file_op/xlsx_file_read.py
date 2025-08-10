@@ -37,13 +37,10 @@ def get_data_from_pathlist(file_list, Charter_Config_Curve):
         # curve_org.iloc[:, 0:-1] = curve_org.iloc[:, 0:-1].apply(pd.to_numeric, errors='coerce')
         print('Data Frame Choice describe:\n{}'.format(curve_org.describe()))
 
-        curve_depth = curve_org.iloc[:, 0].values.reshape((-1, 1))
-        # curve_org = curve_org[:, 1:]
-
-        # 计算 常规九条测井数据的分辨率
-        LEV_normal = (curve_depth[-1, 0] - curve_depth[0, 0]) / curve_depth.shape[0]
-
         if 'depth' in Charter_Config_Curve['curve_name'][0].lower():
+            curve_depth = curve_org.iloc[:, 0].values.reshape((-1, 1))
+            # 计算 常规九条测井数据的分辨率
+            LEV_normal = (curve_depth[-1, 0] - curve_depth[0, 0]) / curve_depth.shape[0]
             print('self.curve_org shape :{}, logging resolution:{:.2f}, Depth is from {} to {}'.format(
                 curve_org.shape, LEV_normal, curve_depth[0, 0], curve_depth[-1, 0]))
 
