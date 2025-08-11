@@ -124,7 +124,7 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
 
 if __name__ == '__main__':
     # path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\25.06.29\UPDATE-13',
-    path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\坨128-侧48',
+    path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\坨128-侧48-实测',
                                             name_keywords=['data_all_logging'], file_extensions=['csv'])
     path_logging = path_logging[0]
     df = pd.read_csv(path_logging, encoding='gbk')
@@ -151,8 +151,10 @@ if __name__ == '__main__':
     window_work_length = 400
     windows_step = 100
     windows_num = (df.shape[0] - window_work_length)//windows_step + 2
+    windows_num = max(windows_num, 1)        # 防止窗长为<0
     windows_view = 1.1
     for i in range(windows_num):
+        print(i)
         window_index = i*windows_step + window_work_length//2
         window_work_start = np.max((0, window_index - window_work_length // 2))
         window_work_end = np.min((df.shape[0] - 1, window_index + window_work_length // 2 + 1))
