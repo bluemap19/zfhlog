@@ -82,6 +82,8 @@ def offset_power(df, LOG_USE=False):
 
 
 ######################################################################################################################################
+TEMPTURE_CORRECTION_MAPPING = pd.read_excel(r'C:\Users\ZFH\Desktop\temperature_far_resistivity_correction.xlsx', sheet_name=0)
+
 ## 对目标数据进行基线的偏移，使用的是 配置好的温度校正文件
 def get_r_by_tempture(tempture):
     """
@@ -89,8 +91,17 @@ def get_r_by_tempture(tempture):
     :param tempture: 温度
     :return: 对应温度下的电阻率值
     """
-    res = 24.81*tempture - 521.51
-    return res
+    # res = 24.81*tempture - 521.51
+    tempture_sub = TEMPTURE_CORRECTION_MAPPING['Temperature'] - tempture
+
+    # 找到最接近的温度索引
+    abs_diff = np.abs(tempture_sub)
+    min_index = abs_diff.idxmin()  # 使用Pandas的idxmin方法
+
+    # 获取校正系数
+    correction_factor = TEMPTURE_CORRECTION_MAPPING.at[min_index, 'Corrrection_factor']
+
+    return correction_factor
 
 ## 对目标数据进行基线的偏移，使用的是 配置好的温度校正文件
 def correction_by_tempture(df, res_base=338.4786):
@@ -98,9 +109,9 @@ def correction_by_tempture(df, res_base=338.4786):
         for i in range(0, df.shape[0]):
             tempture = df.at[i, 'TEMP']     # 45
             res = df.at[i, 'R_temp']        # 真实测量
-            correction_temp = get_r_by_tempture(tempture)       # 590.6379
-            res_correction_temp = res/correction_temp
-            df.at[i, 'R_temp_sub'] = res_correction_temp * res_base
+            correction_temp = get_r_by_tempture(tempture)
+            df.at[i, 'correction_factor'] = correction_temp
+            df.at[i, 'R_temp_sub'] = res / correction_temp
 
         return df
     else:
@@ -108,3 +119,10 @@ def correction_by_tempture(df, res_base=338.4786):
         exit(0)
 
 ######################################################################################################################################
+
+
+if __name__ == '__main__':
+    print(get_r_by_tempture(52))
+    print(get_r_by_tempture(49))
+    print(get_r_by_tempture(31))
+    print(get_r_by_tempture(27))

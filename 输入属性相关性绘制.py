@@ -52,8 +52,8 @@ if __name__ == '__main__':
     # # 调用接口进行分析
     print(data_combined_all[COL_NAMES].describe())
 
-    # plot_correlation_analyze(data_combined_all, COL_NAMES, method='pearson', figsize=(14, 14),
-    #                          return_matrix=False)
+    plot_correlation_analyze(data_combined_all, COL_NAMES, method='pearson', figsize=(14, 14),
+                             return_matrix=False)
 
 
     # scores, accuracies, auc_score, importances = random_forest_correlation_analysis(data_combined_all[COL_NAMES+TARGET_NAME], random_seed=44,

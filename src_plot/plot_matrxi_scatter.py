@@ -18,6 +18,16 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
                         plot_string='',
                         target_col_dict: dict = {},
                         figure: Optional[plt.Figure] = None):
+    """
+    进行数据散步图绘制，制作不同类别数据分布
+    :param df: 数据体，只能是dataframe
+    :param input_names: 输入属性列名称，对应输入属性列
+    :param target_col: 分类列名称，对应类别分类列信息
+    :param plot_string: 图形名称title
+    :param target_col_dict: 类别是int分类类别型，那就需要替换成 字符型，这个是替换字典信息
+    :param figure: 画图类，在哪个 实体plt上进行画图
+    :return:
+    """
 
 
     # 数据预处理增强
@@ -85,6 +95,9 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
         fig = figure
         fig.clear()
 
+    # height参数:控制每个子图的高度（以英寸为单位）
+    # aspect参数:控制每个子图的宽高比（宽度/高度）
+
     g = sns.PairGrid(
         data,
         vars=input_names,
@@ -93,8 +106,8 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
         palette=palette,  # 应用自定义颜色列表
         hue_order=sorted(data[target_col].unique()),  # 固定类别顺序
         diag_sharey=False,
-        height=3.2,
-        aspect=1.1,
+        height=2,
+        aspect=1,
         # corner=True  # 隐藏重复的右上三角（当上下三角类型相同时）
     )
 
