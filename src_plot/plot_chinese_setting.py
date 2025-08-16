@@ -53,9 +53,9 @@ def set_ultimate_chinese_font():
             test_text = "测试中文字体: 窗长 均 类"
             fig, ax = plt.subplots(figsize=(2, 1))
             ax.text(0.5, 0.5, test_text, ha='center', va='center', fontproperties=font_prop)
-            plt.savefig('chinese_test.png', dpi=100)
+            # plt.savefig('chinese_test.png', dpi=100)
+            # print(f"✅ 中文测试图已保存，请检查 'chinese_test.png'")
             plt.close(fig)
-            print(f"✅ 中文测试图已保存，请检查 'chinese_test.png'")
 
         # 设置通用的中文相关参数
         plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题

@@ -6,6 +6,8 @@ from src_data_process.cal_data_glcm_texture import cal_image_texture
 from src_file_op.dir_operation import search_files_by_criteria
 from src_fmi.image_operation import show_Pic
 
+
+# 把所有的岩扫数据进行读取合并，把所有的照片排成一个电成像数据，并进行保存，方便后续的纹理特征提取
 if __name__ == '__main__':
 
     PATH_FOLDER = r'C:\Users\ZFH\Desktop\1-15'

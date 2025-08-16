@@ -189,18 +189,29 @@ def describe_relative_position(class_mean: float, overall_mean: float) -> str:
     abs_diff = abs(diff)
     ratio = abs_diff / overall_mean if overall_mean != 0 else abs_diff
 
+    # # 定义位置描述
+    # if ratio < 0.05:
+    #     # position = "处于整体平均水平"
+    #     position = "中等"
+    # elif ratio < 0.15:
+    #     # position = "略" + ("高于" if diff > 0 else "低于") + "整体平均水平"
+    #     position = "中" + ("高" if diff > 0 else "低")
+    # elif ratio < 0.3:
+    #     # position = "明显" + ("高于" if diff > 0 else "低于") + "整体平均水平"
+    #     position = "偏" + ("高" if diff > 0 else "低") + "整体平均水平"
+    # else:
+    #     position = "显著" + ("高于" if diff > 0 else "低于") + "整体平均水平"
+
     # 定义位置描述
     if ratio < 0.05:
-        position = "处于整体平均水平"
-    elif ratio < 0.15:
-        position = "略" + ("高于" if diff > 0 else "低于") + "整体平均水平"
+        position = "中等"
     elif ratio < 0.3:
-        position = "明显" + ("高于" if diff > 0 else "低于") + "整体平均水平"
+        position = "中" + ("高" if diff > 0 else "低")
     else:
-        position = "显著" + ("高于" if diff > 0 else "低于") + "整体平均水平"
+        position = "偏" + ("高" if diff > 0 else "低")
 
     # 添加具体数值
-    return f"均值{class_mean:.2f}，{position}(整体均值{overall_mean:.2f})"
+    return f"均值{class_mean:.2f}，{position}，整体均值{overall_mean:.2f}"
 
 
 # 辅助函数：描述离散程度
