@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 # 图像变化，根据图像的倾斜角度进行图像的拉伸
-def shear_image(image, slope, padding_color=(0, 0, 0)):
+def shear_image(image, slope, intercept):
     """
     根据公式 y = slope * x 对图像进行拉伸变换
 
@@ -16,19 +16,42 @@ def shear_image(image, slope, padding_color=(0, 0, 0)):
     返回:
     transformed_image: 变换后的图像 (与输入同尺寸)
     """
-    # 获取图像尺寸
-    height, width, channels = image.shape
+    # 1. 处理不同维度的图像
+    original_shape = image.shape
 
-    # 创建输出图像，初始化为填充颜色
-    transformed_image = np.zeros_like(image)
-    transformed_image[:, :] = padding_color
+    if len(original_shape) == 3:
+        # 处理RGB彩色图像
+        height, width, channels = original_shape
+        padding_color = np.array([0, 0, 0], dtype=image.dtype)  # 黑色填充
+    elif len(original_shape) == 2:
+        # 处理灰度图像
+        height, width = original_shape
+        channels = 1
+        image = image[:, :, np.newaxis]  # 添加通道维度
+        padding_color = np.array([0], dtype=image.dtype)  # 灰度0值填充
+    elif len(original_shape) > 3:
+        raise ValueError(f"不支持的图像维度: {original_shape}")
+    else:
+        raise ValueError(f"不支持的图像维度: {original_shape}")
 
-    # 逐列处理图像
+    # 2. 创建输出图像，使用正确维度的填充颜色
+    transformed_image = np.zeros((height, width, channels), dtype=image.dtype)
+
+    # 3. 应用适当的填充方式
+    if channels == 1:
+        # 单通道图像
+        transformed_image[:, :] = padding_color
+    else:
+        # 多通道图像
+        for c in range(channels):
+            transformed_image[:, :, c] = padding_color[c]
+
+    # 4. 逐列处理图像
     for x in range(width):
         # 计算当前列的位移量 (y = slope * x)
-        displacement = slope * x
+        displacement = slope * x + intercept
 
-        # 对位移取整 (亚像素变换需要插值)
+        # 对位移取整
         offset = int(round(displacement))
 
         # 计算源图像和目标图像的行范围
@@ -44,11 +67,26 @@ def shear_image(image, slope, padding_color=(0, 0, 0)):
 
             # 处理顶部边界
             if offset > 0:
-                transformed_image[0:offset, x, :] = padding_color
+                # 使用通道兼容的填充方式
+                if channels == 1:
+                    transformed_image[0:offset, x, :] = padding_color
+                else:
+                    for c in range(channels):
+                        transformed_image[0:offset, x, c] = padding_color[c]
 
             # 处理底部边界
             if offset < 0:
-                transformed_image[height + offset:, x, :] = padding_color
+                # 使用通道兼容的填充方式
+                if channels == 1:
+                    transformed_image[height + offset:, x, :] = padding_color
+                else:
+                    for c in range(channels):
+                        transformed_image[height + offset:, x, c] = padding_color[c]
+
+    # 5. 恢复原始图像形状
+    if len(original_shape) == 2:
+        # 去除添加的通道维度
+        transformed_image = transformed_image.squeeze(axis=-1)
 
     return transformed_image
 

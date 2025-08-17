@@ -11,6 +11,7 @@ from src_file_op.dir_operation import get_all_file_paths
 from src_fmi.fmi_data_read import get_random_ele_data, get_ele_data_from_path
 
 
+
 # import seaborn as sns
 # sns.set()
 
@@ -100,10 +101,16 @@ def get_pic_distribute(pic=np.random.randint(1,256,(8, 8)), dist_length=9, min_V
 
 
 
-def show_Pic(pic_list, pic_order='12', pic_str=[], save_pic=False, path_save='', title='title', figure=(16, 9)):
+def show_Pic(pic_list, pic_order='12', pic_str=[], path_save='', title='title', figure=(16, 9), show=True):
     from matplotlib import pyplot as plt
     os.environ["KMP_DUPLICATE_LIB_OK"] = 'TRUE'
     plt.rcParams['font.family'] = 'SimHei'
+    # """配置Matplotlib支持中文显示"""
+    # if os.name == 'nt':  # Windows
+    #     plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei']
+    # else:  # Mac/Linux
+    #     plt.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei', 'Heiti TC']
+    # plt.rcParams['axes.unicode_minus'] = False
 
     if len(pic_order) != 2:
         print('pic order error:{}'.format(pic_order))
@@ -144,17 +151,19 @@ def show_Pic(pic_list, pic_order='12', pic_str=[], save_pic=False, path_save='',
         if pic_temp.shape[-1] == 3:
             ax.imshow(pic_temp.astype(np.uint8))
         else:
-            ax.imshow(pic_temp.astype(np.uint8), cmap='hot')
-            # ax.imshow(pic_list[i], cmap='afmhot')
-            # ax.imshow(pic_list[i], cmap='gist_heat')
+            # ax.imshow(pic_temp.astype(np.uint8), cmap='hot')
+            # ax.imshow(pic_temp.astype(np.uint8), cmap='afmhot')
+            # ax.imshow(pic_temp.astype(np.uint8), cmap='gist_heat')
+            ax.imshow(pic_temp.astype(np.uint8))
 
-    if save_pic:
-        if path_save == '':
-            plt.savefig('temp.png')
-        else:
-            plt.savefig(path_save)
+
     plt.tight_layout()
-    plt.show()
+    if path_save == '':
+        pass
+    else:
+        plt.savefig(path_save)
+    if show:
+        plt.show()
     plt.close()
 
 
