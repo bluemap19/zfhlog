@@ -43,7 +43,7 @@ if __name__ == '__main__':
         print('IMAGE_GREY shape :{} and set depth shape:{},resolution is {}, depth from {} to {}'.format(IMAGE_GREY.shape, DEPTH_TEMP.shape, depth_resolution, depth_start, depth_end))
 
         # 这个很重要，如果选的区域较大，就会有比较大的噪声影响，比较小的话，拟合又容易不准
-        # IMAGE_GREY = IMAGE_GREY[:, width//7*3:-width//7*3]
+        # IMAGE_GREY = IMAGE_GREY[:, width//15*7:-width//15*7]
         IMAGE_GREY = IMAGE_GREY[:, width//3:width//3*2]
         DF_GREY = pd.DataFrame(np.hstack([DEPTH_TEMP, IMAGE_GREY]))
         target_index = IMAGE_GREY.shape[1]//2 + 1
@@ -52,8 +52,9 @@ if __name__ == '__main__':
             index_list = [0, target_index, j]
             df_depth_correct = DF_GREY.iloc[:, index_list]
             correct_shift, _ = denoising_depth_correction(df_depth_correct, depth_col=0, base_col=1, process_col=2,
-                                       search_range=0.5, coarse_res=0.02, fine_res=0.001,
-                                       denoise_window_point=7, denoise_polyorder=2, plot=False)
+                                       search_range=2, coarse_res=0.1, fine_res=0.0025,
+                                       # search_range=1, coarse_res=0.1, fine_res=0.005,
+                                       denoise_window_point=13, denoise_polyorder=2, plot=True)
             data_shift.append([j, correct_shift])
 
         # 这个是做PPT图用的东西
@@ -62,20 +63,22 @@ if __name__ == '__main__':
         # visualize_well_logs(DF_PLOT, depth_col = 'DEPTH', curve_cols = ['D1', 'D2', 'D3'], type_cols = [], figsize = (24, 10))
 
         data_shift = pd.DataFrame(data_shift, columns=['x', 'y'])
-        print("======== 过原点线性模型拟合 (y = ax) ========")
+        data_shift.iloc[:, 0] = data_shift.iloc[:, 0] - data_shift.shape[0]//2
+        print("使用data shift({})进行过原点线性模型拟合 (y = ax)".format(data_shift.shape))
         # model, slope, r2, inliers = robust_linear_fit(
         #     data_shift, x_col='x', y_col='y',
-        #     degree=1, fit_intercept=True,
+        #     degree=1, fit_intercept=False,
         #     min_samples=0.3, residual_threshold=0.02, plot=True
         # )
         model, slope, intercept, r2, inliers = robust_linear_fit(
             data_shift, x_col='x', y_col='y',
-            degree=1, fit_intercept=True,
-            min_samples=0.3, residual_threshold=0.0008, plot=False
+            degree=1, fit_intercept=False,
+            min_samples=0.5, residual_threshold=0.001, plot=True
         )
         slope/=depth_resolution
-        intercept/=intercept
+        intercept/=depth_resolution
         print('file {} use slope as y={}x + {}, it\'s r2 is {}'.format(path.split('\\')[-1].split('.')[0], slope, intercept, r2))
+        # slope += 0.35
 
         # 进行图像的拉伸、菱形拉伸
         IMAGE_SHEER = shear_image(IMAGE_SCALED, slope, intercept)

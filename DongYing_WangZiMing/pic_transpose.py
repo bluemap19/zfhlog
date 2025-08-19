@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 # 图像变化，根据图像的倾斜角度进行图像的拉伸
-def shear_image(image, slope, intercept):
+def shear_image(image, slope, intercept=0):
     """
     根据公式 y = slope * x 对图像进行拉伸变换
 

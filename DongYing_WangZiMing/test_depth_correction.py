@@ -143,10 +143,10 @@ def calculate_shift(depth, base, process, search_range, coarse_res, fine_res):
     coarse_shift = coarse_search(depth, base, process, search_range, coarse_res)
 
     # 2. 精搜索 - 高分辨率精确定位
-    fine_shift = fine_search(depth, base, process, coarse_shift, search_range / 2, fine_res)
+    fine_shift = fine_search(depth, base, process, coarse_shift, search_range / 5, fine_res)
 
     # 3. 优化验证
-    final_shift = optimize_shift(depth, base, process, fine_shift, search_range / 10)
+    final_shift = optimize_shift(depth, base, process, fine_shift, search_range / 20)
 
     return final_shift
 
@@ -156,7 +156,7 @@ def coarse_search(depth, base, process, search_range, resolution):
     粗搜索阶段 - 低分辨率快速定位大致偏移范围
     """
     best_shift = 0
-    best_corr = -np.inf
+    best_mae = np.inf
 
     # 创建搜索网格
     shifts = np.arange(-search_range, search_range + resolution, resolution)
@@ -165,29 +165,37 @@ def coarse_search(depth, base, process, search_range, resolution):
         # 应用偏移
         shifted_depth = depth + shift
 
-        # 插值到公共网格
-        base_interp = interp1d(depth, base, kind='linear', bounds_error=False, fill_value='extrapolate')
-        process_interp = interp1d(shifted_depth, process, kind='linear', bounds_error=False, fill_value='extrapolate')
-
-        # 公共深度网格
+        # 只保留相同深度范围的数据
         min_depth = max(depth.min(), shifted_depth.min())
         max_depth = min(depth.max(), shifted_depth.max())
 
         if min_depth >= max_depth:
             continue
 
+        # 创建公共深度网格
         common_depth = np.arange(min_depth, max_depth, resolution)
 
-        # 插值
+        # 插值到公共网格
+        base_interp = interp1d(depth, base, kind='linear', bounds_error=False, fill_value=np.nan)
+        process_interp = interp1d(shifted_depth, process, kind='linear', bounds_error=False, fill_value=np.nan)
+
         base_common = base_interp(common_depth)
         process_common = process_interp(common_depth)
 
-        # 计算相关系数
-        corr = np.corrcoef(base_common, process_common)[0, 1]
+        # 剔除NaN值
+        valid_mask = ~np.isnan(base_common) & ~np.isnan(process_common)
+        if np.sum(valid_mask) < 10:  # 有效点太少，跳过
+            continue
+
+        base_valid = base_common[valid_mask]
+        process_valid = process_common[valid_mask]
+
+        # 计算MAE (平均绝对误差)
+        mae = np.mean(np.abs(base_valid - process_valid)/(np.abs(base_valid)+0.01))
 
         # 更新最佳偏移
-        if corr > best_corr:
-            best_corr = corr
+        if mae < best_mae:
+            best_mae = mae
             best_shift = shift
 
     return best_shift
@@ -198,7 +206,7 @@ def fine_search(depth, base, process, center_shift, search_range, resolution):
     精搜索阶段 - 高分辨率精确定位偏移量
     """
     best_shift = center_shift
-    best_corr = -np.inf
+    best_mae = np.inf
 
     # 创建精细搜索网格
     shifts = np.arange(center_shift - search_range, center_shift + search_range + resolution, resolution)
@@ -207,29 +215,37 @@ def fine_search(depth, base, process, center_shift, search_range, resolution):
         # 应用偏移
         shifted_depth = depth + shift
 
-        # 插值到公共网格
-        base_interp = interp1d(depth, base, kind='linear', bounds_error=False, fill_value='extrapolate')
-        process_interp = interp1d(shifted_depth, process, kind='linear', bounds_error=False, fill_value='extrapolate')
-
-        # 公共深度网格
+        # 只保留相同深度范围的数据
         min_depth = max(depth.min(), shifted_depth.min())
         max_depth = min(depth.max(), shifted_depth.max())
 
         if min_depth >= max_depth:
             continue
 
+        # 创建公共深度网格
         common_depth = np.arange(min_depth, max_depth, resolution)
 
-        # 插值
+        # 插值到公共网格
+        base_interp = interp1d(depth, base, kind='linear', bounds_error=False, fill_value=np.nan)
+        process_interp = interp1d(shifted_depth, process, kind='linear', bounds_error=False, fill_value=np.nan)
+
         base_common = base_interp(common_depth)
         process_common = process_interp(common_depth)
 
-        # 计算相关系数
-        corr = np.corrcoef(base_common, process_common)[0, 1]
+        # 剔除NaN值
+        valid_mask = ~np.isnan(base_common) & ~np.isnan(process_common)
+        if np.sum(valid_mask) < 10:  # 有效点太少，跳过
+            continue
+
+        base_valid = base_common[valid_mask]
+        process_valid = process_common[valid_mask]
+
+        # 计算MAE (平均绝对误差)
+        mae = np.mean(np.abs(base_valid - process_valid)/(np.abs(base_valid)+0.01))
 
         # 更新最佳偏移
-        if corr > best_corr:
-            best_corr = corr
+        if mae < best_mae:
+            best_mae = mae
             best_shift = shift
 
     return best_shift
@@ -335,7 +351,7 @@ def test_denoising_depth_correction():
     base_curve = np.sin(depth * 0.01) + np.random.normal(0, 0.2, len(depth))
 
     # 创建偏移的processlog
-    true_shift = 17.0  # 真实偏移量
+    true_shift = 28.0  # 真实偏移量
     process_curve = np.sin((depth + true_shift) * 0.01) + np.random.normal(0, 0.2, len(depth))
 
     # 创建DataFrame
@@ -351,10 +367,10 @@ def test_denoising_depth_correction():
         depth_col='depth',
         base_col='baselog',
         process_col='processlog',
-        search_range=10.0,
+        search_range=30,
         coarse_res=1.0,
         fine_res=0.1,
-        denoise_window=5,
+        denoise_window_point=17,
         denoise_polyorder=2,
         plot=True
     )

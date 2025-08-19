@@ -65,16 +65,16 @@ def correct_res_by_tempture(df_source, df_config):
 
 # 示例使用
 if __name__ == "__main__":
-    path_temp_config = search_files_by_criteria(search_root=r'C:\Users\ZFH\Desktop\电阻率校正-07.31',
-                                            name_keywords=['config_tempture'], file_extensions=['xlsx', 'csv'])
-    path_temp_config = path_temp_config[0]
-    if path_temp_config.endswith('xlsx'):
-        df_config = pd.read_excel(path_temp_config, sheet_name=0, engine='openpyxl')
-    elif path_temp_config.endswith('csv'):
-        df_config = pd.read_csv(path_temp_config, encoding='gbk')
-    else:
-        print('Not find excel file')
-        exit(0)
+    # path_temp_config = search_files_by_criteria(search_root=r'C:\Users\ZFH\Desktop\电阻率校正-07.31',
+    #                                         name_keywords=['config_tempture'], file_extensions=['xlsx', 'csv'])
+    # path_temp_config = path_temp_config[0]
+    # if path_temp_config.endswith('xlsx'):
+    #     df_config = pd.read_excel(path_temp_config, sheet_name=0, engine='openpyxl')
+    # elif path_temp_config.endswith('csv'):
+    #     df_config = pd.read_csv(path_temp_config, encoding='gbk')
+    # else:
+    #     print('Not find excel file')
+    #     exit(0)
 
     file_name = r'原始数据-4.xlsx'
     path_measured_logging = r'C:\Users\ZFH\Desktop\电阻率校正-07.31' + '\\' + file_name
