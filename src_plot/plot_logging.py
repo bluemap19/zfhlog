@@ -65,7 +65,7 @@ def visualize_well_logs(data: pd.DataFrame,
     depth_min = data[depth_col].min()
     depth_max = data[depth_col].max()
     # 初始显示窗口大小为总深度的10%
-    window_size = (depth_max - depth_min) * 0.1
+    window_size = (depth_max - depth_min) * 1
     resolution = get_resolution_by_depth(data[depth_col].dropna().values)
 
     # 初始深度位置（显示窗口顶部）
@@ -90,7 +90,7 @@ def visualize_well_logs(data: pd.DataFrame,
     # 关键修改：创建窗口大小滑动条（取代深度位置滑动条）
     slider_bottle_adjustment = legend_adjustment
     slider_length_adjustment = 0.95 - slider_bottle_adjustment
-    ax_slider = plt.axes([0.965, slider_bottle_adjustment, 0.035, slider_length_adjustment])
+    ax_slider = plt.axes([0.96, slider_bottle_adjustment, 0.045, slider_length_adjustment])
 
     # 计算窗口大小范围
     min_window_size = (depth_max - depth_min) * 0.01  # 最小窗口大小（1%）
@@ -172,6 +172,9 @@ def visualize_well_logs(data: pd.DataFrame,
             ax.grid(True, alpha=0.3)
             min_temp = data[col].min() * 0.95 if data[col].min() >= 0 else data[col].min() * 1.05
             max_temp = data[col].max() * 1.05 if data[col].max() >= 0 else data[col].max() * 0.95
+            if abs(min_temp - max_temp) < 0.01:
+                min_temp -= 1
+                max_temp += 1
             ax.set_xlim(min_temp, max_temp)
             ax.invert_yaxis()
 

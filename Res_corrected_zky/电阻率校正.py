@@ -2,101 +2,27 @@ import csv
 from datetime import datetime
 import numpy as np
 import pandas as pd
+
+from Res_corrected_zky.Remove_temp_influence import offset_linear, offset_power
 from src_data_process.OLS1 import nonlinear_fitting
 from src_data_process.data_filter import remove_static_depth_data
-from src_data_process.resistivity_correction import scale_gaussian_by_config, scale_by_quantiles_old, scale_gaussian
+from src_data_process.resistivity_correction import scale_gaussian_by_config, scale_gaussian
 from src_file_op.dir_operation import search_files_by_criteria
 from scipy import stats
-
-# 温度影响偏移 指数函数
-def temp_influence_power_formula(df, A, B):
-    return (A*np.power(df['TEMP'], B) - df['R_temp'])/df['R_temp']
-
-
-# 温度影响偏移 线性函数
-def temp_influence_linear_formula(df, A, B):
-    return (A*df['TEMP'] + B - df['R_temp'])/df['R_temp']
-    # return (A*df['TEMP'] + B - df['R_temp'])/(df['R_temp']*df['TEMP'])
-    # return (A*np.power(df['TEMP'], B) - df['R_temp'])
-
-# 偏移量剔除
-def offset_linear(df):
-    fit_result = nonlinear_fitting(df, temp_influence_linear_formula, initial_guess=(200, -5000),
-                                   bounds=([0.1, -np.inf], [350, np.inf]))
-    A, B = fit_result.x
-    df['R_temp_sub'] = df['R_temp'] - A * df['TEMP'] - B
-    print(f"Linear formular success as: A = {A:.4f}, B = {B:.4f}, 残差平方和: {fit_result.cost:.4f}")
-    return df
-
-# 偏移量剔除
-def offset_power(df):
-    # A:[0.2, 5], B:[1.5, 3]
-    fit_result = nonlinear_fitting(df, temp_influence_power_formula, initial_guess=(0.5, 2.5), bounds=([0.2, 0.003], [200, 30]))
-    # fit_result = nonlinear_fitting(df, temp_influence_power_formula, initial_guess=(0.5, 2.5), bounds=([0.2, 1.5], [5, 3]))
-    A, B = fit_result.x
-    df['R_temp_sub'] = df['R_temp'] / (A * np.power(df['TEMP'], B))
-    print(f"Power formular success as: A = {A:.4f}, B = {B:.4f}, 残差平方和: {fit_result.cost:.4f}")
-    return df
-
-
-def calculate_r2(df, col_names):
-    """
-    计算DataFrame中两列数据的相关性系数R²
-
-    参数:
-    df (pd.DataFrame): 包含目标列的DataFrame
-    col_names (list): 包含两个列名的列表，例如['col1', 'col2']
-
-    返回:
-    r2 (float): 两列数据的R²值
-    """
-    # 验证输入参数
-    if not isinstance(df, pd.DataFrame):
-        raise TypeError("df必须是pandas DataFrame")
-
-    if not isinstance(col_names, list) or len(col_names) != 2:
-        raise ValueError("col_names必须是包含两个列名的列表")
-
-    # 检查列是否存在
-    for col in col_names:
-        if col not in df.columns:
-            raise ValueError(f"列 '{col}' 不在DataFrame中")
-
-    # 提取目标列数据
-    x = df[col_names[0]].astype(float)
-    y = df[col_names[1]].astype(float)
-
-    # 处理缺失值（删除有NaN的行）
-    mask = ~(x.isna() | y.isna())
-    x_clean = x[mask]
-    y_clean = y[mask]
-
-    # 检查是否有足够的数据点
-    n = len(x_clean)
-    if n < 3:
-        raise ValueError(f"有效数据点不足({n})，无法计算相关性")
-
-    # 计算皮尔逊相关系数
-    r, p_value = stats.pearsonr(x_clean, y_clean)
-
-    # 计算R²值
-    r2 = r ** 2
-
-    return r2
 
 
 def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
     # 确保输入包含所需列
     if PRED_GAUSS_SETTING:
-        required_cols = ['R_temp', 'TEMP', 'R_gauss']
+        required_cols = ['R_measured', 'TEMP', 'R_gauss']
     else:
-        required_cols = ['R_temp', 'TEMP', 'R_real', 'R_gauss']
+        required_cols = ['R_measured', 'TEMP', 'R_real', 'R_gauss']
     assert all(col in df.columns for col in required_cols), "DataFrame缺少必要列"
 
-    # 执行拟合,先尝试 幂函数R_temp' = A * TEMP^B，再尝试 线性函数 R_temp' = A * TEMP + B
+    # 执行拟合,先尝试 幂函数R_measured' = A * TEMP^B，再尝试 线性函数 R_measured' = A * TEMP + B
     if offset_function.lower() == 'linear':
         try:
-            df = offset_linear(df)
+            df = offset_linear(df, LOG_USE=False)
         except Exception as e:
             print(f"Method power failed: {str(e)}, now try linear formula")
             df = offset_power(df)
@@ -121,7 +47,7 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear'):
 
 
 
-
+# 逐窗口进行拟合，逐窗口进行量级调整
 if __name__ == '__main__':
     # path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\25.06.29\UPDATE-13',
     path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\坨128-侧48-实测',
@@ -135,12 +61,12 @@ if __name__ == '__main__':
     column_mapping = {
         '#DEPTH':'DEPTH',
         'TEMP':'TEMP',
-        'ResFar':'R_temp',
+        'ResFar':'R_measured',
         'RT':'R_real',
     }
     column_mapping_inverted = {value: key for key, value in column_mapping.items()}
     df.rename(columns=column_mapping, inplace=True)
-    print(df[['DEPTH', 'TEMP', 'R_temp']].describe())
+    print(df[['DEPTH', 'TEMP', 'R_measured']].describe())
     df['R_temp_sub'] = 0
     df['R_gauss'] = 0
 

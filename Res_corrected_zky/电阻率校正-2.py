@@ -1,62 +1,12 @@
 import csv
 from datetime import datetime
-
 import numpy as np
 import pandas as pd
-
 from src_data_process.OLS1 import nonlinear_fitting
 from src_data_process.data_filter import remove_static_depth_data
 from src_data_process.resistivity_correction import scale_gaussian, scale_gaussian_by_config
 from src_file_op.dir_operation import search_files_by_criteria
-from Remove_temp_influence import correction_by_tempture
-
-
-# 温度影响偏移指数
-def temp_influence_power_formula(df, A, B):
-    return (A*np.power(df['TEMP'], B) - df['R_temp'])/df['R_temp']
-    # return (A*np.power(df['TEMP'], B) - df['R_temp'])/(df['R_temp']*df['TEMP'])
-    # return (A*np.power(df['TEMP'], B) - df['R_temp'])
-def temp_influence_log_power_formula(df, A, B):
-    return (A*np.power(df['TEMP'], B) - np.log(df['R_temp']))/np.log(df['R_temp'])
-
-
-# 温度影响偏移指数
-def temp_influence_linear_formula(df, A, B):
-    return (A*df['TEMP'] + B - df['R_temp'])/df['R_temp']
-    # return (A*df['TEMP'] + B - df['R_temp'])/(df['R_temp']*df['TEMP'])
-    # return (A*np.power(df['TEMP'], B) - df['R_temp'])
-def temp_influence_log_linear_formula(df, A, B):
-    return (A*df['TEMP'] + B - np.log(df['R_temp']))/np.log(df['R_temp'])
-
-def offset_linear(df, LOG_USE):
-    if LOG_USE:
-        fit_result = nonlinear_fitting(df, temp_influence_log_linear_formula, initial_guess=(200, -5000),
-                                   bounds=([-np.inf, -np.inf], [np.inf, np.inf]))
-        A, B = fit_result.x
-        df['R_temp_sub'] = np.log(df['R_temp']) - A * df['TEMP'] - B
-    else:
-        fit_result = nonlinear_fitting(df, temp_influence_linear_formula, initial_guess=(200, -5000),
-                                   bounds=([50, -np.inf], [350, np.inf]))
-        A, B = fit_result.x
-        df['R_temp_sub'] = df['R_temp'] - A * df['TEMP'] - B
-    print(f"Linear formular success as: A = {A:.4f}, B = {B:.4f}, 残差平方和: {fit_result.cost:.4f}")
-    return df
-
-def offset_power(df, LOG_USE):
-    if LOG_USE:
-        # A:[0.2, 5], B:[1.5, 3]
-        fit_result = nonlinear_fitting(df, temp_influence_log_power_formula, initial_guess=(0.5, 2.5), bounds=([0.2, 1.5], [5, 3]))
-        # fit_result = nonlinear_fitting(df, temp_influence_power_formula, initial_guess=(0.5, 2.5), bounds=([0.2, 1.5], [5, 3]))
-        A, B = fit_result.x
-        df['R_temp_sub'] = np.log(df['R_temp']) - A * np.power(df['TEMP'], B)
-    else:
-        # A:[0.2, 5], B:[1.5, 3]
-        fit_result = nonlinear_fitting(df, temp_influence_power_formula, initial_guess=(0.5, 2.5), bounds=([0.2, 1.5], [5, 3]))
-        # fit_result = nonlinear_fitting(df, temp_influence_power_formula, initial_guess=(0.5, 2.5), bounds=([0.2, 1.5], [5, 3]))
-        A, B = fit_result.x
-        df['R_temp_sub'] = df['R_temp'] - A * np.power(df['TEMP'], B)
-    print(f"Power formular success as: A = {A:.4f}, B = {B:.4f}, 残差平方和: {fit_result.cost:.4f}")
-    return df
+from Remove_temp_influence import correction_by_tempture, offset_linear, offset_power
 
 
 def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear', LOG_USE=False):
@@ -86,11 +36,6 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear', LOG_USE=Fals
         except Exception as e:
             print(f"Method power failed: {str(e)}, now try linear formula")
 
-
-
-    # print(f"状态: {fit_result.message}")
-    # plot_dataframe(df, 'R_temp_sub', 'R_real', title=None, X_ticks=None, Y_ticks=None, figure_type='scatter')
-
     if PRED_GAUSS_SETTING:
         if LOG_USE:
             pass
@@ -104,23 +49,11 @@ def fit_r_pred(df, PRED_GAUSS_SETTING={}, offset_function='linear', LOG_USE=Fals
             df['R_gauss'] = np.power(np.e, df['R_gauss_log'])
         else:
             df['R_gauss'], stats  = scale_gaussian(source_data=df['R_temp_sub'], target_data=df['R_real'], return_stats=True)
-    # """"source_mean": μ_source,
-    # "source_std": σ_source,
-    # "source_range": get_range(source_data),
-    # "target_mean": μ_target,
-    # "target_std": σ_target,
-    # "target_range": get_range(target_data),
-    # "scaled_mean": np.median(scaled_data),
-    # "scaled_std": np.std(scaled_data),
-    # "scaled_range": get_range(scaled_data),"""
-
-    # source_mean, source_std = stats['source_mean'], stats['source_std']
-    # target_mean, target_std = stats['target_mean'], stats['target_std']
-    # print(f'data org as:μ {source_mean:.4f}, σ {source_std:.4f} --> data target:μ {target_mean:.4f}, σ {target_std:.4f}')
 
     return df
 
 
+# 根据临井测井资料进行直接的偏移，这个最邪修，放弃
 def log_predv_nearto_realv(df, window_length, SHIFT_RATIO=0.5, pred_col='R_gauss', real_col='R_real'):
     df_copy = df.copy()
 
@@ -133,32 +66,15 @@ def log_predv_nearto_realv(df, window_length, SHIFT_RATIO=0.5, pred_col='R_gauss
 
     return df_copy
 
-    pass
-
 
 
 if __name__ == '__main__':
-    # LG = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\20250623')
-    #
-    # print(LG.WELL_NAMES)
-    #
-    # path_logging = LG.search_target_file_path(well_name='02-第9井次  坨73-斜13井',
-    #                                           target_path_feature=['resampled'],
-    #                                           target_file_type='logging')
-    # print(f'current work path :{path_logging}')
-    #
-    # df = LG.get_well_data(well_name='02-第9井次  坨73-斜13井',
-    #                       file_path=path_logging,
-    #                       Norm=False)
-    # print(df.describe())
-    # print(list(df.columns))
-
     path_logging = search_files_by_criteria(search_root=r'C:\Users\Administrator\Desktop\25.06.29\UPDATE-3',
                                             name_keywords=['data_all_logging'], file_extensions=['csv'])
     print(path_logging)
     path_logging = path_logging[0]
     df = pd.read_csv(path_logging, encoding='gbk')
-    # print(df.describe())
+    print(df.describe())
     # exit(0)
 
     # 1. 定义映射关系（原始列名:新列名）
