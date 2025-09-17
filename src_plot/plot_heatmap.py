@@ -7,21 +7,32 @@ import seaborn as sns
 mpl.rcParams['font.sans-serif'] = ['Microsoft YaHei']
 plt.rcParams['axes.unicode_minus']=False
 
+
 def plot_clustering_heatmap(
         df: pd.DataFrame,
-        target_col: list = ['目标列'],
+        target_col: list = None,  # 修改默认值为 None
         y_label: str = '数据',
         title: str = "Clustering Algorithm Accuracy Distribution",
         condition_formatter: Optional[Callable] = None,
         figsize: tuple = (10, 6),
         cmap: str = "YlGnBu",
         font_scale: float = 1.0,
-        figure: Optional[plt.Figure] = None  # 新增参数，用于接收外部figure
+        figure: Optional[plt.Figure] = None
 ) -> plt.Axes:
     """生成dataframe准确率分布热力图接口"""
     # 参数校验
     if not isinstance(df, pd.DataFrame):
         raise TypeError("输入必须为Pandas DataFrame")
+
+    # 设置默认 target_col
+    if target_col is None:
+        # 默认选择除索引外的所有列
+        target_col = [col for col in df.columns if col != '窗长']
+
+    # 检查列是否存在
+    missing_cols = [col for col in target_col if col not in df.columns]
+    if missing_cols:
+        raise ValueError(f"以下列不存在: {', '.join(missing_cols)}")
 
     # 创建画布（使用传入的figure或新建）
     if figure is None:
@@ -34,7 +45,7 @@ def plot_clustering_heatmap(
 
     # 生成热力图核心逻辑
     heatmap = sns.heatmap(
-        df[target_col],
+        df[target_col],  # 使用有效的列
         annot=True,
         fmt=".2f",
         cmap=cmap,
@@ -56,10 +67,11 @@ def plot_clustering_heatmap(
     if condition_formatter:
         y_labels = [condition_formatter(i) for i in df.index]
     else:
-        y_labels = [f"{i}" for i in df.窗长]
+        # 使用索引作为标签
+        y_labels = [str(i) for i in df.index]
 
     x_labels = list(df[target_col].columns)
-    heatmap.set_yticklabels(y_labels, rotation=45)
+    heatmap.set_yticklabels(y_labels, rotation=0)  # 水平显示标签
     heatmap.set_xticklabels(x_labels, rotation=45, ha='right')
 
     # 优化布局

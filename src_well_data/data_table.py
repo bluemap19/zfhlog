@@ -7,7 +7,7 @@ from src_table.table_process import table_2_to_3, get_replace_dict, table_3_to_2
 
 
 class data_table:
-    def __init__(self, path='', well_name='', resolution=-1):
+    def __init__(self, path='', well_name='', resolution=0.0025):
         self._table_2 = pd.DataFrame()
         self._table_2_replaced = pd.DataFrame()
         self._table_3 = pd.DataFrame()
@@ -39,28 +39,20 @@ class data_table:
                 try:
                     self._data = pd.read_excel(file_path, sheet_name=table_name)
                 except Exception as e:
-                    print('文件读取失败', e)
-                    self._data = pd.DataFrame()
-            # 读取完表格数据之后，先对replace_dict进行赋值
-            if not self._data.empty:
-                try:
-                    self._replace_dict_local = get_replace_dict(self._data.iloc[:, -1].values)
-                except Exception as e:
-                    print('file path:{}, as exception:{}'.format(self._file_path, e))
-                    exit(0)
+                    warnings.warn('xlsx表格数据读取失败,报错{}，直接读取表格数据的第一个表格'.format(e))
+                    self._data = pd.read_excel(file_path, sheet_name=0)
 
             if TYPE2:
                 self._table_2 = self._data
-                if self._table_2.shape[1] != 2:
-                    warnings.warn('table file is not 2 cols', DeprecationWarning)
+                self.check_table_2()
             if TYPE3:
                 self._table_3 = self._data
-                if self._table_3.shape[1] != 3:
-                    warnings.warn('table file is not 2 cols', DeprecationWarning)
+                self.check_table_3()
             else:
                 if self._data.shape[1] == 2:
                     # 表格 2 初始化
                     self._table_2 = self._data
+                    self.check_table_2()
                     # 分辨率初始化
                     self._table_resolution = get_resolution_by_depth(self._table_2.iloc[:, 0].values)
                     # 表格2 转 表格3
@@ -68,6 +60,7 @@ class data_table:
                 elif self._data.shape[1] == 3:
                     # 表格3初始化
                     self._table_3 = self._data
+                    self.check_table_3()
                     # 分辨率初始化
                     if self._table_resolution < 0:
                         self._table_resolution = 0.1
@@ -75,11 +68,71 @@ class data_table:
                     # 表格3 转 表格2
                     self.table_3_to_2()
                 else:
-                    print('ALARM TABLE　FORMAT:{},{}'.format(self._data.columns, self._data.shape))
+                    print('\033[31m' + 'ALARM TABLE　FORMAT AS:{},{}, YOU MUST ALTER IT AS (DEP_START-DEP_END-TYPE) or (DEPTH-TYPE)'.format(self._data.columns, self._data.shape) + '\033[0m')
+                    print(self._data)
                     self._table_3 = self._data
+                    self.check_table_3()
+
+            # 读取完表格数据之后，先对 replace_dict 进行赋值
+            if not self._data.empty:
+                try:
+                    self._replace_dict_local = get_replace_dict(self._data.iloc[:, -1].values)
+                except Exception as e:
+                    print('\033[31m' + 'file path:{}, as exception:{}'.format(self._file_path, e) + '\033[0m')
+                    exit(0)
         else:
             pass
 
+    # 对table2进行详细的数据格式检查
+    def check_table_2(self):
+        if self._table_2.empty:
+            print('\033[31m' + 'table file is not empty' + '\033[0m')
+
+        if self._table_2.shape[1] != 2:
+            print('\033[31m' + 'table file is not legal 2 cols:{}'.format(self._table_2.columns) + '\033[0m')
+
+        # 检查整个 self._table_2 是否有空值
+        has_nulls = self._table_2.isnull().values.any()
+        if has_nulls:
+            null_counts = self._table_2.isnull().sum()
+            print('\033[31m' + f"self._table_2 包含空值:\n{null_counts}\n直接丢弃相应空数据" + '\033[0m')
+            self._table_2 = self._table_2.dropna(how='all').reset_index(drop=True)
+        for i in range(self._table_2.shape[0]):
+            if i != 0:
+                depth_last = self._table_2.iloc[i-1, 0]
+                depth_now = self._table_2.iloc[i, 0]
+                if depth_last >= depth_now:
+                    print('\033[31m' + 'error depth setting in table:{} in depth:{} & {}'.format(self._file_path, depth_last, depth_now) + '\033[0m')
+
+
+    # 对table3进行详细的数据格式检查
+    def check_table_3(self):
+        if self._table_3.empty:
+            print('\033[31m' + 'table file is not empty' + '\033[0m')
+
+        if self._table_3.shape[1] != 3:
+            print('\033[31m' + 'table file is not legal 3 cols:{}'.format(self._table_3.columns) + '\033[0m')
+
+        # 检查整个 self._table_3 是否有空值
+        has_nulls = self._table_3.isnull().values.any()
+        if has_nulls:
+            null_counts = self._table_3.isnull().sum()
+            print('\033[31m' + f"self._table_3 包含空值: \n{null_counts}\n直接丢弃相应空数据" + '\033[0m')
+            self._table_3 = self._table_3.dropna(how='all').reset_index(drop=True)
+        for i in range(self._table_3.shape[0]):
+            if i != 0:
+                depth_1 = self._table_3.iloc[i-1, 0]
+                depth_2 = self._table_3.iloc[i-1, 1]
+                depth_3 = self._table_3.iloc[i, 0]
+                depth_4 = self._table_3.iloc[i, 1]
+                if depth_1 >= depth_2:
+                    print('\033[31m' + 'error depth setting in table:{} in depth:{} & {}'.format(self._file_path, depth_1, depth_2) + '\033[0m')
+                if depth_3 >= depth_4:
+                    print('\033[31m' + 'error depth setting in table:{} in depth:{} & {}'.format(self._file_path, depth_3, depth_4) + '\033[0m')
+                if depth_3 < depth_2:
+                    print('\033[31m' + 'error depth setting in table:{} in depth:{} & {}'.format(self._file_path, depth_3, depth_4) + '\033[0m')
+
+    # 表格3转2
     def table_2_to_3(self):
         if self._table_3.shape[0] == 0:
             cols_temp = ['Depth_start', 'Depth_end', 'Type']
@@ -87,6 +140,7 @@ class data_table:
             table_3_temp = table_2_to_3(self._table_2.values)
             self._table_3 = pd.DataFrame(table_3_temp, columns=cols_temp)
 
+    # 表格2转3
     def table_3_to_2(self, resolution=-1):
         if resolution < 0:
             resolution = self._table_resolution
@@ -94,7 +148,8 @@ class data_table:
             table_2_temp = table_3_to_2(self._table_3.values, step=resolution)
             cols_temp = ['Depth', 'Type']
             self._table_2 = pd.DataFrame(table_2_temp, columns=cols_temp)
-
+        else:
+            return
 
     def get_table_3(self, curve_names=[]):
         if self._table_3.shape[0] == 0:
@@ -158,7 +213,8 @@ class data_table:
         # print(self.table_3)
 
 if __name__ == '__main__':
-    test_table = data_table(path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\城96\城96__LITHO_TYPE.csv', well_name='城96')
+    test_table = data_table(path=r'F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv', well_name='城96')
+    # test_table = data_table(path=r'F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分原始数据.csv', well_name='城96')
 
     print(test_table.get_table_3().describe())
     print(test_table.get_table_2().describe())

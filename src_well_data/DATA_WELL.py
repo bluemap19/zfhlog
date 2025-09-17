@@ -1,22 +1,22 @@
 import os
 from datetime import datetime
-
 import numpy as np
 import pandas as pd
 from src_file_op.dir_operation import search_files_by_criteria, search_target_path
 from src_logging.curve_preprocess import get_resolution_by_depth, data_combine_new, data_combine_table2col
 from src_well_data.data_logging import data_logging
 from src_well_data.data_table import data_table
+from src_well_data.data_FMI import data_FMI
 
 
-class WELL:
+class DATA_WELL:
     def __init__(self, path_folder='', WELL_NAME=''):
-        # 初始化四种类型数据（测井数据、电成像数据、核磁数据、表格分类数据）的describe
-        # 存放格式为{logging_path1:describe_data1, logging_path2:describe_data2}
-        self.describe_logging = {}
-        self.describe_FMI = {}
-        self.describe_NMR = {}
-        self.describe_table = {}
+        # # 初始化四种类型数据（测井数据、电成像数据、核磁数据、表格分类数据）的describe
+        # # 存放格式为{logging_path1:describe_data1, logging_path2:describe_data2}
+        # self.describe_logging = {}
+        # self.describe_FMI = {}
+        # self.describe_NMR = {}
+        # self.describe_table = {}
 
         # 初始化四种类型数据（测井数据、电成像数据、核磁数据、表格分类数据）的 数据实体存放，默认保存成{路径：dataframe}的字典格式
         # 存放格式为{logging_path1:dataframe1, logging_path2:dataframe2}
@@ -25,6 +25,10 @@ class WELL:
         self.FMI_dict = {}
         self.NMR_dict = {}
 
+        # 初始化每一个path对应的dataframe对应的header表头，即曲线名称{路径：[depth, GR, DEN, CNL]}的字典格式，这个是保存所有的文件表头
+        self.curve_names = {}
+        # 初始化每一个path对应的dataframe对应的目标文件header表头，即曲线名称{路径：[depth, GR, DEN]}的字典格式，这个保存的是所有文件的目标表头
+        self.curve_names_target = {}
         # 初始化 测井数据+表格数据 的保存，依旧是{路径：dataframe}的字典格式保存
         self.logging_table = {}
 
@@ -33,10 +37,7 @@ class WELL:
 
         # 初始化井名所在的路径
         self.well_path = path_folder
-        # 初始化每一个path对应的dataframe对应的header表头，即曲线名称{路径：[depth, GR, DEN, CNL]}的字典格式，这个是保存所有的文件表头
-        self.curve_names = {}
-        # 初始化每一个path对应的dataframe对应的目标文件header表头，即曲线名称{路径：[depth, GR, DEN]}的字典格式，这个保存的是所有文件的目标表头
-        self.curve_names_target = {}
+
         # 如果没有传入井名，那么就默认取路径最后一个文件夹的名字作为井名称
         if WELL_NAME == '':
             self.WELL_NAME = path_folder.split('/')[-1].split('\\')[-1].split('.')[0]
@@ -44,7 +45,7 @@ class WELL:
             self.WELL_NAME = WELL_NAME
 
         # 配置四种格式文件的关键字，分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据路径关键词NMR
-        self.file_charter_dict = {'logging':['logging'], 'FMI':['FMI_dyna', 'FMI_stat'], 'NMR':['NMR'], 'table':['LITHO_TYPE']} # 保存目标文件关键字,分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据NMR
+        self.file_charter_dict = {'logging':['logging'], 'FMI_DYNA':['DYNA'], 'FMI_STAT':['STAT'], 'NMR':['NMR'], 'table':['LITHO_TYPE']} # 保存目标文件关键字,分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据NMR
         # 保存目标文件路径,分别存放 测井数据文件路径键logging，表格数据路径键table，电成像数据路径键FMI， 核磁数据路径键NMR
         # 存放格式为{logging:[logging_path1, logging_path2], table:[table_path1, table_path2], FMI:[FMI_path1, FMI_path2], NMR:[NMR_path1, NMR_path2]}
         self.file_path_dict = {}
@@ -59,9 +60,6 @@ class WELL:
         # 搜寻测井数据所在文件
         file_list = search_files_by_criteria(self.well_path, name_keywords=self.file_charter_dict['logging'], file_extensions=['.xlsx', '.csv'])
         if len(file_list) == 0:
-            file_list = search_files_by_criteria(self.well_path, name_keywords=['Logging_ALL'], file_extensions=['.xlsx', '.csv'])
-
-        if len(file_list) == 0:
             print('No logging files found,in path:{}, by charter:{} {}'.format(self.well_path, self.WELL_NAME, self.file_charter_dict['logging']))
             self.file_path_dict['logging'] = []
         if len(file_list) >= 1:
@@ -70,9 +68,6 @@ class WELL:
 
         # 搜寻表格数据所在文件
         file_list = search_files_by_criteria(self.well_path, name_keywords=self.file_charter_dict['table'], file_extensions=['.xlsx', '.csv'])
-        if len(file_list) == 0:
-            file_list = search_files_by_criteria(self.well_path, name_keywords=['_LITHO_TYPE'], file_extensions=['.xlsx', '.csv'])
-
         if len(file_list) >= 1:
             print('successed searching table file as:{}'.format(file_list))
             self.file_path_dict['table'] = file_list
@@ -80,8 +75,26 @@ class WELL:
             print('No table file found,in path:{}, by charter:{}'.format(self.well_path, self.file_charter_dict['table']))
             self.file_path_dict['table'] = []
 
+        # 搜索电成像图像数据
+        file_list_fmi_dyna = search_files_by_criteria(self.well_path, name_keywords=self.file_charter_dict['FMI_DYNA'], file_extensions=['.txt'], all_keywords=False)
+        if len(file_list_fmi_dyna) >= 1:
+            print('successed searching fmi dyna file as:{}'.format(file_list_fmi_dyna))
+            self.file_path_dict['fmi_dyna'] = file_list_fmi_dyna
+        else:
+            print('No fmi dyna file found,in path:{}, by charter:{}'.format(self.well_path, self.file_charter_dict['FMI_DYNA']))
+            self.file_path_dict['fmi_dyna'] = []
+
+        file_list_fmi_stat = search_files_by_criteria(self.well_path, name_keywords=self.file_charter_dict['FMI_STAT'], file_extensions=['.txt'], all_keywords=False)
+        if len(file_list_fmi_stat) >= 1:
+            print('successed searching fmi_stat file as:{}'.format(file_list_fmi_stat))
+            self.file_path_dict['fmi_stat'] = file_list_fmi_stat
+        else:
+            print('No fmi stat file found,in path:{}, by charter:{}'.format(self.well_path, self.file_charter_dict['FMI_STAT']))
+            self.file_path_dict['fmi_stat'] = []
+
     # 测井文件读取，data_logging类型的初始化
-    def data_logging_init(self, path):
+    def data_logging_init(self, path=''):
+        # 数据体字典self.logging_dict已经存放了，初始化了，则直接返回就行了
         if path in list(self.logging_dict.keys()):
             return
         else:
@@ -97,7 +110,8 @@ class WELL:
             # self.resolution[path] = logging_data._resolution
 
     # 表格资料读取，table_data类型的初始化
-    def data_table_init(self, path):
+    def data_table_init(self, path=''):
+        # 数据体字典self.table_dict已经存放了，初始化了，则直接返回就行了
         if path in list(self.table_dict.keys()):
             return
         else:
@@ -109,6 +123,19 @@ class WELL:
             if table_data._table_resolution < 0:
                 table_data.set_table_resolution(self.get_logging_resolution())
             self.table_dict[path] = table_data
+
+    def data_FMI_init(self, path_stat='', path_dyna=''):
+        # 数据体字典 self.FMI_dict 已经存放了，初始化了，则直接返回就行了
+        if path_stat in list(self.FMI_dict.keys()):
+            return
+        else:
+            if path_dyna == '':
+                path_dyna = self.file_path_dict['fmi_dyna'][0]
+            if path_stat == '':
+                path_stat = self.file_path_dict['fmi_stat'][0]
+            fmi_data = data_FMI(path_dyna=path_dyna, path_stat=path_stat)
+            fmi_data.read_data()
+            self.FMI_dict[path_stat] = fmi_data
 
     def check_logging_files(self, well_key=''):
         # 如果测井资料为空，初始化测井资料
@@ -132,6 +159,7 @@ class WELL:
             # 还没有初始化，则重新进行初始化
             if well_key in self.file_path_dict['logging']:
                 self.data_logging_init(path=well_key)
+
 
     # 获取测井数据，根据文件路径+曲线名称，返回dataframe格式的测井数据
     def get_logging_data(self, well_key='', curve_names=[], Norm=False):
@@ -232,7 +260,6 @@ class WELL:
 
         # # print(table_value)
         # print(table_value.shape, logging_value.shape)
-
         logging_columns = list(logging_value.columns)
         table_columns = list(table_value.columns)
         array_table = table_value.values.astype(np.float32)
@@ -249,57 +276,57 @@ class WELL:
         well_value = self.get_default_dict(self.logging_dict, well_key)
         well_value._data_with_type = df
 
-    # dataframe文件保存
-    def data_save(self, path='', new_sheet_name='', df=pd.DataFrame()):
-        if path.endswith('.xlsx'):
-            if df.shape[0] > 0:
-                # 检查文件是否已存在
-                try:
-                    # 加载现有工作簿获取所有Sheet名称
-                    with pd.ExcelFile(path) as xls:
-                        existing_sheets = xls.sheet_names
-
-                    # 生成唯一Sheet名称（避免覆盖）
-                    if new_sheet_name in existing_sheets:
-                        i = 1
-                        while f"{new_sheet_name}_{i}" in existing_sheets:
-                            i += 1
-                        new_sheet_name = f"{new_sheet_name}_{i}"
-
-                    # 以追加模式写入
-                    with pd.ExcelWriter(path, engine='openpyxl', mode='a') as writer:
-                        df.to_excel(writer, sheet_name=new_sheet_name, index=False)
-
-                    print(f"成功添加新Sheet: [{new_sheet_name}]")
-
-                except FileNotFoundError:
-                    # 如果文件不存在则新建
-                    df.to_excel(path, sheet_name=new_sheet_name, index=False)
-                    print(f"新建文件并添加Sheet: [{new_sheet_name}]")
-
-        elif path.endswith('.csv'):
-            if df.shape[0] > 0:
-                if os.path.exists(path):
-                    print(f"已存在文件，未保存：{path}")
-                else:
-                    df.to_csv( path,
-                               index=False,  # 不保存索引
-                               encoding='utf-8-sig',  # 支持中文的编码格式
-                               sep=',',  # CSV分隔符
-                               quotechar='"',  # 文本限定符
-                               float_format='%.4f')  # 浮点数格式
-                    print(f"已创建新文件：{path}")
-
-    def save_logging_data(self):
-        # 保存的是保留了Type类型的测井数据
-        for key in list(self.logging_dict.keys()):
-            data_logging = self.get_default_dict(self.logging_dict, key)
-            if data_logging._data.shape[0] > 0:
-                # 原始测井数据的合并
-                self.data_save(path=key, new_sheet_name=self.WELL_NAME, df=data_logging._data)
-                path_combined = self.generate_new_path(key)
-                # 筛选测井数据＋分类数据的合并
-                self.data_save(path=path_combined, new_sheet_name=self.WELL_NAME, df=data_logging._data_with_type)
+    # # dataframe文件保存
+    # def data_save(self, path='', new_sheet_name='', df=pd.DataFrame()):
+    #     if path.endswith('.xlsx'):
+    #         if df.shape[0] > 0:
+    #             # 检查文件是否已存在
+    #             try:
+    #                 # 加载现有工作簿获取所有Sheet名称
+    #                 with pd.ExcelFile(path) as xls:
+    #                     existing_sheets = xls.sheet_names
+    #
+    #                 # 生成唯一Sheet名称（避免覆盖）
+    #                 if new_sheet_name in existing_sheets:
+    #                     i = 1
+    #                     while f"{new_sheet_name}_{i}" in existing_sheets:
+    #                         i += 1
+    #                     new_sheet_name = f"{new_sheet_name}_{i}"
+    #
+    #                 # 以追加模式写入
+    #                 with pd.ExcelWriter(path, engine='openpyxl', mode='a') as writer:
+    #                     df.to_excel(writer, sheet_name=new_sheet_name, index=False)
+    #
+    #                 print(f"成功添加新Sheet: [{new_sheet_name}]")
+    #
+    #             except FileNotFoundError:
+    #                 # 如果文件不存在则新建
+    #                 df.to_excel(path, sheet_name=new_sheet_name, index=False)
+    #                 print(f"新建文件并添加Sheet: [{new_sheet_name}]")
+    #
+    #     elif path.endswith('.csv'):
+    #         if df.shape[0] > 0:
+    #             if os.path.exists(path):
+    #                 print(f"已存在文件，未保存：{path}")
+    #             else:
+    #                 df.to_csv( path,
+    #                            index=False,  # 不保存索引
+    #                            encoding='utf-8-sig',  # 支持中文的编码格式
+    #                            sep=',',  # CSV分隔符
+    #                            quotechar='"',  # 文本限定符
+    #                            float_format='%.4f')  # 浮点数格式
+    #                 print(f"已创建新文件：{path}")
+    #
+    # def save_logging_data(self):
+    #     # 保存的是保留了Type类型的测井数据
+    #     for key in list(self.logging_dict.keys()):
+    #         data_logging = self.get_default_dict(self.logging_dict, key)
+    #         if data_logging._data.shape[0] > 0:
+    #             # 原始测井数据的合并
+    #             self.data_save(path=key, new_sheet_name=self.WELL_NAME, df=data_logging._data)
+    #             path_combined = self.generate_new_path(key)
+    #             # 筛选测井数据＋分类数据的合并
+    #             self.data_save(path=path_combined, new_sheet_name=self.WELL_NAME, df=data_logging._data_with_type)
 
     # 根据目标字符串特征，搜索符合目标特征的文件，读取文件并返回目标数据
     def search_logging_data_by_charters(self, target_path_feature=[], target_file_type='logging', curve_names=[], Norm=False):
@@ -392,41 +419,52 @@ class WELL:
     def get_table_path_list(self):
         return self.file_path_dict['table']
     def get_FMI_path_list(self):
-        return self.file_path_dict['FMI']
+        return self.file_path_dict['fmi_stat'], self.file_path_dict['fmi_dyna']
     def get_NMR_path_list(self):
         return self.file_path_dict['NMR']
 
+    def get_fmi_texture(self, Mode='ALL', texture_config={'level':16, 'distance':[2,4], 'angles':[0, np.pi/4, np.pi/2, np.pi*3/4], 'windows_length':80, 'windows_step':5}):
 
+
+        pass
 
 if __name__ == '__main__':
-    WELL_TEST = WELL(path_folder=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\城96', WELL_NAME='城96')
+    # WELL_TEST = WELL_Class(path_folder=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\城96', WELL_NAME='城96')
+    #
+    # print(WELL_TEST.file_path_dict)
+    #
+    # # print(WELL_TEST.get_type_3())
+    # print(WELL_TEST.get_type_2())
+    #
+    # # print(WELL_TEST.get_type_3_replaced())
+    # print(WELL_TEST.get_type_2_replaced())
+    #
+    # path_logging = WELL_TEST.search_data_path_by_charters(target_path_feature=['logging_', '_110_'], target_file_type='logging')
+    # path_table = WELL_TEST.search_data_path_by_charters(target_path_feature=['litho_'], target_file_type='table')
+    # print(path_logging)
+    # print(path_table)
+    #
+    # WELL_TEST.reset_table_replace_dict(path_table,
+    #                                    replace_dict={'中GR长英黏土质': 0, '中低GR长英质': 1, '富有机质长英质页岩': 2,
+    #                                                  '富有机质黏土质页岩': 4, '高GR富凝灰长英质': 3})
+    # print('current table {} replace dict is :{}'.format(path_table, WELL_TEST.get_table_replace_dict(table_key=path_table)))
+    #
+    # # print(WELL_TEST.get_type_3_replaced())
+    # print(WELL_TEST.get_type_2_replaced())
+    #
+    # data_combined = WELL_TEST.combine_logging_table(well_key=path_logging, table_key=path_table, Norm=False,
+    #                                                 replace_dict={'中GR长英黏土质': 0, '中低GR长英质': 1,
+    #                                                               '富有机质长英质页岩': 2, '富有机质黏土质页岩': 2, '高GR富凝灰长英质': 1})
+    # print(data_combined.describe())
+    #
+    # data_logging = WELL_TEST.get_logging_data(well_key=path_logging, curve_names=[])
+    # print(data_logging)
 
+    WELL_TEST = DATA_WELL(path_folder=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\城96', WELL_NAME='城96')
     print(WELL_TEST.file_path_dict)
-
-    # print(WELL_TEST.get_type_3())
-    print(WELL_TEST.get_type_2())
-
-    # print(WELL_TEST.get_type_3_replaced())
-    print(WELL_TEST.get_type_2_replaced())
-
-    path_logging = WELL_TEST.search_data_path_by_charters(target_path_feature=['logging_', '_110_'], target_file_type='logging')
-    path_table = WELL_TEST.search_data_path_by_charters(target_path_feature=['litho_'], target_file_type='table')
-    print(path_logging)
-    print(path_table)
-
-    WELL_TEST.reset_table_replace_dict(path_table,
-                                       replace_dict={'中GR长英黏土质': 0, '中低GR长英质': 1, '富有机质长英质页岩': 2,
-                                                     '富有机质黏土质页岩': 4, '高GR富凝灰长英质': 3})
-    print('current table {} replace dict is :{}'.format(path_table, WELL_TEST.get_table_replace_dict(table_key=path_table)))
-
-    # print(WELL_TEST.get_type_3_replaced())
-    print(WELL_TEST.get_type_2_replaced())
-
-    data_combined = WELL_TEST.combine_logging_table(well_key=path_logging, table_key=path_table, Norm=False,
-                                                    replace_dict={'中GR长英黏土质': 0, '中低GR长英质': 1,
-                                                                  '富有机质长英质页岩': 2, '富有机质黏土质页岩': 2, '高GR富凝灰长英质': 1})
-    print(data_combined.describe())
-
-    data_logging = WELL_TEST.get_logging_data(well_key=path_logging, curve_names=[])
-    print(data_logging)
-
+    print(WELL_TEST.get_FMI_path_list())
+    print(WELL_TEST.get_type_3(table_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv'))
+    print(WELL_TEST.get_type_2(table_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv'))
+    print(WELL_TEST.combine_logging_table(well_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\Texture_File\\城96_texture_logging_Texture_ALL_80_5.csv', curve_names_logging=[],
+                                    table_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv', curve_names_table=[],
+                                    replace_dict={}, new_col='', Norm=False))

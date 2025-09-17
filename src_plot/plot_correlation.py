@@ -41,6 +41,9 @@ def plot_correlation_analyze(df, col_names, method='pearson', figsize=(14, 14),
     if missing_cols:
         raise ValueError(f"以下列在DataFrame中不存在: {missing_cols}")
 
+    # df 进行Peason相关性系数计算，必须全部使用float格式的数据，这里把类别转换成float类型数据
+    df[col_names] = df[col_names].astype(float)
+
     # 设置中文字体
     chinese_font_prop = set_ultimate_chinese_font()
 

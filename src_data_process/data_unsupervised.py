@@ -43,9 +43,9 @@ class ClusteringPipeline:
         # 加载预训练模型
         if saved_model_path:
             self.load_model(saved_model_path)
-        # else:
-        #     # 初始化算法配置
-        #     self._init_algorithm_config(None)
+        else:
+            # 初始化算法配置
+            self._init_algorithm_config(None)
 
     def _default_algorithm_config(self):
         """ 默认算法配置（只保存配置，不初始化实例）"""

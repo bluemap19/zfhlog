@@ -151,10 +151,10 @@ def show_Pic(pic_list, pic_order='12', pic_str=[], path_save='', title='title', 
         if pic_temp.shape[-1] == 3:
             ax.imshow(pic_temp.astype(np.uint8))
         else:
-            # ax.imshow(pic_temp.astype(np.uint8), cmap='hot')
+            ax.imshow(pic_temp.astype(np.uint8), cmap='hot')
             # ax.imshow(pic_temp.astype(np.uint8), cmap='afmhot')
             # ax.imshow(pic_temp.astype(np.uint8), cmap='gist_heat')
-            ax.imshow(pic_temp.astype(np.uint8))
+            # ax.imshow(pic_temp.astype(np.uint8))
 
 
     plt.tight_layout()

@@ -170,8 +170,27 @@ def visualize_well_logs(data: pd.DataFrame,
 
             ax.set_title(col, fontsize=10, pad=5)
             ax.grid(True, alpha=0.3)
-            min_temp = data[col].min() * 0.95 if data[col].min() >= 0 else data[col].min() * 1.05
-            max_temp = data[col].max() * 1.05 if data[col].max() >= 0 else data[col].max() * 0.95
+
+            # 修改后的代码段
+            min_temp = data[col][(data[col] >= -99) & (data[col] <= 999)].min()
+            max_temp = data[col][(data[col] >= -99) & (data[col] <= 999)].max()
+
+            # 应用缩放比例
+            if min_temp >= 0:
+                min_temp *= 0.95  # 正值范围缩小5%
+            else:
+                min_temp *= 1.05  # 负值范围扩大5%
+
+            if max_temp >= 0:
+                max_temp *= 1.05  # 正值范围扩大5%
+            else:
+                max_temp *= 0.95  # 负值范围缩小5%
+
+            # 确保范围有效
+            if pd.isna(min_temp) or pd.isna(max_temp):
+                min_temp = data[col].min()
+                max_temp = data[col].max()
+
             if abs(min_temp - max_temp) < 0.01:
                 min_temp -= 1
                 max_temp += 1

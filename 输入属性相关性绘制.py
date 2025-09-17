@@ -1,4 +1,4 @@
-from src_data_process.data_correlation_analysis import random_forest_correlation_analysis
+from src_data_process.data_correlation_analysis_old import random_forest_correlation_analysis
 from src_plot.plot_correlation import plot_correlation_analyze
 from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 

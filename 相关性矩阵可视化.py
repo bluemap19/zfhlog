@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src_data_process.data_correlation_analysis import random_forest_correlation_analysis
+from src_data_process.data_correlation_analysis_old import random_forest_correlation_analysis
 from src_file_op.dir_operation import search_files_by_criteria
 from src_plot.plot_heatmap import plot_clustering_heatmap
 

@@ -3,7 +3,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from src_data_process.data_balanace import smart_balance_dataset
 from src_data_process.data_correlation_analysis_old import data_correction_analyse_by_tree
-from src_data_process.data_correlation_analysis import random_forest_correlation_analysis
+from src_data_process.data_correlation_analysis_old import random_forest_correlation_analysis
 from src_data_process.data_filter import pdnads_data_drop, pandas_data_filtration
 from src_data_process.data_supervised import supervised_classification, model_predict
 from src_plot.plot_heatmap import plot_clustering_heatmap

@@ -3,7 +3,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from src_data_process.data_balanace import smart_balance_dataset
 from src_data_process.data_correlation_analysis_old import data_correction_analyse_by_tree
-from src_data_process.data_correlation_analysis import random_forest_correlation_analysis
+from src_data_process.data_correlation_analysis_old import random_forest_correlation_analysis
 from src_data_process.data_filter import pdnads_data_drop, pandas_data_filtration
 from src_data_process.data_supervised import supervised_classification, model_predict
 from src_plot.plot_heatmap import plot_clustering_heatmap
@@ -12,7 +12,8 @@ from src_well_project.LOGGING_PROJECT import LOGGING_PROJECT
 
 
 if __name__ == '__main__':
-    path_project = r'C:\Users\ZFH\Documents\simu-result'
+    # path_project = r'C:\Users\ZFH\Documents\simu-result'
+    path_project = r'F:\电成像模拟结果'
     LG = LOGGING_PROJECT(project_path=path_project)
     print(LG.WELL_NAMES)
 
@@ -28,11 +29,11 @@ if __name__ == '__main__':
     Imp_windows_length_dict = {}  # 所有的Importance结果 字典    np.array([24,]) 24项纹理特征影响因子数组
     # 这三个字点都是字典含字典的格式,两个索引分别是 窗长-树个数
 
-    path_table_target = LG.search_target_file_path(well_name='simu2', target_path_feature=['LITHO_TYPE'], target_file_type='table')
-    print(LG.get_table_3_all_data(well_names=['simu2'], file_path={'simu2':path_table_target}))
-    print(LG.get_all_table_replace_dict())
+    path_table_target = LG.search_target_file_path(well_name='simu4', target_path_feature=['LITHO_TYPE'], target_file_type='table')
+    print(LG.get_table_3_all_data(well_names=['simu4'], file_path={'simu4':path_table_target}))
+    print(LG.get_all_table_replace_dict(well_names=['simu4']))
 
-    replace_dict = {'低阻多斑块': 0, '低阻少斑块': 1, '高阻多斑块': 2, '高阻少斑块': 3, '高阻层理': 4, '高阻纹理': 5, '低阻层理': 6, '低阻纹理': 7}
+    replace_dict = {'块状构造泥岩': 0, '富有机质富凝灰质页岩': 1, '富有机质粉砂级长英质页岩': 2, '沉凝灰岩': 3, '薄夹层砂岩': 4}
     COL_NAMES = [
                 'STAT_CON', 'STAT_DIS', 'STAT_HOM', 'STAT_ENG', 'STAT_COR', 'STAT_ASM', 'STAT_ENT', 'STAT_XY_CON',
                 'STAT_XY_DIS', 'STAT_XY_HOM', 'STAT_XY_ENG', 'STAT_XY_COR', 'STAT_XY_ASM', 'STAT_XY_ENT',
@@ -46,13 +47,13 @@ if __name__ == '__main__':
         ACC_tree_num_dict = {}
         AUC_tree_num_dict = {}
         Imp_tree_num_dict = {}
-        path_logging_target = LG.search_target_file_path(well_name='simu2', target_path_feature=['Texture_ALL', f'_{i}_5'], target_file_type='logging')
-        path_table_target = LG.search_target_file_path(well_name='simu2', target_path_feature=['LITHO_TYPE'], target_file_type='table')
+        path_logging_target = LG.search_target_file_path(well_name='simu4', target_path_feature=['Texture_ALL', f'_{i}_5'], target_file_type='logging')
+        path_table_target = LG.search_target_file_path(well_name='simu4', target_path_feature=['LITHO_TYPE'], target_file_type='table')
         print('get data from path:{}, get table from:{}'.format(path_logging_target, path_table_target))
 
-        data_input = LG.combined_all_logging_with_type(well_names=['simu2'],
-                                                       file_path_logging={'simu2': path_logging_target},
-                                                       file_path_table={'simu2': path_table_target},
+        data_input = LG.combined_all_logging_with_type(well_names=['simu4'],
+                                                       file_path_logging={'simu4': path_logging_target},
+                                                       file_path_table={'simu4': path_table_target},
                                                        replace_dict=replace_dict, type_new_col=TARGET_NAME[0],
                                                        curve_names_logging=COL_NAMES,
                                                        Norm=True)

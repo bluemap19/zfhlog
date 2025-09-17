@@ -123,7 +123,8 @@ def get_all_subfolder_paths(root_dir: Union[str, Path]) -> List[str]:
 def search_files_by_criteria(
         search_root: Union[str, Path],
         name_keywords: Iterable[str] = (),
-        file_extensions: Iterable[str] = ()
+        file_extensions: Iterable[str] = (),
+        all_keywords: bool = True,
 ) -> List[str]:
     """根据名称关键字和文件扩展名搜索文件
     Args:
@@ -160,18 +161,23 @@ def search_files_by_criteria(
             if path_obj.suffix.lstrip('.').lower() not in ext_set:
                 continue
 
-        # 检查名称关键字
+        # 检查名称关键字,首先判断是严格对照所有关键词，还是只对照其中一项关键词
         filename = path_obj.stem.lower()
-        contains_all_keywords = all(
-            keyword.lower() in filename
-            for keyword in name_keywords
-        )
+        if all_keywords:
+            contains_all_keywords = all(
+                keyword.lower() in filename
+                for keyword in name_keywords
+            )
+        else:
+            contains_all_keywords = any(
+                keyword.lower() in filename
+                for keyword in name_keywords
+            )
 
         if contains_all_keywords:
             matched_files.append(file_path)
 
     return sorted(matched_files)
-
 
 # 根据关键字list：target_path_feature=[]在文件路径list：path_list中进行搜索，只有满足所有target_path_feature的文件路径才能被筛选出来，筛选出所有的path并返回
 def search_target_path(path_list=[], target_path_feature=[]):

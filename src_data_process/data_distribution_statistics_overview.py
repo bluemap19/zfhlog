@@ -25,13 +25,35 @@ def data_overview(df: pd.DataFrame = pd.DataFrame(),
         raise ValueError("必须指定分析的特征列")
     if not target_col:
         raise ValueError("必须指定分类标签列")
-    if not target_col_dict:
-        print("警告：未提供分类标签映射字典，将使用原始编码")
-        target_col_dict = {k: str(k) for k in df[target_col].unique()}
-    if set(list(target_col_dict.keys())) != set(list(df[target_col].unique())):
+    # if not target_col_dict:
+    #     print("警告：未提供分类标签映射字典，将使用原始编码")
+    #     target_col_dict = {k: str(k) for k in df[target_col].unique()}
+    # if set(list(target_col_dict.keys())) != set(list(df[target_col].unique())):
+    #     print('target_col_dict 可叙述化词典设置错误')
+    #     print(list(target_col_dict.keys()), list(df[target_col].unique()))
+    #     raise ValueError("target_col_dict.key()必须等于input_names")
+    # 获取目标列的唯一值
+    unique_target_values = df[target_col].unique().astype(int)
+    # 修复检查逻辑：键应该与目标列的唯一值匹配
+    target_keys = set(target_col_dict.keys())
+    unique_target_set = set(unique_target_values)
+
+    # 检查是否所有目标值都有对应的键
+    if not target_keys.issubset(unique_target_set):
         print('target_col_dict 可叙述化词典设置错误')
-        print(list(target_col_dict.keys()), list(df[target_col].unique()))
-        raise ValueError("target_col_dict.key()必须等于input_names")
+        print(f"字典键: {list(target_col_dict.keys())}")
+        print(f"目标列唯一值: {list(unique_target_values)}")
+
+        # 找出缺失的键
+        missing_keys = unique_target_set - target_keys
+        print(f"缺失的键: {list(missing_keys)}")
+
+        # 找出多余的键
+        extra_keys = target_keys - unique_target_set
+        print(f"多余的键: {list(extra_keys)}")
+
+        raise ValueError("target_col_dict的键必须包含目标列的所有唯一值")
+
 
     # 2. 准备结果容器
     results = []

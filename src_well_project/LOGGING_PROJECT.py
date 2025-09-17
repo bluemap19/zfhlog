@@ -1,8 +1,9 @@
 import os
+import numpy as np
 import pandas as pd
 from src_file_op.dir_operation import get_all_subfolder_paths
 from src_table.table_process import get_replace_dict
-from src_well_data.DATA_WELL import WELL
+from src_well_data.DATA_WELL import DATA_WELL
 
 
 class LOGGING_PROJECT:
@@ -43,7 +44,7 @@ class LOGGING_PROJECT:
 
         # 根据self.WELL_PATH初始化所有的井信息，初始化所有的WELL()类Class
         for well_name in self.WELL_PATH.keys():
-            well_temp = WELL(path_folder=self.WELL_PATH[well_name], WELL_NAME=well_name)
+            well_temp = DATA_WELL(path_folder=self.WELL_PATH[well_name], WELL_NAME=well_name)
             self.well_logging_path_dict[well_name] = well_temp.get_logging_path_list()
             self.well_table_path_dict[well_name] = well_temp.get_table_path_list()
             # self.well_FMI_path_dict[well_name] = well_temp.get_FMI_path_list()
@@ -126,14 +127,14 @@ class LOGGING_PROJECT:
     def get_table_3_data_replaced(self, well_name='', file_path='', curve_names=[], replace_dict={}):
         if not replace_dict:
             replace_dict = self.replace_dict_all
-        well_data = self.get_default_dict(self.WELL_DATA, well_name)
-        data_logging_type = well_data.get_type_3_replaced
+        WELL_temp = self.get_default_dict(self.WELL_DATA, well_name)
+        data_logging_type = WELL_temp.get_type_3_replaced
         return data_logging_type
     def get_table_2_data_replaced(self, well_name='', file_path='', curve_names=[], replace_dict={}):
         if not replace_dict:
             replace_dict = self.replace_dict_all
-        well_data = self.get_default_dict(self.WELL_DATA, well_name)
-        data_logging_type = well_data.get_type_2_replaced
+        WELL_temp = self.get_default_dict(self.WELL_DATA, well_name)
+        data_logging_type = WELL_temp.get_type_2_replaced
         return data_logging_type
 
 
@@ -203,7 +204,7 @@ class LOGGING_PROJECT:
             WELL_TEMP.reset_table_replace_dict(table_key=well_names_key[well_name], replace_dict=dict, new_col=type_new_col)
 
 
-
+    # 合并
     def combined_all_logging_with_type(self, well_names=[], file_path_logging={}, file_path_table={}, curve_names_logging=[], curve_names_type=[], replace_dict={}, type_new_col='', Norm=False):
         """
         :param well_names:          list [] 井名列表
@@ -230,9 +231,9 @@ class LOGGING_PROJECT:
 
         data_logging_type_list = []
         for well_name in well_names:
-            well_data = self.get_default_dict(self.WELL_DATA, well_name)
+            WELL_temp = self.get_default_dict(self.WELL_DATA, well_name)
             print('current processing well data:{}'.format(well_name))
-            data_logging_type = well_data.combine_logging_table(well_key=file_path_logging[well_name],
+            data_logging_type = WELL_temp.combine_logging_table(well_key=file_path_logging[well_name],
                                                                 curve_names_logging=curve_names_logging,
                                                                 table_key=file_path_table[well_name],
                                                                 curve_names_table=curve_names_type,
@@ -243,11 +244,30 @@ class LOGGING_PROJECT:
         # print(data_final.head(10))
         return data_final
 
+    # 通过参数配置计算电成像纹理数据
+    def get_fmi_texture(self, well_names=['SIMU4'], file_path_logging={}, Mode='ALL', texture_config={'level':16, 'distance':[2,4], 'angles':[0, np.pi/4, np.pi/2, np.pi*3/4], 'windows_length':80, 'windows_step':5}):
+        if well_names == []:
+            well_names = self.WELL_NAMES
+        if not file_path_logging:
+            for well_name in well_names:
+                file_path_logging[well_name] = ''
+
+        data_texture_dict = {}
+        for well_name in well_names:
+            WELL_temp = self.get_default_dict(self.WELL_DATA, well_name)
+            print('current processing well data:{}'.format(well_name))
+            data_texture = WELL_temp.get_fmi_texture(Mode=Mode, texture_config=texture_config)
+            name_temp = well_name + '_' + Mode + '_texture'
+            data_texture_dict[name_temp] = data_texture
+            # print(data_logging_type.describe())
+
+        return data_texture_dict
+
 
 
 
 if __name__ == '__main__':
-    TEST_LOGGING_PROJECT = LOGGING_PROJECT(project_path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV')
+    TEST_LOGGING_PROJECT = LOGGING_PROJECT(project_path=r'F:\桌面\算法测试-长庆数据收集\logging_CSV')
 
     print(TEST_LOGGING_PROJECT.WELL_NAMES)
 

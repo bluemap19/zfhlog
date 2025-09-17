@@ -12,7 +12,7 @@ np.set_printoptions(precision=4, suppress=True)
 if __name__ == '__main__':
     # path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
     # path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
-    path_folder = r'E:\桌面\收集的成像特征数据集'
+    path_folder = r'F:\桌面\收集的成像特征数据集'
     list_path_texture = get_all_file_paths(path_folder)
 
     RADIA_STAT_MAX = np.array([12.2933, 1.9019, 0.965, 0.9353, 0.8958, 0.8747, 6.0645]) * 1.1
@@ -28,7 +28,6 @@ if __name__ == '__main__':
     RADIA_SUB_STAT_MIN = RADIA_SUB_STAT_MIN - np.abs(0.2 * RADIA_SUB_STAT_MIN)
     RADIA_SUB_DYNA_MIN = np.array([-18.549, -2.2455, 0.0376, 0.0066, 0.0725, 0.0012, -1.0267])
     RADIA_SUB_DYNA_MIN = RADIA_SUB_DYNA_MIN - np.abs(0.2 * RADIA_SUB_DYNA_MIN)
-
 
     GLCM_DYNA_LIST = []
     GLCM_STAT_LIST = []
@@ -59,7 +58,6 @@ if __name__ == '__main__':
             GLCM_DYNA_LIST.append(texture_average_dyna.ravel())
             GLCM_SUB_DYNA_LIST.append(texture_sub_dyna.ravel())
 
-
             GLCM_ALL_LIST.append(texture_average_stat)
             GLCM_ALL_LIST.append(texture_sub_stat)
             GLCM_ALL_LIST.append(texture_average_dyna)
@@ -69,29 +67,30 @@ if __name__ == '__main__':
             name_list.append([CHAR_TEMP, 'DYNA'])
             name_list.append([CHAR_TEMP, 'DYNA_SUB'])
 
-
-            IMG_LIST = [255-img_stat, glcm_map_average_stat, EMPTY_PIC, EMPTY_PIC, 255-img_dyna, glcm_map_average_dyna, EMPTY_PIC, EMPTY_PIC]
-            show_Pic(IMG_LIST, pic_order='18', figure=(42, 5), pic_str=['Img', 'GLCM_Mean', 'Radar', 'GLCM_X', 'Radar', 'GLCM_Y', 'Radar', 'Radar'], title='')
+            IMG_LIST = [255-img_stat, glcm_map_average_stat, 255-img_dyna, glcm_map_average_dyna]
+            # show_Pic(IMG_LIST, pic_order='81', figure=(5, 42), pic_str=['Img', 'GLCM_Mean', 'Radar', 'GLCM_X', 'Radar', 'GLCM_Y', 'Radar', 'Radar'], title='')
+            show_Pic(IMG_LIST, pic_order='41', figure=(3, 11), pic_str=['', '', '', '', '', '', '', ''], title='')
 
             RADAR_LIST = [(texture_average_stat.ravel() - RADIA_STAT_MIN) / (RADIA_STAT_MAX - RADIA_STAT_MIN),
                           (texture_sub_stat.ravel() - RADIA_SUB_STAT_MIN) / (RADIA_SUB_STAT_MAX - RADIA_SUB_STAT_MIN),
                           (texture_average_dyna.ravel() - RADIA_DYNA_MIN) / (RADIA_DYNA_MAX - RADIA_DYNA_MIN),
                           (texture_sub_dyna.ravel() - RADIA_SUB_DYNA_MIN) / (RADIA_SUB_DYNA_MAX - RADIA_SUB_DYNA_MIN)]
-            attributes = ['CON', 'DIS', 'HOM', 'ENG', 'COR', 'ASM', 'ENT']
-            sub_titles = ['MEAN', 'X', 'Y', 'SUB']
-            from matplotlib import pyplot as plt
 
-            fig2, axes2 = draw_radar_chart(
-                data_list=RADAR_LIST,
-                radar_str=attributes,
-                pic_order='14',
-                figure=(22, 5),
-                pic_str=sub_titles,
-                title='',
-                norm=True
-            )
-            plt.show()
-            # exit(0)
+            # attributes = ['CON', 'DIS', 'HOM', 'ENG', 'COR', 'ASM', 'ENT']
+            # # sub_titles = ['MEAN', 'X', 'Y', 'SUB']
+            # sub_titles = ['', '', '', '']
+            # from matplotlib import pyplot as plt
+            # fig2, axes2 = draw_radar_chart(
+            #     data_list=RADAR_LIST,
+            #     radar_str=attributes,
+            #     pic_order='41',
+            #     figure=(5, 24),
+            #     pic_str=sub_titles,
+            #     title='',
+            #     norm=True
+            # )
+            # plt.show()
+            # # exit(0)
 
     GLCM_STAT = np.array(GLCM_STAT_LIST)
     GLCM_SUB_STAT = np.array(GLCM_SUB_STAT_LIST)

@@ -11,7 +11,7 @@ np.set_printoptions(precision=4, suppress=True)
 if __name__ == '__main__':
     # path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
     # path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
-    path_folder = r'E:\桌面\收集的成像特征数据集'
+    path_folder = r'F:\桌面\收集的成像特征数据集'
     list_path_texture = get_all_file_paths(path_folder)
 
     RADIA_MAX = np.array([18.2128, 2.5686, 0.9731, 0.9448, 0.9388, 0.8927, 6.3658]) * 1.1
@@ -53,26 +53,29 @@ if __name__ == '__main__':
 
             # print(texture_sub.shape, texture_x.shape, texture_y.shape, glcm_map_x.shape, glcm_map_y.shape, texture_average.shape, glcm_map_average.shape)
 
-            IMG_LIST = [255-img_data, glcm_map_average, EMPTY_PIC, glcm_map_x, EMPTY_PIC, glcm_map_y, EMPTY_PIC, EMPTY_PIC]
-            show_Pic(IMG_LIST, pic_order='18', figure=(42, 5), pic_str=['Img', 'GLCM_Mean', 'Radar', 'GLCM_X', 'Radar', 'GLCM_Y', 'Radar', 'Radar'], title='')
+            # IMG_LIST = [255-img_data, glcm_map_x, glcm_map_y, glcm_map_average, EMPTY_PIC, EMPTY_PIC, EMPTY_PIC, EMPTY_PIC]
+            IMG_LIST = [255-img_data, glcm_map_x, glcm_map_y, glcm_map_average]
+            # show_Pic(IMG_LIST, pic_order='18', figure=(42, 5), pic_str=['Img', 'GLCM_X', 'GLCM_Y', 'GLCM_Mean', 'Radar', 'Radar', 'Radar_Mean', 'Radar_Sub'], title='')
+            show_Pic(IMG_LIST, pic_order='41', figure=(3, 10), pic_str=['', '', '', '', '', '', '', ''], title='')
 
-            RADAR_LIST = [(texture_average.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
-                          (texture_x.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
+            RADAR_LIST = [(texture_x.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
                           (texture_y.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
+                          (texture_average.ravel() - RADIA_MIN) / (RADIA_MAX - RADIA_MIN),
                           (texture_sub.ravel() - RADIA_SUB_MIN)/(RADIA_SUB_MAX - RADIA_SUB_MIN)]
             attributes = ['CON', 'DIS', 'HOM', 'ENG', 'COR', 'ASM', 'ENT']
-            sub_titles = ['MEAN', 'X', 'Y', 'SUB']
-            from matplotlib import pyplot as plt
-            fig2, axes2 = draw_radar_chart(
-                data_list=RADAR_LIST,
-                radar_str=attributes,
-                pic_order='14',
-                figure=(22, 5),
-                pic_str=sub_titles,
-                title='',
-                norm=True
-            )
-            plt.show()
+            # # sub_titles = ['X', 'Y', 'MEAN', 'SUB']
+            # sub_titles = ['', '', '', '', '']
+            # from matplotlib import pyplot as plt
+            # fig2, axes2 = draw_radar_chart(
+            #     data_list=RADAR_LIST,
+            #     radar_str=attributes,
+            #     pic_order='41',
+            #     figure=(5, 26),
+            #     pic_str=sub_titles,
+            #     title='',
+            #     norm=True
+            # )
+            # plt.show()
 
 
     GLCM_FEATURE_VS = np.array(GLCM_FEATURE_LIST_VS)

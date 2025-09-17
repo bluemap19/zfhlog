@@ -4,7 +4,7 @@ import pandas as pd
 from scipy.signal import find_peaks
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.ndimage import gaussian_filter1d
+from scipy.spatial import cKDTree
 from sklearn.decomposition import PCA
 # 对聚类结果进行画图
 from pylab import mpl
@@ -342,71 +342,138 @@ def data_combine_table3col(data_main, table_vice, drop=True):
     return np.array(data_final)
 
 
+# def data_combine_table2col(data_main, table_vice, drop=True):
+#     """
+#     数据合并
+#     :param data_main:主数据，为n行m列的测井数据，第一列为DEPTH列，必须连续且等差
+#     :param table_vice: 表格数据，解释结论n*2 必须遵循 [depth, Type]   Type必须为数字，否则会报错。
+#     :param drop:是否抛弃 解释结论表格没有的数据，True的话，就舍弃掉，数字的话，就用那个数字代替，False的话，就用-1代替
+#     :return: numpy.ndarray:合并后的测井数据
+#     """
+#     # 表格信息的审查，确保表格信息的合理可用
+#     for i in range(table_vice.shape[0]):
+#         if i>0:
+#             if table_vice[i-1, 0] > table_vice[i, 0]:
+#                 print('Error dep configuration:{}-->{}'.format(table_vice[i-1], table_vice[i]))
+#                 exit(0)
+#
+#     depth_table_resolution = get_resolution_by_depth(table_vice[:, 0])
+#     depth_resolution = get_resolution_by_depth(data_main[:, 0])
+#     # table_vice[:, 0].astype(np.float64)
+#
+#     data_final = []
+#     index_table_continue = 0
+#     combined_successfully = 0
+#     for i in range(data_main.shape[0]):
+#         depth = data_main[i, 0]
+#         flag = True
+#         for j in range(table_vice.shape[0]-index_table_continue):
+#             dep_table = float(table_vice[j+index_table_continue, 0])
+#             type = table_vice[j+index_table_continue, -1]
+#             if abs(depth-dep_table) < (depth_table_resolution/2+0.001):
+#                 data_final.append(np.append(data_main[i].ravel(), type))
+#                 index_table_continue = j+index_table_continue
+#                 combined_successfully += 1
+#                 flag = False
+#                 # index_table_continue = np.max(0, index_table_continue-1)
+#                 break
+#
+#         if flag == True:
+#             if drop == True:
+#                 pass
+#             else:
+#                 data_final.append(np.append(data_main[i].ravel(), np.nan))
+#
+#     data_final = np.array(data_final)
+#     # data_final[:, 0].astype(np.float64)
+#
+#     # print('data logging:[{},{}] ＋ data table:[{},{}] --> data combined :{},[{}, {}]， '
+#     #       'with resolution {}, success count:{}'.format(data_main[0, 0], data_main[-1, 0], table_vice.ravel()[0], table_vice.ravel()[-1],
+#     #                                                     data_final.shape, data_final[0, 0], data_final[-1, 0], depth_resolution, combined_successfully))
+#
+#     # 直接获取首行第一列和末行第一列的值
+#     print('data logging:[{:.2f},{:.2f}] ＋ data table:[{:.2f},{:.2f}] --> data combined :{},[{:.2f}, {:.2f}], '
+#           'with resolution {:.4f}, success count:{}'.format(
+#         data_main[0, 0],
+#         data_main[-1, 0],
+#         table_vice[0, 0],  # 第一行的第一列
+#         table_vice[-1, 0],  # 最后一行的第一列
+#         data_final.shape,
+#         data_final[0, 0],
+#         data_final[-1, 0],
+#         depth_resolution,
+#         combined_successfully
+#     ))
+#
+#     # print('success combine table info:{}'.format(combined_successfully))
+#     return data_final
+
+
+
 def data_combine_table2col(data_main, table_vice, drop=True):
     """
-    数据合并
-    :param data_main:主数据，为n行m列的测井数据，n*m 必须连续且等差
-    :param table_vice: 表格数据，一般为解释结论n*2 必须遵循 [depth, Type]   Type必须为数字，否则会报错。
-    :param drop:是否抛弃 解释结论表格没有的数据，True的话，就舍弃掉，数字的话，就用那个数字代替，False的话，就用-1代替
-    :return: numpy.ndarray:合并后的测井数据
+    高效数据合并函数 - 优化版
+
+    使用KD树进行最近邻搜索，大幅提升合并效率
+
+    :param data_main: 主数据，n行m列的测井数据，第一列为DEPTH列
+    :param table_vice: 表格数据，n*2数组，格式为[depth, Type]
+    :param drop: 是否抛弃无匹配的数据
+    :return: 合并后的测井数据数组
     """
-    # 表格信息的审查，确保表格信息的合理可用
-    for i in range(table_vice.shape[0]):
-        if i>0:
-            if table_vice[i-1, 0] > table_vice[i, 0]:
-                print('Error dep configuration:{}-->{}'.format(table_vice[i-1], table_vice[i]))
-                exit(0)
+    # 1. 数据预处理和验证
+    # 检查表格数据是否有序
+    if not np.all(np.diff(table_vice[:, 0]) >= 0):
+        print("警告：表格深度数据未排序，正在自动排序...")
+        sorted_indices = np.argsort(table_vice[:, 0])
+        table_vice = table_vice[sorted_indices]
 
-    depth_table_resolution = get_resolution_by_depth(table_vice[:, 0])
-    depth_resolution = get_resolution_by_depth(data_main[:, 0])
-    # table_vice[:, 0].astype(np.float64)
+    # 提取深度列
+    main_depths = data_main[:, 0].astype(np.float64)
+    table_depths = table_vice[:, 0].astype(np.float64)
+    table_types = table_vice[:, -1].astype(np.float64)
 
-    data_final = []
-    index_table_continue = 0
-    combined_successfully = 0
-    for i in range(data_main.shape[0]):
-        depth = data_main[i, 0]
-        flag = True
-        for j in range(table_vice.shape[0]-index_table_continue):
-            dep_table = float(table_vice[j+index_table_continue, 0])
-            type = table_vice[j+index_table_continue, -1]
-            if abs(depth-dep_table) < (depth_table_resolution/2+0.001):
-                data_final.append(np.append(data_main[i].ravel(), type))
-                index_table_continue = j+index_table_continue
-                combined_successfully += 1
-                flag = False
-                # index_table_continue = np.max(0, index_table_continue-1)
-                break
+    # 2. 计算分辨率
+    depth_table_resolution = get_resolution_by_depth(table_depths)
+    depth_resolution = get_resolution_by_depth(main_depths)
+    tolerance = depth_table_resolution / 2 + 0.001
 
-        if flag == True:
-            if drop == True:
-                pass
-            else:
-                data_final.append(np.append(data_main[i].ravel(), np.nan))
+    # 3. 使用KD树进行高效最近邻搜索
+    # 创建KD树索引
+    tree = cKDTree(table_depths.reshape(-1, 1))
 
-    data_final = np.array(data_final)
-    # data_final[:, 0].astype(np.float64)
+    # 查询最近邻
+    distances, indices = tree.query(main_depths.reshape(-1, 1), k=1, distance_upper_bound=tolerance)
 
-    # print('data logging:[{},{}] ＋ data table:[{},{}] --> data combined :{},[{}, {}]， '
-    #       'with resolution {}, success count:{}'.format(data_main[0, 0], data_main[-1, 0], table_vice.ravel()[0], table_vice.ravel()[-1],
-    #                                                     data_final.shape, data_final[0, 0], data_final[-1, 0], depth_resolution, combined_successfully))
+    # 4. 创建合并结果数组
+    # 初始化结果数组
+    if drop:
+        # 只保留有匹配的行
+        valid_mask = distances <= tolerance
+        valid_count = np.sum(valid_mask)
+        result = np.empty((valid_count, data_main.shape[1] + 1))
 
-    # # 直接获取首行第一列和末行第一列的值
-    # print('data logging:[{:.2f},{:.2f}] ＋ data table:[{:.2f},{:.2f}] --> data combined :{},[{:.2f}, {:.2f}], '
-    #       'with resolution {:.4f}, success count:{}'.format(
-    #     data_main[0, 0],
-    #     data_main[-1, 0],
-    #     table_vice[0, 0],  # 第一行的第一列
-    #     table_vice[-1, 0],  # 最后一行的第一列
-    #     data_final.shape,
-    #     data_final[0, 0],
-    #     data_final[-1, 0],
-    #     depth_resolution,
-    #     combined_successfully
-    # ))
+        # 填充有效数据
+        result[:, :-1] = data_main[valid_mask]
+        result[:, -1] = table_types[indices[valid_mask]]
+    else:
+        # 保留所有行，无匹配的填充NaN
+        result = np.empty((data_main.shape[0], data_main.shape[1] + 1))
+        result[:, :-1] = data_main
 
-    # print('success combine table info:{}'.format(combined_successfully))
-    return data_final
+        # 填充匹配的类型值
+        valid_mask = distances <= tolerance
+        result[:, -1] = np.where(valid_mask, table_types[indices], np.nan)
+
+    # 5. 输出合并统计信息
+    valid_count = np.sum(distances <= tolerance)
+    print(f'数据合并统计: 主数据行数={data_main.shape[0]}, 表格数据行数={table_vice.shape[0]}')
+    print(f'成功匹配行数={valid_count} ({valid_count / data_main.shape[0] * 100:.2f}%)')
+    print(f'主数据深度范围=[{main_depths.min():.2f}, {main_depths.max():.2f}]')
+    print(f'表格数据深度范围=[{table_depths.min():.2f}, {table_depths.max():.2f}]')
+    print(f'合并后数据行数={result.shape[0]}')
+
+    return result
 
 
 

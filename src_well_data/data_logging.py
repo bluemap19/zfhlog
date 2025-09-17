@@ -1,8 +1,8 @@
 import os
 import sys
-
+import numpy as np
 import pandas as pd
-from src_logging.curve_preprocess import get_resolution_by_depth, data_Normalized
+from src_logging.curve_preprocess import get_resolution_by_depth, data_Normalized, find_mode
 import xml.etree.ElementTree as ET
 
 class data_logging:
@@ -35,27 +35,40 @@ class data_logging:
             # table_name = self._logging_name
             table_name = 0
 
-        if file_path.endswith('.csv'):
-            try:
-                self._data = pd.read_csv(file_path)
-            except Exception as e:
-                print('文件读取失败', e)
-                self._data = pd.DataFrame()
-        elif file_path.endswith('.xlsx'):
-            try:
-                self._data = pd.read_excel(file_path, sheet_name=table_name)
-            except Exception as e:
-                print('文件读取失败', e)
-                self._data = pd.DataFrame()
+        if os.path.isfile(file_path):
+            if file_path.endswith('.csv'):
+                try:
+                    self._data = pd.read_csv(file_path)
+                except Exception as e:
+                    print('文件读取失败', e)
+                    self._data = pd.DataFrame()
+            elif file_path.endswith('.xlsx'):
+                try:
+                    self._data = pd.read_excel(file_path, sheet_name=table_name)
+                except Exception as e:
+                    print('文件读取失败', e)
+                    self._data = pd.DataFrame()
+            elif file_path.endswith('.txt'):
+                try:
+                    self._data = np.loadtxt(file_path, skiprows=8)
+                    self._data = pd.DataFrame(self._data, columns=['待修改数据', '待修改数据'])
+                except Exception as e:
+                    print('文件读取失败', e)
+                    self._data = pd.DataFrame()
+        else:
+            print('IT IS NOT A FILE:{}'.format(file_path))
+            exit(0)
 
         # 分辨率初始化
-        self._resolution = get_resolution_by_depth(self._data.iloc[:, 0].values)
+        self._resolution = self.get_logging_resolution()
         # 表格头初始化
         self._curve_names = list(self._data.columns)
 
-    def save_data(self, file_path='', table_name=''):
+    def save_data(self, file_path=''):
+        if file_path == '':
+            file_path = self._file_path
 
-        pass
+        self._data.to_csv(file_path, index=False)
 
     # 数据直接读取
     def get_data(self, curve_names=[], depth_delete=[]):
@@ -126,12 +139,13 @@ class data_logging:
 
         return input_mapping_cols
 
+    # 读取 该表下所有的曲线名称
     def get_curve_names(self):
         if len(self._curve_names) == 0:
             self.read_data()
         return self._curve_names
 
-
+    # 这个读取的是，曲线名称映射
     def load_config(self, config_name):
         print(sys.argv[0], os.getcwd())
         """从 XML 文件加载配置"""
@@ -164,11 +178,20 @@ class data_logging:
 
         return data_dict
 
+    # 计算logging_data的分辨率
+    def get_logging_resolution(self):
+        depth_array = self._data.iloc[:, 0].values
+        depth_array = depth_array.ravel()
+        depth_diff = np.diff(depth_array)
+        depth_resolution = find_mode(depth_diff)
+        return depth_resolution
 
 
-# if __name__ == '__main__':
-#     test_data = data_logging(path=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\城96\城96_logging_data.csv', well_name='城96')
-#
-#     col_names = ['GRC', 'CN', 'DT', 'Sp']
-#     print(test_data.get_data(curve_names=col_names).describe())
-#     print(test_data.mapping_dict)
+if __name__ == '__main__':
+    test_data = data_logging(path=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\城96\A-城96_logging_data.csv', well_name='城96')
+
+    col_names = ['GRC', 'CN', 'DT', 'Sp']
+    print(test_data.get_data(curve_names=col_names).describe())
+    print(test_data.mapping_dict)
+    print(test_data.get_curve_names())
+    print(test_data._resolution)
