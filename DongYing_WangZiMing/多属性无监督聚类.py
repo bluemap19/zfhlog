@@ -233,7 +233,6 @@ if __name__ == '__main__':
     print(DF_O.describe())
 
     print(DF_O.columns)     # ['井号', '深度', 'TVD', 'GR10', '_CAL', '_SPDH', '_RD', '_RS', '_DEN', '_AC', '_CNL', '_TOC', '_POR', '_P10', '_P25', '_P75', '_P90', '_P50', '_TOC实测', '_实测S2', '_实测S1', '_GRAY', '_QF', '_CLA', '_岩相1', '_岩相7']
-
     ATTRIBUTE_INPUT = ['GR10', '_RD', '_RS', '_DEN', '_AC', '_CNL', '_TOC', '_P10', '_P50', '_P90', '_QF', '_CLA', '_GRAY']
 
     # 1. 数据预处理
@@ -278,6 +277,6 @@ if __name__ == '__main__':
         figsize=(22, 10)
     )
 
-# # 保存结果
+    # # 保存结果
     # DF_O.to_excel(PATH_FOLDER+'\SOM聚类结果.xlsx', index=False)
 

@@ -67,6 +67,16 @@ class data_table:
                         print('reset table resolution as 0.1m')
                     # 表格3 转 表格2
                     self.table_3_to_2()
+                elif self._data.shape[1] >= 4:
+                    # 表格4初始化
+                    self._table_3 = self._data.iloc[:, 1:4]
+                    self.check_table_3()
+                    # 分辨率初始化
+                    if self._table_resolution < 0:
+                        self._table_resolution = 0.1
+                        print('reset table resolution as 0.1m')
+                    # 表格3 转 表格2
+                    self.table_3_to_2()
                 else:
                     print('\033[31m' + 'ALARM TABLE　FORMAT AS:{},{}, YOU MUST ALTER IT AS (DEP_START-DEP_END-TYPE) or (DEPTH-TYPE)'.format(self._data.columns, self._data.shape) + '\033[0m')
                     print(self._data)

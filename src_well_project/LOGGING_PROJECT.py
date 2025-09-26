@@ -181,8 +181,10 @@ class LOGGING_PROJECT:
         return data_vertical_combined
 
     # 获得所有数据的合并table3，并利用table3计算replace_dict
-    def get_all_table_replace_dict(self, well_names=[], file_path={}, curve_names=[], Type_col_name='Type'):
+    def get_all_table_replace_dict(self, well_names=[], file_path={}, curve_names=[], Type_col_name=''):
         table_value = self.get_table_3_all_data(well_names=well_names, file_path=file_path, curve_names=curve_names)
+        if Type_col_name == '':
+            Type_col_name = list(table_value.columns)[-2]       # -1为井名列，get_table_3_all_data函数会为table的最后一列加一个井名列
         self.replace_dict_all = get_replace_dict(table_value[Type_col_name])
         return self.replace_dict_all
 

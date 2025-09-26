@@ -1148,16 +1148,16 @@ def get_glcm_Features(IMG_gray, level=16, distance=[1, 2], angles=[0, np.pi / 4,
 
     # 总的glcm平均矩阵
     glcm_mean = [glcm.reshape((level, level, -1)).mean(axis=2)]         # 16*16*1
-    # 图像 不同距离 下的glcm灰度共生矩阵glcm
+    # 图像  不同距离 下的glcm灰度共生矩阵glcm
     for i in range(glcm.shape[2]):                                      # 16*16*2
         glcm_mean.append(glcm[:, :, i, :].mean(axis=2))
     # 图像 不同方向 上的图形glcm灰度矩阵
     for i in range(glcm.shape[3]):                                      # 16*16*4
         glcm_mean.append(glcm[:, :, :, i].mean(axis=2))
 
-    glcm_mean = np.array(glcm_mean)                                                                   # ---> 7*16*16
-    glcm_mean = glcm_mean.transpose(1, 2, 0)                    # 转换形状7*16*16--->16*16*7
-    glcm_mean = np.expand_dims(glcm_mean, axis=-1)              # 转换形状16*16*7--->16*16*7*1
+    glcm_mean = np.array(glcm_mean)                                     # ---> 7*16*16
+    glcm_mean = glcm_mean.transpose(1, 2, 0)                            # 转换形状7*16*16--->16*16*7
+    glcm_mean = np.expand_dims(glcm_mean, axis=-1)                      # 转换形状16*16*7--->16*16*7*1
 
     # 得到共生矩阵的特征统计值，官方文档
     # http://tonysyu.github.io/scikit-image/api/skimage.feature.html#skimage.feature.greycoprops

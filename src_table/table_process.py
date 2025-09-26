@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-
 def get_replace_dict(df):
     """
     :param df:只能是类别信息，DF或者是array
@@ -34,11 +33,11 @@ def get_replace_dict(df):
 def table_3_to_2(np_layer_3, step=-1):
     if step <= 0:
         print('set right well resolution : {}'.format(step))
-        return np.array([])
+        exit(0)
 
     if np_layer_3.shape[1] != 3:
         print('label shape error:{}, please give label as n*3 shape...'.format(np_layer_3.shape))
-        return np.array([])
+        exit(0)
 
     np_layer_2 = []
     for i in range(np_layer_3.shape[0]):
@@ -46,10 +45,10 @@ def table_3_to_2(np_layer_3, step=-1):
         if i>0:
             if float(np_layer_3[i][0]) < float(np_layer_3[i - 1][1]):
                 print('Error layer config:{}-->{}'.format(np_layer_3[i - 1], np_layer_3[i]))
-                return np.array([])
+                exit(0)
         if float(np_layer_3[i][0]) > float(np_layer_3[i][1]):
             print('Error layer config:{}'.format(np_layer_3[i]))
-            return np.array([])
+            exit(0)
 
         dep_start, dep_end, type = np_layer_3[i]
         num_dep = int((float(dep_end) - float(dep_start)) / step) + 1
@@ -82,12 +81,10 @@ def table_2_to_3(np_layer_2):
             index_list.append(i)
     index_list.append(np_layer_2.shape[0] - 1)
 
-
     depth_min = np_layer_2[0][0]
     depth_max = np_layer_2[-1][0]
     depth_step = (depth_max - depth_min)/(np_layer_2.shape[0] - 1)
     # print('depth_step is {}'.format(depth_step), index_list)
-
 
     # 通过index信息，收集类型发生变化的深度信息及类型信息
     np_layer_3 = []

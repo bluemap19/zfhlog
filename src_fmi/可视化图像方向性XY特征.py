@@ -9,9 +9,8 @@ from src_plot.plot_radar import draw_radar_chart
 np.set_printoptions(precision=4, suppress=True)
 
 if __name__ == '__main__':
-    # path_folder = r'C:\Users\Administrator\Desktop\纹理案例'
-    # path_folder = r'C:\Users\ZFH\Desktop\纹理案例'
-    path_folder = r'F:\桌面\收集的成像特征数据集'
+    # path_folder = r'F:\桌面\收的成像特征数据集\城96'
+    path_folder = r'F:\桌面\收的成像特征数据集\SIMU4'
     list_path_texture = get_all_file_paths(path_folder)
 
     RADIA_MAX = np.array([18.2128, 2.5686, 0.9731, 0.9448, 0.9388, 0.8927, 6.3658]) * 1.1
@@ -28,7 +27,7 @@ if __name__ == '__main__':
     name_list_XY = []
     name_list_SUB = []
     for i in list_path_texture:
-        if i.__contains__('STAT'):
+        if i.__contains__('STAT') and i.endswith('.txt'):
             img_data, depth_data = get_ele_data_from_path(i)
             CHAR_TEMP = i.split('/')[-1].split('\\')[-1].split('.txt')[0]
             EMPTY_PIC = np.zeros([256, 256])

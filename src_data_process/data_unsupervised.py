@@ -544,7 +544,8 @@ def evaluate_clustering(X, cluster_df):
                 results.loc[algo, 'UIndex'] = float('nan')
             else:
                 # 修正公式：使用科学运算（** 表示幂运算，* 表示乘法）
-                results.loc[algo, 'UIndex'] = ((100**results.loc[algo, 'DVI'])*results.loc[algo, 'Silhouette'])/(results.loc[algo, 'DBI'])
+                # results.loc[algo, 'UIndex'] = ((100**results.loc[algo, 'DVI'])*results.loc[algo, 'Silhouette'])/(results.loc[algo, 'DBI'])
+                results.loc[algo, 'UIndex'] = 1/((0.2/results.loc[algo, 'Silhouette'])+(results.loc[algo, 'DBI']/2)+(0.02/results.loc[algo, 'DVI']))
 
         except Exception as e:
             print(f"{algo}评估失败：{str(e)}")

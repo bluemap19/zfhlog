@@ -3,7 +3,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 from src_file_op.dir_operation import search_files_by_criteria, search_target_path
-from src_logging.curve_preprocess import get_resolution_by_depth, data_combine_new, data_combine_table2col
+from src_logging.logging_combine import data_combine_table2col
 from src_well_data.data_logging import data_logging
 from src_well_data.data_table import data_table
 from src_well_data.data_FMI import data_FMI
@@ -45,7 +45,7 @@ class DATA_WELL:
             self.WELL_NAME = WELL_NAME
 
         # 配置四种格式文件的关键字，分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据路径关键词NMR
-        self.file_charter_dict = {'logging':['logging'], 'FMI_DYNA':['DYNA'], 'FMI_STAT':['STAT'], 'NMR':['NMR'], 'table':['LITHO_TYPE']} # 保存目标文件关键字,分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据NMR
+        self.file_charter_dict = {'logging':['logging'], 'FMI_DYNA':['dyna'], 'FMI_STAT':['stat'], 'NMR':['NMR'], 'table':['table']} # 保存目标文件关键字,分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据NMR
         # 保存目标文件路径,分别存放 测井数据文件路径键logging，表格数据路径键table，电成像数据路径键FMI， 核磁数据路径键NMR
         # 存放格式为{logging:[logging_path1, logging_path2], table:[table_path1, table_path2], FMI:[FMI_path1, FMI_path2], NMR:[NMR_path1, NMR_path2]}
         self.file_path_dict = {}
@@ -124,6 +124,7 @@ class DATA_WELL:
                 table_data.set_table_resolution(self.get_logging_resolution())
             self.table_dict[path] = table_data
 
+    # 成像资料读取， data_FMI 类型的初始化, 其key使用的是 path_stat+path_dyna
     def data_FMI_init(self, path_stat='', path_dyna=''):
         # 数据体字典 self.FMI_dict 已经存放了，初始化了，则直接返回就行了
         if path_stat in list(self.FMI_dict.keys()):
@@ -133,9 +134,11 @@ class DATA_WELL:
                 path_dyna = self.file_path_dict['fmi_dyna'][0]
             if path_stat == '':
                 path_stat = self.file_path_dict['fmi_stat'][0]
+            if (path_dyna is None) or (path_stat is None):
+                print('\033[31m' + 'Empty fmi file found,in path:{}'.format(path_stat) + '\033[0m')
+                exit(0)
             fmi_data = data_FMI(path_dyna=path_dyna, path_stat=path_stat)
-            fmi_data.read_data()
-            self.FMI_dict[path_stat] = fmi_data
+            self.FMI_dict[path_stat+path_dyna] = fmi_data
 
     def check_logging_files(self, well_key=''):
         # 如果测井资料为空，初始化测井资料
@@ -156,10 +159,9 @@ class DATA_WELL:
             # 已经初始化过了
             if well_key in list(self.logging_dict.keys()):
                 return
-            # 还没有初始化，则重新进行初始化
+            # 还没有初始化，则重新进行初始化，但是要求这个输入的的路径 well_key 在 file_path_dict['logging']中
             if well_key in self.file_path_dict['logging']:
                 self.data_logging_init(path=well_key)
-
 
     # 获取测井数据，根据文件路径+曲线名称，返回dataframe格式的测井数据
     def get_logging_data(self, well_key='', curve_names=[], Norm=False):
@@ -172,7 +174,6 @@ class DATA_WELL:
         else:
             data_temp = well_value.get_data(curve_names)
         return data_temp
-
 
     def check_table_files(self, table_key=''):
         # 如果字典表格数据为空，初始化表格数据字典
@@ -191,10 +192,9 @@ class DATA_WELL:
             # 已经初始化过了
             if table_key in list(self.table_dict.keys()):
                 return
-            # 还没有初始化，则重新进行初始化
+            # 还没有初始化，则重新进行初始化，但是要求这个输入的的路径 table_key 在 file_path_dict['table']中
             if table_key in self.file_path_dict['table']:
                 self.data_table_init(path=table_key)
-
 
     # 获得dep-s，dep-e，type类型的表格数据
     def get_type_3(self, table_key='', curve_names=[]):
@@ -215,7 +215,6 @@ class DATA_WELL:
         table_value.table_type_replace(replace_dict=replace_dict, new_col=new_col)
         return table_value.get_table_3_replaced(curve_names=curve_names)
 
-
     # 获得depth，type类型的表格数据
     def get_type_2(self, table_key='', curve_names=[]):
         self.check_table_files(table_key)
@@ -235,6 +234,33 @@ class DATA_WELL:
         table_value.table_type_replace(replace_dict=replace_dict, new_col=new_col)
         return table_value.get_table_2_replaced(curve_names=curve_names)
 
+
+    def check_fmi_files(self, fmi_stat_key='', fmi_dyna_key=''):
+        # 如果字典表格数据为空，初始化表格数据字典
+        if not self.FMI_dict:
+            self.data_FMI_init(path_stat=fmi_stat_key, path_dyna=fmi_dyna_key)
+        # FMI data 类的存放器 dict 不为空
+        else:
+            # 已经初始化过了
+            if fmi_stat_key+fmi_dyna_key in list(self.FMI_dict.keys()):
+                return
+            # 还没有初始化，则重新进行初始化，但是要求这个输入的的路径 fmi_stat_key 在 file_path_dict['fmi_stat']中
+            if (fmi_stat_key in self.file_path_dict['fmi_stat']) and (fmi_dyna_key in self.file_path_dict['fmi_dyna']):
+                self.data_FMI_init(path_stat=fmi_stat_key, path_dyna=fmi_dyna_key)
+            if len(fmi_stat_key+fmi_dyna_key)<2:
+                self.data_FMI_init(path_stat=fmi_stat_key, path_dyna=fmi_dyna_key)
+            else:
+                print('\033[31m'+'PATH {}&{} Not In This WELL PATH LIST:{}&{}'.format(fmi_stat_key, fmi_dyna_key,
+                                    self.file_path_dict['fmi_stat'], self.file_path_dict['fmi_dyna']) + '\033[0m')
+
+    def get_fmi_data(self, fmi_stat_key='', fmi_dyna_key='', mode='ALL'):
+        self.check_fmi_files(fmi_stat_key=fmi_stat_key, fmi_dyna_key=fmi_dyna_key)
+
+        fmi_value = self.get_default_dict(dict=self.FMI_dict, key_default=fmi_stat_key+fmi_dyna_key)
+        data_all = fmi_value.get_data(mode=mode)
+
+        return data_all
+
     # 根据测井数据路径+测井数据表格头 表格数据路径+表格数据头 表格数据类型对应的replace_dict 来进行 测井数据与表格数据的合并 用来进行分类任务输入数据获取
     def combine_logging_table(self, well_key='', curve_names_logging=[],
                                     table_key='', curve_names_table=[],
@@ -250,10 +276,10 @@ class DATA_WELL:
 
         logging_value = self.get_logging_data(well_key=well_key, curve_names=curve_names_logging, Norm=Norm)
 
-        # 现根据replace_dict更新表格数据table_value
+        # 现根据 replace_dict 更新表格数据 table_value
         self.reset_table_replace_dict(table_key=table_key, replace_dict=replace_dict, new_col=new_col)
 
-        # 再获得table_value，进行测井数据-表格数据的合并
+        # 再获得 table_value ，进行测井数据-表格数据的合并
         table_value = self.get_type_2_replaced(table_key=table_key, curve_names=curve_names_table, new_col=new_col)
         # print(table_value.shape)
         # print(table_value.dtypes)
@@ -375,7 +401,8 @@ class DATA_WELL:
     # 获得默认dict数据，key_default为空默认为dict的首个元素，若key_default有实值，则获得该值对应的value数据
     def get_default_dict(self, dict={}, key_default=''):
         if not dict:
-            print('Empty dictionary get')
+            print('\033[1;32m Empty dictionary get in {}, you must read file firstly \033[0m'.format(self.WELL_NAME))
+            print('')
             return pd.DataFrame()
         if key_default == '':
             key_default = list(dict.keys())[0]
@@ -393,9 +420,9 @@ class DATA_WELL:
                 value_default = dict[key_default]
         return value_default
 
-    # 获得井的替换词典replace_dict
+    # 获得井的替换词典 replace_dict
     def get_table_replace_dict(self, table_key=''):
-        table_value = self.get_default_dict(self.table_dict, table_key)
+        table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
         return table_value._replace_dict_local
 
     # 获得曲线名称
@@ -411,22 +438,33 @@ class DATA_WELL:
         # 添加时间戳
         timestamp = datetime.now().strftime("_%Y%m%d_%H%M%S")
         new_name = f"{name_part}{timestamp}{ext}"
-
         return os.path.join(dir_path, new_name)
 
     def get_logging_path_list(self):
         return self.file_path_dict['logging']
+
     def get_table_path_list(self):
         return self.file_path_dict['table']
+
     def get_FMI_path_list(self):
         return self.file_path_dict['fmi_stat'], self.file_path_dict['fmi_dyna']
+
     def get_NMR_path_list(self):
         return self.file_path_dict['NMR']
 
-    def get_fmi_texture(self, Mode='ALL', texture_config={'level':16, 'distance':[2,4], 'angles':[0, np.pi/4, np.pi/2, np.pi*3/4], 'windows_length':80, 'windows_step':5}):
+    def get_fmi_texture(self, fmi_stat_key='', fmi_dyna_key='', path_saved='', Mode='ALL', texture_config={'level':16, 'distance':[2,4], 'angles':[0, np.pi/4, np.pi/2, np.pi*3/4], 'windows_length':80, 'windows_step':5}):
+        self.check_fmi_files(fmi_stat_key=fmi_stat_key, fmi_dyna_key=fmi_dyna_key)
 
+        if path_saved == '':
+            path_saved = fmi_stat_key.replace('STAT', 'TEXTURE').replace('.txt', '.csv')
+            print('current path saved is {}'.format(path_saved))
 
-        pass
+        FMI_data_temp = self.get_default_dict(dict=self.FMI_dict, key_default=fmi_stat_key+fmi_dyna_key)
+        FMI_data_temp.ele_stripes_delete(mode=Mode)
+        texture_result = FMI_data_temp.get_texture(mode=Mode, texture_config=texture_config, save_texture=path_saved)
+
+        return texture_result
+
 
 if __name__ == '__main__':
     # WELL_TEST = WELL_Class(path_folder=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\城96', WELL_NAME='城96')
@@ -460,11 +498,20 @@ if __name__ == '__main__':
     # data_logging = WELL_TEST.get_logging_data(well_key=path_logging, curve_names=[])
     # print(data_logging)
 
-    WELL_TEST = DATA_WELL(path_folder=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\城96', WELL_NAME='城96')
-    print(WELL_TEST.file_path_dict)
+    # WELL_TEST = DATA_WELL(path_folder=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\城96', WELL_NAME='城96')
+    # print(WELL_TEST.file_path_dict)
+    # print(WELL_TEST.get_FMI_path_list())
+    # print(WELL_TEST.get_type_3(table_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv'))
+    # print(WELL_TEST.get_type_2(table_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv'))
+    # print(WELL_TEST.combine_logging_table(well_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\Texture_File\\城96_texture_logging_Texture_ALL_80_5.csv', curve_names_logging=[],
+    #                                 table_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv', curve_names_table=[],
+    #                                 replace_dict={}, new_col='', Norm=False))
+
+    WELL_TEST = DATA_WELL(path_folder=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\樊页3HF')
+    # WELL_TEST = DATA_WELL(path_folder=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\樊页2HF')
     print(WELL_TEST.get_FMI_path_list())
-    print(WELL_TEST.get_type_3(table_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv'))
-    print(WELL_TEST.get_type_2(table_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv'))
-    print(WELL_TEST.combine_logging_table(well_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\Texture_File\\城96_texture_logging_Texture_ALL_80_5.csv', curve_names_logging=[],
-                                    table_key='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv', curve_names_table=[],
-                                    replace_dict={}, new_col='', Norm=False))
+    Data_all = WELL_TEST.get_fmi_data()
+    print(Data_all['DYNA'].shape, Data_all['STAT'].shape, Data_all['DEPTH_DYNA'].shape)
+    taaaaaa = WELL_TEST.get_fmi_texture(path_saved='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\樊页3HF\\樊页3HF_TEXTURE.csv')
+    # taaaaaa = WELL_TEST.get_fmi_texture(path_saved='F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\樊页2HF\\樊页2HF_TEXTURE.csv')
+    print(taaaaaa.shape)
