@@ -131,6 +131,7 @@ def evaluate_supervised_clustering(
             # 转换为DataFrame
             report_df = pd.DataFrame(report).transpose()
 
+            #AI看这里，在cm矩阵后面，请加上这个矩阵每一个类别对应的F1、precision、recall三个判别指数，以及整体的F1、precision、recall判别指数，然后index=[f"真实: {cls}" for cls in classes]+['F1', 'precision', 'recall', 'ALL']
             # 创建混淆矩阵DataFrame
             cm_df = pd.DataFrame(
                 cm,
