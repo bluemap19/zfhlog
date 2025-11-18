@@ -62,10 +62,10 @@ def table_3_to_2(np_layer_3, step=-1):
 # 把二维的 深度-类别 的n*2信息 合并成三维的 顶深-底深-类别 n*3信息，必须保持数据是连续的，中间不能有任何的数据缺失
 def table_2_to_3(np_layer_2):
     if isinstance(np_layer_2, np.ndarray):
-        print('type np_layer_2 is ndarray, type correct, continue running')
+        print('function table_2_to_3 input is ndarray, type correct, continue running')
     elif isinstance(np_layer_2, pd.DataFrame):
         np_layer_2 = np_layer_2.values
-        print('type np_layer_2 is pd.DataFrame, type change correct, continue running')
+        print('function table_2_to_3 input is pd.DataFrame, type change correct, continue running')
     else:
         print(f"<UNK>: {np_layer_2}")
         exit(0)

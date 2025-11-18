@@ -14,7 +14,13 @@ from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering, SpectralClu
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
 # 在 Windows 系统上使用 MKL（Intel Math Kernel Library）时，KMeans 可能存在内存泄漏问题，特别是当数据划分的块数少于可用线程数时。
-os.environ["OMP_NUM_THREADS"] = "4"  # 4 是一个保守值，可根据 CPU 核心数调整
+# os.environ["OMP_NUM_THREADS"] = "4"  # 4 是一个保守值，可根据 CPU 核心数调整
+# 设置线程数，通常设置为CPU核心数的一半或更少
+os.environ["OMP_NUM_THREADS"] = "4"
+os.environ["OPENBLAS_NUM_THREADS"] = "4"
+os.environ["MKL_NUM_THREADS"] = "4"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "4"
+os.environ["NUMEXPR_NUM_THREADS"] = "4"
 
 class ClusteringPipeline:
     def __init__(self,
@@ -588,20 +594,57 @@ def evaluate_clustering(X, cluster_df):
 
 def cluster_result_mapping(true_labels, pred_labels):
     cm = contingency_matrix(pred_labels, true_labels)
-    # print(cm)
-    # exit(0)
+
+    # replace_dict = {}
+    # acc_dict = {}
+    # acc_num_dict = {}
+    # 这个是最基础的算法，看聚类结果，因为 聚类结果 多于 原始分类结果 ，把每一个 聚类结果袋 分别看一下能够放入 原始分类 的哪一个分类袋
+    # 但这个方法应对不了 非均衡数据 只能应对 均衡数据，非均衡数据会全部分给那个数据量最大的分类
+    # 并构造replace的词典，进行聚类结果相应的替换
+    # for i in range(cm.shape[0]):
+    #     max_num = np.max(cm[i, :])
+    #     index_max = np.argmax(cm[i, :])
+    #     acc_temp = max_num/np.sum(cm[i, :])
+    #
+    #     replace_dict[i] = index_max
+    #     acc_dict[i] = acc_temp
+    #     acc_num_dict[i] = max_num
+
+
+    # 计算列和和行和
+    sum_col = np.sum(cm, axis=0)
+    sum_row = np.sum(cm, axis=1)
+    # 避免除以零
+    sum_col = np.where(sum_col == 0, 1, sum_col)
+    sum_row = np.where(sum_row == 0, 1, sum_row)
+
+    # 2. 按行归一化（每行和为1）- 反映每个预测类别的真实分布
+    cm_row_normalized = cm / sum_row.reshape(-1, 1)
+    # 1. 按列归一化（每列和为1）- 反映每个真实类别的预测分布
+    cm_col_normalized = cm / sum_col.reshape(1, -1)
 
     replace_dict = {}
     acc_dict = {}
     acc_num_dict = {}
-    for i in range(cm.shape[0]):
-        max_num = np.max(cm[i, :])
-        index_max = np.argmax(cm[i, :])
-        acc_temp = max_num/np.sum(cm[i, :])
+    # 先从 聚类结果出发 看一下聚类结果对应的 replace 字典，这个一般可能存在不太完善的地方
+    for i in range(cm_row_normalized.shape[0]):
+        acc_temp = np.max(cm_row_normalized[i, :])
+        index_max = np.argmax(cm_row_normalized[i, :])
+        max_num = cm[i, index_max]
 
         replace_dict[i] = index_max
         acc_dict[i] = acc_temp
         acc_num_dict[i] = max_num
+    # 再从真实结果出发，确保每一个真实结果对应的类都存在至少一个预测的类与之相对应，当然，后面的类的保底预测类bagging可能会覆盖前面的类的保底bagging，这个要想办法进行后续的改进
+    for i in range(cm_col_normalized.shape[1]):
+        acc_temp = np.max(cm_col_normalized[:, i])
+        index_max = np.argmax(cm_col_normalized[:, i])
+        max_num = cm[index_max, i]
+
+        replace_dict[index_max] = i
+        acc_dict[index_max] = acc_temp
+        acc_num_dict[index_max] = max_num
+    # for i in range(cm_row_normalized.shape[0]):
     acc_dict[-1] = np.sum(list(acc_num_dict.values()))/np.sum(cm)
 
     return replace_dict, acc_dict, acc_num_dict
@@ -638,7 +681,6 @@ def evaluate_clustering_performance_with_label(df, true_col='Type_native'):
     for algo in df.columns:
         # 跳过原始标签列
         if algo.__contains__(true_col):
-            # df_type_result_new[algo] = df[algo]
             continue
 
         # 执行评估
@@ -685,18 +727,15 @@ def get_random_data_with_type(attributes = ['STAT_ENT', 'STAT_DIS', 'STAT_CON', 
     df_attributes['STAT_ENG'] = df_attributes['STAT_ENG'] * 2.5 + 12.0
 
     # 添加分类列'Type'
-    df_class = pd.DataFrame({class_col: y % 3 + 1})  # 转换为1-3的类别标签
-
-    df = pd.concat([df_attributes, df_class], axis=1)
-
-    return df
+    Type_T = np.random.choice([0, 1, 2, 3, 4], size=df_attributes.shape[0], p=[0.05, 0.1, 0.15, 0.3, 0.4])
+    df_attributes[class_col] = Type_T
+    return df_attributes
 
 if __name__ == '__main__':
     # 设置随机种子以确保可重复性
     np.random.seed(42)
     # 定义列名
-    attributes = ['STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM',
-                  'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_ENG']
+    attributes = ['STAT_ENT', 'STAT_DIS', 'STAT_CON', 'STAT_XY_HOM', 'STAT_HOM', 'STAT_XY_CON', 'DYNA_DIS', 'STAT_ENG']
     class_col = 'Type'
 
     # 1.初始化数据，合并属性列和分类列
@@ -707,7 +746,7 @@ if __name__ == '__main__':
     print(df.head())
 
     # 2. 初始化接口
-    Unsupervised_Pipeline = ClusteringPipeline(cluster_num=5, scale_data=True)
+    Unsupervised_Pipeline = ClusteringPipeline(cluster_num=8, scale_data=True)
     # 3. 模型训练
     Unsupervised_Pipeline.fit(df[attributes])
 
@@ -716,7 +755,7 @@ if __name__ == '__main__':
     # print('无监督聚类结果：')
     # print(results.describe())
 
-    pred_result = Unsupervised_Pipeline.predict(df[attributes], algorithm=['KMeans', 'DBSCAN','Hierarchical','Spectral','GMM', 'SOM'])
+    pred_result = Unsupervised_Pipeline.predict(df[attributes], algorithm=['KMeans', 'DBSCAN', 'Hierarchical', 'Spectral', 'GMM', 'SOM'])
     print(pred_result.describe())
 
     # 无监督聚类的评价标准Silhouette、CH、DBI、DVI计算

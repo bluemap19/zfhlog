@@ -17,7 +17,7 @@ def check_and_make_dir(dir_path):
         print('successfully create dir:{}'.format(dir_path))
         assert os.path.exists(dir_path), dir_path
 
-#
+
 # # 遍历文件夹，返回的是文件夹下的目录以及文件
 # def traverse_folder(path):
 #     """
@@ -179,7 +179,7 @@ def search_files_by_criteria(
 
     return sorted(matched_files)
 
-# 根据关键字list：target_path_feature=[]在文件路径list：path_list中进行搜索，只有满足所有target_path_feature的文件路径才能被筛选出来，筛选出所有的path并返回
+############ 根据关键字list：target_path_feature=[]在文件路径list：path_list中进行搜索，只有满足所有target_path_feature的文件路径才能被筛选出来，筛选出所有的path并返回
 def search_target_path(path_list=[], target_path_feature=[]):
     matched_paths = []
     for path in path_list:
@@ -192,6 +192,7 @@ def search_target_path(path_list=[], target_path_feature=[]):
             matched_paths.append(path)
 
     return matched_paths
+
 # def search_target_path(path_list=None, target_path_feature=None):
 #     """
 #     改进版路径搜索函数：基于特征词精确匹配文件路径

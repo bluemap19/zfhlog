@@ -76,7 +76,14 @@ def get_resolution_by_depth(depth_series):
     :param depth_series: 深度序列（pd.Series）
     :return: 分辨率值
     """
-    sorted_depths = depth_series.sort_values().unique()
+    if isinstance(depth_series, pd.Series):
+        sorted_depths = depth_series.sort_values().unique()
+    elif isinstance(depth_series, np.ndarray):
+        sorted_depths = np.unique(depth_series.argsort())
+    else:
+        print('Unsupport depth_series type!')
+        raise TypeError('Unsupport depth_series type!')
+
     if len(sorted_depths) < 2:
         return 0.0
 

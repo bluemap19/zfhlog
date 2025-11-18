@@ -15,9 +15,7 @@ def visualize_well_logs(data: pd.DataFrame,
                         curve_cols: list = ['L1', 'L2', 'L3', 'L4'],
                         type_cols: list = [],
                         figsize: tuple = (12, 10),
-                        colors: list = ['#FF0000', '#00FF00', '#0000FF', '#00FFFF',
-                                        '#FF00FF', '#8000FF', '#00FF80', '#FF0080',
-                                        '#FFA500', '#FFFF00'],
+                        colors: list = ['#FF0000', '#00FF00', '#0000FF', '#00FFFF', '#FF00FF', '#8000FF', '#00FF80', '#FF0080', '#FFA500', '#FFFF00'],
                         legend_dict: dict = {},
                         figure=None):
     """
@@ -191,7 +189,7 @@ def visualize_well_logs(data: pd.DataFrame,
                 min_temp = data[col].min()
                 max_temp = data[col].max()
 
-            if abs(min_temp - max_temp) < 0.01:
+            if abs(min_temp - max_temp) < 0.00001:
                 min_temp -= 1
                 max_temp += 1
             ax.set_xlim(min_temp, max_temp)
@@ -405,7 +403,7 @@ if __name__ == "__main__":
             np.random.randn(1000, 4),
             np.random.choice([0, 1, 2, 3], size=(1000, 4))
         ]),
-        columns=['Depth', 'L1', 'L2', 'L3', 'L4', 'D2', 'D4', 'D3', 'D5']
+        columns=['Depth', 'L1', 'L2', 'L3', 'L4', 'Type2', 'Type4', 'Type3', 'Type5']
     )
 
     # 调用可视化接口
@@ -413,6 +411,6 @@ if __name__ == "__main__":
         data=sample_data,
         depth_col='Depth',
         curve_cols=['L1', 'L2', 'L3', 'L4'],
-        type_cols=['D2', 'D5'],
+        type_cols=['Type2', 'Type4', 'Type3', 'Type5'],
         legend_dict={0: 'Type0', 1: 'Type1', 2: 'Type2', 3: 'Type3'}
     )

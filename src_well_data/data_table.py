@@ -111,7 +111,7 @@ class data_table:
             if i != 0:
                 depth_last = self._table_2.iloc[i-1, 0]
                 depth_now = self._table_2.iloc[i, 0]
-                if depth_last >= depth_now:
+                if depth_last > depth_now:
                     print('\033[31m' + 'error depth setting in table:{} in depth:{} & {}'.format(self._file_path, depth_last, depth_now) + '\033[0m')
 
 
@@ -223,7 +223,7 @@ class data_table:
         # print(self.table_3)
 
 if __name__ == '__main__':
-    test_table = data_table(path=r'F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分_LITHO_TYPE.csv', well_name='城96')
+    test_table = data_table(path=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\FY1-15\FY1-15_LITHO_TYPE.csv', well_name='FY1-15')
     # test_table = data_table(path=r'F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分原始数据.csv', well_name='城96')
 
     print(test_table.get_table_3().describe())

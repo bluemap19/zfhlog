@@ -106,9 +106,7 @@ def cal_images_texture(imgs=[], depth=np.array([]), windows=20, step=5, texture_
                 )
 
                 # 图像的 纹理信息均值 提取
-                texture_mean, glcm_map, _, _ = get_glcm_Features(window_img, level=texture_config['level'],
-                                                                          distance=texture_config['distance'],
-                                                                          angles=texture_config['angles'])
+                texture_mean, glcm_map, _, _ = get_glcm_Features(window_img, level=texture_config['level'], distance=texture_config['distance'], angles=texture_config['angles'])
                 # 图像的 纹理差信息 提取
                 texture_sub = get_glcm_sub(window_img, level=texture_config['level'], distance=texture_config['distance'])
                 # 图像的 纹理信息X 提取

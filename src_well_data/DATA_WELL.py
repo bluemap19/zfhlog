@@ -45,7 +45,7 @@ class DATA_WELL:
             self.WELL_NAME = WELL_NAME
 
         # 配置四种格式文件的关键字，分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据路径关键词NMR
-        self.file_charter_dict = {'logging':['logging'], 'FMI_DYNA':['dyna'], 'FMI_STAT':['stat'], 'NMR':['NMR'], 'table':['table']} # 保存目标文件关键字,分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据NMR
+        self.file_charter_dict = {'logging':['logging'], 'FMI_DYNA':['dyna'], 'FMI_STAT':['stat'], 'NMR':['NMR'], 'table':['LITHO_TYPE']} # 保存目标文件关键字,分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据NMR
         # 保存目标文件路径,分别存放 测井数据文件路径键logging，表格数据路径键table，电成像数据路径键FMI， 核磁数据路径键NMR
         # 存放格式为{logging:[logging_path1, logging_path2], table:[table_path1, table_path2], FMI:[FMI_path1, FMI_path2], NMR:[NMR_path1, NMR_path2]}
         self.file_path_dict = {}
@@ -205,6 +205,7 @@ class DATA_WELL:
             table_value.read_data()
 
         return table_value.get_table_3(curve_names=curve_names)
+
     def get_type_3_replaced(self, table_key='', curve_names=[], replace_dict={}, new_col=''):
         self.check_table_files(table_key)
 
@@ -224,6 +225,7 @@ class DATA_WELL:
             table_value.read_data()
 
         return table_value.get_table_2(curve_names=curve_names)
+
     def get_type_2_replaced(self, table_key='', curve_names=[], replace_dict={}, new_col=''):
         self.check_table_files(table_key)
 
@@ -452,7 +454,7 @@ class DATA_WELL:
     def get_NMR_path_list(self):
         return self.file_path_dict['NMR']
 
-    def get_fmi_texture(self, fmi_stat_key='', fmi_dyna_key='', path_saved='', Mode='ALL', texture_config={'level':16, 'distance':[2,4], 'angles':[0, np.pi/4, np.pi/2, np.pi*3/4], 'windows_length':80, 'windows_step':5}):
+    def get_fmi_texture(self, fmi_stat_key='', fmi_dyna_key='', path_saved='', Mode='ALL', texture_config={'level':16, 'distance':[2,4], 'angles':[0, np.pi/4, np.pi/2, np.pi*3/4], 'windows_length':200, 'windows_step':100}):
         self.check_fmi_files(fmi_stat_key=fmi_stat_key, fmi_dyna_key=fmi_dyna_key)
 
         if path_saved == '':
@@ -465,6 +467,11 @@ class DATA_WELL:
 
         return texture_result
 
+    def get_fmi_data(self, fmi_stat_key='', fmi_dyna_key='', Mode='ALL', ):
+        FMI_data_temp = self.get_default_dict(dict=self.FMI_dict, key_default=fmi_stat_key+fmi_dyna_key)
+        data_dict = FMI_data_temp.get_data(mode=Mode)
+
+        return data_dict
 
 if __name__ == '__main__':
     # WELL_TEST = WELL_Class(path_folder=r'C:\Users\ZFH\Desktop\算法测试-长庆数据收集\logging_CSV\城96', WELL_NAME='城96')

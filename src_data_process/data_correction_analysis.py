@@ -280,7 +280,7 @@ if __name__ == '__main__':
     target_col = 'target_numeric'
 
     pearson_result, pearson_sorted, rf_result, rf_sorted = feature_influence_analysis(
-        df=test_data,
+        df_input=test_data,
         input_cols=input_cols,
         target_col=target_col,
         replace_dict={}

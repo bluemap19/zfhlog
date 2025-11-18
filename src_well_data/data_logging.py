@@ -151,8 +151,7 @@ class data_logging:
         """从 XML 文件加载配置"""
         # path_current = os.getcwd()
         # path_current = r'C:\Users\ZFH\Documents\GitHub\zfhlog\src_well_data'
-        path_current = r'D:\GitHubProj\zfhlog\src_well_data'
-        # path_current = r'D:\GitHubProject\zfhlog\src_well_data'
+        path_current = r'D:\GitHub\zfhlog\src_well_data'
         filepath = path_current + f"\{config_name}"
 
         if not os.path.exists(filepath):
@@ -188,10 +187,11 @@ class data_logging:
 
 
 if __name__ == '__main__':
-    test_data = data_logging(path=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\城96\A-城96_logging_data.csv', well_name='城96')
+    # test_data = data_logging(path=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\城96\A-城96_logging_data.csv', well_name='城96')
+    test_data = data_logging(path=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\FY1-15\FY1-15_texture_logging_data.csv', well_name='FY1-15')
 
-    col_names = ['GRC', 'CN', 'DT', 'Sp']
-    print(test_data.get_data(curve_names=col_names).describe())
+    # col_names = ['GRC', 'CN', 'DT', 'Sp']
+    print(test_data.get_data().describe())
     print(test_data.mapping_dict)
     print(test_data.get_curve_names())
     print(test_data._resolution)

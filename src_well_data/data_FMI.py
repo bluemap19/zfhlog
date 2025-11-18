@@ -74,7 +74,7 @@ class data_FMI:
             print('\033[31m' + 'File path does not exist as:{}'.format(file_path) + '\033[0m')
             return
 
-    def get_data(self, mode='DYNA'):
+    def get_data(self, mode='ALL'):
         if mode == 'DYNA':
             if self._data_dyna.empty:
                 data_dyna = self.read_data(self._path_dyna)
@@ -172,8 +172,8 @@ if __name__ == '__main__':
     test_FMI = data_FMI(
         # path_dyna=r'F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96_FMI_Main 1700-2120_dyna.txt',
         # path_stat=r'F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96_FMI_Main 1700-2120_stat.txt',
-        path_dyna=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\FY1-15\FY1-15_dyna.txt',
-        path_stat=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\FY1-15\FY1-15_stat.txt',
+        path_dyna=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\FY1-15\FY1-15HF_电成像数据_DYNA.txt',
+        path_stat=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\FY1-15\FY1-15HF_电成像数据_STAT.txt',
         well_name='FY1-15')
 
     DYNA = test_FMI.get_data(mode='DYNA')
@@ -182,5 +182,4 @@ if __name__ == '__main__':
     print(STAT['STAT'].shape, STAT['DEPTH_STAT'].shape, )
 
     test_FMI.ele_stripes_delete(mode='ALL')
-    test_FMI.get_texture(mode='ALL',
-                         save_texture=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\FY1-15\FY1-15_texture.csv')
+    test_FMI.get_texture(mode='ALL', save_texture=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\FY1-15\FY1-15_texture.csv')
