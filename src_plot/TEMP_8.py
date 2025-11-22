@@ -368,69 +368,6 @@ class WellLogVisualizer:
         except Exception as e:
             logger.warning(f"字体设置失败: {e}, 使用默认设置")
 
-    # def _validate_logging_data(self, data: pd.DataFrame, depth_col: str,
-    #                            curve_cols: List[Any], type_cols: List[str]) -> None:
-    #     """
-    #     验证输入参数的有效性 - 确保数据格式正确且必要列存在
-    #
-    #     参数验证流程：
-    #     1. 检查数据类型是否正确
-    #     2. 检查必要参数是否为空
-    #     3. 验证所有指定列是否存在于数据中
-    #     4. 检查数据基本完整性（非空、深度列有效）
-    #     """
-    #     if data is None:
-    #         logger.info("无 logging 数据")
-    #         return
-    #
-    #     # 1. 验证数据框类型
-    #     if not isinstance(data, pd.DataFrame):
-    #         raise ValueError("data参数必须是pandas DataFrame类型")
-    #
-    #     # 2. 验证深度列参数
-    #     if not depth_col or not isinstance(depth_col, str):
-    #         raise ValueError("depth_col必须是非空字符串")
-    #
-    #     # 3. 验证曲线列参数
-    #     if not curve_cols or not isinstance(curve_cols, list):
-    #         raise ValueError("curve_cols必须是非空列表")
-    #
-    #     # 4. 处理可选的分类列参数
-    #     if type_cols is None:
-    #         type_cols = []  # 转换为空列表便于后续处理
-    #     elif not isinstance(type_cols, list):
-    #         raise ValueError("type_cols必须是列表或None")
-    #
-    #     # 修改：展平曲线列结构以检查所有必要列
-    #     required_cols = [depth_col]
-    #     flat_curve_cols = []
-    #     for item in curve_cols:
-    #         if isinstance(item, list):
-    #             # 嵌套列表：多曲线道
-    #             flat_curve_cols.extend(item)
-    #             required_cols.extend(item)
-    #         elif isinstance(item, str):
-    #             # 单曲线
-    #             flat_curve_cols.append(item)
-    #             required_cols.append(item)
-    #         else:
-    #             raise ValueError("curve_cols中的元素必须是字符串或字符串列表")
-    #
-    #     # 检查列名存在性 检查所有指定列是否存在于数据中
-    #     missing_cols = set(required_cols) - set(data.columns)
-    #     if missing_cols:
-    #         raise ValueError(f"数据中缺少以下必要列: {missing_cols}")
-    #
-    #     # 6. 检查数据基本完整性
-    #     if data.empty:
-    #         raise ValueError("输入数据不能为空DataFrame")
-    #
-    #     if data[depth_col].isna().all():
-    #         raise ValueError("深度列数据全部为空")
-    #
-    #     self.data = data.sort_values(depth_col).reset_index(drop=True)  # 按深度排序
-    #
-    #     logger.info("输入参数验证通过，曲线结构: %s", curve_cols)
     def _validate_logging_data(self, logging_dict:Dict[str, Any]) -> None:
         """
         验证输入参数的有效性 - 确保数据格式正确且必要列存在
@@ -564,6 +501,106 @@ class WellLogVisualizer:
             fmi_dict['title'] = [f'FMI_{i + 1}' for i in range(len(fmi_dict['image_data']))]
 
         logger.info("FMI数据验证通过，包含%d个图像", len(fmi_dict['image_data']))
+
+    def _validate_nmr_data(self, nmr_dict: List) -> None:
+        """验证NMR数据的结构和完整性 - 增强验证"""
+        if nmr_dict is None:
+            logger.info("无NMR数据")
+            return
+
+        if not isinstance(nmr_dict, list):
+            raise ValueError("NMR_dict必须是列表类型")
+
+        for i, nmr_data in enumerate(nmr_dict):
+            if nmr_data is None:
+                logger.warning(f"NMR道[{i}]为None，跳过验证")
+                continue
+            if not isinstance(nmr_data, dict):
+                raise ValueError(f"NMR道[{i}]必须是字典类型，实际类型: {type(nmr_data)}")
+            if len(nmr_data) == 0:
+                logger.warning(f"NMR道[{i}]为空字典，跳过验证")
+                continue
+            # 深度键格式转换：字符串 -> 浮点数
+            converted_nmr_data = {}
+            invalid_keys = []
+
+            for depth_key, depth_data in nmr_data.items():
+                try:
+                    # 尝试将深度键转换为浮点数
+                    if isinstance(depth_key, str):
+                        converted_depth = float(depth_key)
+                    elif isinstance(depth_key, (int, float, np.number)):
+                        converted_depth = float(depth_key)
+                    else:
+                        raise ValueError(f"不支持的深度键类型: {type(depth_key)}")
+
+                    # 验证深度数据结构
+                    if not isinstance(depth_data, dict):
+                        raise ValueError(f"深度{converted_depth}的数据必须是字典类型")
+
+                    # 检查必要键是否存在
+                    required_keys = ['NMR_X', 'NMR_Y']
+                    for req_key in required_keys:
+                        if req_key not in depth_data:
+                            raise ValueError(f"深度{converted_depth}的数据缺少必要键: {req_key}")
+
+                    # 检查数据格式
+                    if not isinstance(depth_data['NMR_X'], np.ndarray):
+                        raise ValueError(f"深度{converted_depth}的NMR_X必须是numpy数组")
+
+                    if not isinstance(depth_data['NMR_Y'], np.ndarray):
+                        raise ValueError(f"深度{converted_depth}的NMR_Y必须是numpy数组")
+
+                    # 检查数组维度匹配
+                    if depth_data['NMR_X'].shape != depth_data['NMR_Y'].shape:
+                        raise ValueError(f"深度{converted_depth}的NMR_X和NMR_Y形状不匹配: "
+                                         f"{depth_data['NMR_X'].shape} != {depth_data['NMR_Y'].shape}")
+
+                    # 检查数组长度
+                    if len(depth_data['NMR_X']) == 0 or len(depth_data['NMR_Y']) == 0:
+                        raise ValueError(f"深度{converted_depth}的NMR_X或NMR_Y为空数组")
+
+                    # 检查数值有效性
+                    if np.any(np.isnan(depth_data['NMR_X'])) or np.any(np.isinf(depth_data['NMR_X'])):
+                        logger.warning(f"深度{converted_depth}的NMR_X包含NaN或Inf值")
+
+                    if np.any(np.isnan(depth_data['NMR_Y'])) or np.any(np.isinf(depth_data['NMR_Y'])):
+                        logger.warning(f"深度{converted_depth}的NMR_Y包含NaN或Inf值")
+
+                    # 验证通过，添加到转换后的字典
+                    converted_nmr_data[converted_depth] = depth_data
+
+                except ValueError as e:
+                    logger.warning(f"深度键转换失败或数据验证失败: {e}，跳过该深度点")
+                    invalid_keys.append(depth_key)
+                    continue
+                except Exception as e:
+                    logger.warning(f"处理深度键时出现意外错误: {e}，跳过该深度点")
+                    invalid_keys.append(depth_key)
+                    continue
+
+                # 替换原始数据为转换后的数据
+            nmr_dict[i] = converted_nmr_data
+
+            # 记录转换结果
+            if invalid_keys:
+                logger.warning(f"NMR道[{i}]跳过{len(invalid_keys)}个无效深度点")
+
+            if converted_nmr_data:
+                # 对深度进行排序（便于后续处理）
+                sorted_depths = sorted(converted_nmr_data.keys())
+                logger.info(f"NMR道[{i}]验证通过: {len(converted_nmr_data)}个有效深度点, "
+                            f"深度范围: {min(sorted_depths):.2f}-{max(sorted_depths):.2f}")
+            else:
+                logger.warning(f"NMR道[{i}]无有效数据，将被忽略")
+
+        # 移除空的数据道
+        self.NMR_dict = [nmr_data for nmr_data in nmr_dict if nmr_data and len(nmr_data) > 0]
+
+        if not self.NMR_dict:
+            logger.info("所有NMR道均无有效数据")
+        else:
+            logger.info(f"NMR数据验证完成，剩余{len(self.NMR_dict)}个有效数据道")
 
 
     def _setup_depth_limits(self, depth_limit_config: Optional[List[float]]) -> None:
@@ -1660,11 +1697,6 @@ class WellLogVisualizer:
 
     def visualize(self,
                   logging_dict:Dict[str, Any]=None,
-                  # data: pd.DataFrame = None,
-                  # depth_col: str = 'Depth',
-                  # curve_cols: List[str] = None,
-                  # type_cols: List[str] = None,
-                  # legend_dict: Dict[int, str] = None,
                   figsize: Tuple[float, float] = (12, 10),
                   colors: List[str] = None,
                   fmi_dict: Dict[str, Any] = None,
@@ -1689,24 +1721,11 @@ class WellLogVisualizer:
 
             if colors is None:
                 colors = self.DEFAULT_CURVE_COLORS  # 默认颜色序列
-            # # ========== 参数预处理 ==========
-            # if curve_cols is None:
-            #     if data is not None:
-            #         curve_cols = data.columns[1:]  # 默认曲线列
-            # if type_cols is None:
-            #     type_cols = []  # 默认无分类列
-            # if legend_dict is None:
-            #     legend_dict = {}  # 默认空图例
-            #
-            # self.data = data
-            # self.depth_col = depth_col
-            # self.curve_cols = curve_cols
-            # self.type_cols = type_cols
-
             # ========== 参数验证 ==========
-            # self._validate_logging_data(self.data, self.depth_col, self.curve_cols, self.type_cols)
             self._validate_logging_data(logging_dict)
             self._validate_fmi_data(fmi_dict)
+            self._validate_nmr_data(NMR_dict)
+
             if logging_dict is None:
                 self.data = None
                 self.depth_col = None

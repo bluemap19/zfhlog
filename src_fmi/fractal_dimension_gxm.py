@@ -4,6 +4,8 @@ import cv2
 import math
 from typing import Dict
 
+import pandas as pd
+
 
 def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step: float = 0.1) -> Dict:
     """
@@ -28,6 +30,27 @@ def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step:
             - mass_exponents: 质量指数τ(q)，与广义维数通过τ(q) = (q-1)D_q关联
             - 其他辅助统计量和质量指标
     """
+    # =========================================================================
+    # 输入数据验证
+    # =========================================================================
+    if image_array is None or image_array.size == 0:
+        raise ValueError("输入图像为空")
+
+    # 检查图像是否全零
+    if np.all(image_array == 0):
+        raise ValueError("输入图像全为零，无法进行分形分析")
+
+    # 3. 检查数据类型
+    if image_array.dtype not in [np.uint8, np.float32, np.float64]:
+        print(f"警告: 不支持的图像数据类型 {image_array.dtype}")
+        # 尝试转换数据类型
+        image_array = image_array.astype(np.float32)
+
+    # 检查图像数值范围
+    if np.min(image_array) < 0:
+        print("警告: 图像包含负值，将进行绝对值处理")
+        image_array = np.abs(image_array)
+
     # =========================================================================
     # 第一阶段：图像预处理与尺度参数设置
     # =========================================================================
@@ -116,7 +139,7 @@ def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step:
         normalization_factor = np.sum(box_probability_matrix[:current_scale_box_count, scale_index])
 
         # 质量守恒验证：归一化因子应等于图像总强度
-        if abs(normalization_factor - total_image_intensity) > 1e-10:
+        if abs(normalization_factor - total_image_intensity) > 1e-5:
             print(f'警告: 检测到归一化因子差异，计算值: {normalization_factor}, 图像总强度: {total_image_intensity}')
 
         # 对每个盒子进行概率归一化
@@ -172,7 +195,7 @@ def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step:
 
             # 遍历当前尺度所有盒子，计算加权概率测度μ_i(q,ε)
             for box_index in range(current_scale_box_count):
-                if normalized_probability_matrix[box_index, scale_index] != 0:
+                if normalized_probability_matrix[box_index, scale_index] > 0:
                     # =========================================================
                     # 核心计算2：加权概率测度 μ_i(q,ε) = [p_i(ε)]^q / χ(q,ε)
                     # =========================================================
@@ -198,6 +221,8 @@ def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step:
 
                     # 验证加权概率测度归一化：Σ μ_i(q,ε) 应该等于1
                     weighted_probability_sum += weighted_probability_measure
+                else:
+                    weighted_probability_sum +=  0
 
             # 存储当前尺度和q值下的计算结果
             multifractal_spectrum_f[scale_index, q_index] = f_alpha_numerator
@@ -215,7 +240,7 @@ def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step:
     for scale_index in range(maximum_scale_levels):
         current_scale_box_count = int((standardized_image_size ** 2) / (scale_sequence[scale_index] ** 2))
         for box_index in range(current_scale_box_count):
-            if normalized_probability_matrix[box_index, scale_index] != 0:
+            if normalized_probability_matrix[box_index, scale_index] > 0:
                 # 计算p_i log p_i项，用于q=1时的信息维数计算
                 special_case_q1[scale_index] += (
                         normalized_probability_matrix[box_index, scale_index] *
@@ -404,7 +429,10 @@ def visualize_multifractal_results(analysis_results: Dict):
 # 测试用例
 if __name__ == "__main__":
     # 创建测试图像（256×256随机纹理）
-    test_texture = cv2.imread(r"C:\Users\Maple\Documents\MATLAB\multifractal-last modified\output1.jpg", cv2.IMREAD_GRAYSCALE).astype(np.uint8)
+    # test_texture = cv2.imread(r"C:\Users\Maple\Documents\MATLAB\multifractal-last modified\output1.jpg", cv2.IMREAD_GRAYSCALE).astype(np.uint8)
+    test_texture = pd.read_csv(r'C:\Users\Maple\Desktop\MISTAKE_SANPLE1.csv')
+    test_texture = test_texture.values.astype(np.uint8)
+    print(test_texture.shape, type(test_texture))
 
     print("开始执行多维分形分析...")
     fractal_results = multifractal_analysis(test_texture)

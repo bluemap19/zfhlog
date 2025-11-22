@@ -1,201 +1,11 @@
-import numpy as np
 import matplotlib.pyplot as plt
-import cv2
-import math
-from typing import Dict
-
-
-# def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step: float = 0.1) -> Dict:
-#     """
-#     多维分形分析主函数
-#
-#     Args:
-#         image_array: 输入图像数组(灰度图)
-#         q_range: q值范围，从-q_range到+q_range
-#         q_step: q值步长
-#
-#     Returns:
-#         包含所有分形计算结果的字典
-#     """
-#     # 基本参数设置
-#     minimum_pixel_block_size = 2
-#     processed_image = cv2.resize(image_array, (256, 256), interpolation=cv2.INTER_CUBIC)
-#     original_rows, original_cols = processed_image.shape
-#
-#     # 计算尺度级数
-#     maximum_scale_levels = int(math.floor(math.log(original_rows) / math.log(minimum_pixel_block_size)))
-#     standardized_image_size = minimum_pixel_block_size ** maximum_scale_levels
-#     standardized_image = cv2.resize(processed_image, (standardized_image_size, standardized_image_size), interpolation=cv2.INTER_CUBIC)
-#
-#     # 尺度序列定义
-#     scale_sequence = [minimum_pixel_block_size ** (scale_index + 1) for scale_index in range(maximum_scale_levels)]
-#     maximum_box_count = (standardized_image_size ** 2) // (minimum_pixel_block_size ** 2)
-#
-#     # 初始化存储矩阵
-#     box_probability_matrix = np.zeros((int(maximum_box_count), maximum_scale_levels))
-#     boxes_count_per_scale = np.zeros(maximum_scale_levels)
-#     total_image_intensity = np.sum(standardized_image)
-#
-#     # 多尺度盒子划分与强度统计
-#     for current_scale_index in range(maximum_scale_levels):
-#         boxes_count_per_scale[current_scale_index] = (standardized_image_size ** 2) / (
-#                     scale_sequence[current_scale_index] ** 2)
-#         box_counter = 0
-#         current_box_size = int(scale_sequence[current_scale_index])
-#
-#         for start_row in range(0, standardized_image_size - current_box_size + 1, current_box_size):
-#             for start_col in range(0, standardized_image_size - current_box_size + 1, current_box_size):
-#                 if box_counter < maximum_box_count:
-#                     image_block = standardized_image[start_row:start_row + current_box_size,
-#                                   start_col:start_col + current_box_size]
-#                     box_probability_matrix[box_counter, current_scale_index] = np.sum(image_block)
-#                     box_counter += 1
-#
-#     # 概率归一化处理
-#     normalized_probability_matrix = np.zeros((int(maximum_box_count), maximum_scale_levels))
-#     for scale_index in range(maximum_scale_levels):
-#         current_scale_box_count = int((standardized_image_size ** 2) / (scale_sequence[scale_index] ** 2))
-#         normalization_factor = np.sum(box_probability_matrix[:current_scale_box_count, scale_index])
-#
-#         if abs(normalization_factor - total_image_intensity) > 1e-10:
-#             print(f'警告: 归一化因子差异, 计算值: {normalization_factor}, 实际总值: {total_image_intensity}')
-#
-#         for box_index in range(current_scale_box_count):
-#             if normalization_factor != 0:
-#                 normalized_probability_matrix[box_index, scale_index] = (box_probability_matrix[box_index, scale_index]
-#                                                                          / normalization_factor)
-#             else:
-#                 normalized_probability_matrix[box_index, scale_index] = 0
-#
-#     # 生成q值序列
-#     q_values_sequence = np.arange(-q_range, q_range + q_step, q_step)
-#     q_values_storage = q_values_sequence.copy()
-#
-#     # 初始化结果存储矩阵
-#     multifractal_spectrum_f = np.zeros((maximum_scale_levels, len(q_values_sequence)))
-#     singularity_strength_alpha = np.zeros((maximum_scale_levels, len(q_values_sequence)))
-#     partition_function_values = np.zeros((maximum_scale_levels, len(q_values_sequence)))
-#
-#     # 配分函数计算
-#     for scale_index in range(maximum_scale_levels):
-#         current_scale_box_count = int((standardized_image_size ** 2) / (scale_sequence[scale_index] ** 2))
-#
-#         for q_index, current_q_value in enumerate(q_values_sequence):
-#             # 计算配分函数 χ(q,ε) = Σ p_i^q
-#             partition_function_sum = np.sum([normalized_probability_matrix[i, scale_index] ** current_q_value
-#                                              for i in range(current_scale_box_count)
-#                                              if normalized_probability_matrix[i, scale_index] != 0])
-#
-#             # 初始化累积变量
-#             f_alpha_numerator = 0.0
-#             alpha_q_numerator = 0.0
-#             weighted_probability_sum = 0.0
-#
-#             for box_index in range(current_scale_box_count):
-#                 if normalized_probability_matrix[box_index, scale_index] != 0:
-#                     # 计算加权概率测度 μ_i(q,ε) = p_i^q / χ(q,ε)
-#                     weighted_probability_measure = (
-#                                 (normalized_probability_matrix[box_index, scale_index] ** current_q_value)
-#                                 / partition_function_sum)
-#
-#                     # 累加f(α)计算项: μ_i(q,ε) * log(μ_i(q,ε))
-#                     if weighted_probability_measure > 0:
-#                         f_alpha_numerator += weighted_probability_measure * math.log(weighted_probability_measure)
-#
-#                     # 累加α(q)计算项: μ_i(q,ε) * log(p_i)
-#                     if normalized_probability_matrix[box_index, scale_index] > 0:
-#                         alpha_q_numerator += (weighted_probability_measure *
-#                                               math.log(normalized_probability_matrix[box_index, scale_index]))
-#
-#                     weighted_probability_sum += weighted_probability_measure
-#
-#             # 存储计算结果
-#             multifractal_spectrum_f[scale_index, q_index] = f_alpha_numerator
-#             singularity_strength_alpha[scale_index, q_index] = alpha_q_numerator
-#             partition_function_values[scale_index, q_index] = partition_function_sum
-#
-#     # q=1特殊情况处理（避免奇异性）
-#     special_case_q1 = np.zeros(maximum_scale_levels)
-#     for scale_index in range(maximum_scale_levels):
-#         current_scale_box_count = int((standardized_image_size ** 2) / (scale_sequence[scale_index] ** 2))
-#         for box_index in range(current_scale_box_count):
-#             if normalized_probability_matrix[box_index, scale_index] != 0:
-#                 special_case_q1[scale_index] += (normalized_probability_matrix[box_index, scale_index] *
-#                                                  math.log(normalized_probability_matrix[box_index, scale_index]))
-#
-#     # 尺度对数计算
-#     logarithmic_scales = np.array([math.log(scale_value) for scale_value in scale_sequence])
-#
-#     # 广义分形维数D_q计算
-#     generalized_fractal_dimensions = np.zeros(len(q_values_storage))
-#
-#     for q_index, current_q_value in enumerate(q_values_storage):
-#         if abs(current_q_value - 1) > 1e-10:
-#             # q ≠ 1 情况: D_q = τ(q)/(q-1), 其中τ(q)通过log-log线性回归得到
-#             regression_line = np.polyfit(logarithmic_scales,
-#                                          np.log(partition_function_values[:, q_index] + 1e-10), 1)
-#             generalized_fractal_dimensions[q_index] = regression_line[0] / (current_q_value - 1)
-#         else:
-#             # q = 1 特殊情况: D_1 = lim(ε→0) Σ μ_i log(μ_i) / log(ε)
-#             regression_line = np.polyfit(logarithmic_scales, special_case_q1, 1)
-#             generalized_fractal_dimensions[q_index] = regression_line[0]
-#
-#     # 奇异指数α(q)和多重分形谱f(α)计算
-#     singularity_exponents = np.zeros(len(q_values_storage))
-#     multifractal_spectrum = np.zeros(len(q_values_storage))
-#     alpha_regression_r2 = np.zeros(len(q_values_storage))
-#     f_spectrum_regression_r2 = np.zeros(len(q_values_storage))
-#
-#     for q_index in range(len(q_values_storage)):
-#         # 计算奇异指数 α(q) = dτ(q)/dq
-#         alpha_regression = np.polyfit(logarithmic_scales, singularity_strength_alpha[:, q_index], 1)
-#         singularity_exponents[q_index] = alpha_regression[0]
-#
-#         # 计算α(q)拟合的R²值
-#         alpha_fitted_values = np.polyval(alpha_regression, logarithmic_scales)
-#         alpha_residual_sum_squares = np.sum((singularity_strength_alpha[:, q_index] - alpha_fitted_values) ** 2)
-#         alpha_total_sum_squares = np.sum((singularity_strength_alpha[:, q_index] -
-#                                           np.mean(singularity_strength_alpha[:, q_index])) ** 2)
-#         alpha_regression_r2[q_index] = (1 - (alpha_residual_sum_squares / alpha_total_sum_squares)
-#                                         if alpha_total_sum_squares != 0 else 0)
-#
-#         # 计算多重分形谱 f(α) = qα(q) - τ(q)
-#         f_spectrum_regression = np.polyfit(logarithmic_scales, multifractal_spectrum_f[:, q_index], 1)
-#         multifractal_spectrum[q_index] = f_spectrum_regression[0]
-#
-#         # 计算f(α)拟合的R²值
-#         f_spectrum_fitted_values = np.polyval(f_spectrum_regression, logarithmic_scales)
-#         f_spectrum_residual_sum_squares = np.sum((multifractal_spectrum_f[:, q_index] - f_spectrum_fitted_values) ** 2)
-#         f_spectrum_total_sum_squares = np.sum((multifractal_spectrum_f[:, q_index] -
-#                                                np.mean(multifractal_spectrum_f[:, q_index])) ** 2)
-#         f_spectrum_regression_r2[q_index] = (1 - (f_spectrum_residual_sum_squares / f_spectrum_total_sum_squares)
-#                                              if f_spectrum_total_sum_squares != 0 else 0)
-#
-#     # 质量指数 τ(q) = (q-1)D_q
-#     mass_exponent_tau = (q_values_storage - 1) * generalized_fractal_dimensions
-#
-#     # 构建完整结果字典
-#     analysis_results = {
-#         'q_values': q_values_storage,
-#         'singularity_exponents': singularity_exponents,
-#         'multifractal_spectrum': multifractal_spectrum,
-#         'generalized_dimensions': generalized_fractal_dimensions,
-#         'mass_exponents': mass_exponent_tau,
-#         'alpha_regression_quality': alpha_regression_r2,
-#         'spectrum_regression_quality': f_spectrum_regression_r2,
-#         'total_scale_levels': maximum_scale_levels,
-#         'processed_image_size': standardized_image_size,
-#         'scale_values': scale_sequence
-#     }
-#
-#     return analysis_results
 import numpy as np
 import cv2
 import math
 from typing import Dict
 
 
-def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step: float = 0.1, img_size:tuple = None, box_sizes:list=[2, 4, 8, 16, 32, 64, 128]) -> Dict:
+def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step: float = 0.1) -> Dict:
     """
     多维分形分析主函数 - 基于盒子计数法计算图像的多重分形特征
 
@@ -521,14 +331,12 @@ def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step:
         'weighted_probability_alpha': singularity_strength_alpha,  # 加权概率测度相关量
         'weighted_probability_f': multifractal_spectrum_f  # 加权概率测度相关量
     }
-
     return analysis_results
 
 
 def visualize_multifractal_results(analysis_results: Dict):
     """
     绘制2×2子图展示多维分形分析结果
-
     Args:
         analysis_results: 多维分形分析结果字典
     """
@@ -555,8 +363,7 @@ def visualize_multifractal_results(analysis_results: Dict):
     subplot_axes[0, 0].grid(True, alpha=0.3)
 
     # 子图2: α(q)-f(α)关系及其抛物线拟合
-    subplot_axes[0, 1].plot(singularity_exponents, multifractal_spectrum, 'bo', markersize=4,
-                            label='Multifractal Spectrum')
+    subplot_axes[0, 1].plot(singularity_exponents, multifractal_spectrum, 'bo', markersize=4, label='Multifractal Spectrum')
     if len(singularity_exponents) > 2:
         try:
             # 抛物线拟合多重分形谱

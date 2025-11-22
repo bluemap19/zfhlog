@@ -2,3 +2,5 @@ chinese_test.png
 src_plot/spec_testdata.csv
 src_plot/env_testdata.csv
 src_plot/radar_charts.png
+/src_fmi/alpha_f_dyna.txt
+/src_fmi/alpha_f_stat.txt

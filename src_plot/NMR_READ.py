@@ -55,7 +55,7 @@ def generate_nmr_data(depth_range: Tuple[float, float], num_points: int = 20,
         if amplitude.max() > 0:
             amplitude = amplitude / amplitude.max()
 
-        nmr_dict[depth] = {
+        nmr_dict[f'{depth:.4f}'] = {
             'NMR_X': t2_values,
             'NMR_Y': amplitude,
             'mean_T2': mean_t2,

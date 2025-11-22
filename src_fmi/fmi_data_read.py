@@ -162,6 +162,7 @@ def get_random_ele_data():
     # 500*250 长图像
     path_test1 = r'F:\DeepLData\target_stage1_small_big_mix\FMI_IMAGE\ZG_FMI_SPLIT\guan17-11_204_3682.0025_3683.2525_dyna.png'
     path_test2 = r'F:\DeepLData\target_stage1_small_big_mix\FMI_IMAGE\ZG_FMI_SPLIT\guan17-11_204_3682.0025_3683.2525_stat.png'
+
     # 正常图像 250*250
     # path_test1 = r'F:\DeepLData\target_stage1_small_big_mix\FMI_IMAGE\ZG_FMI_SPLIT\guan17-11_95_3627.5025_3628.1275_dyna.png'
     # path_test2 = r'F:\DeepLData\target_stage1_small_big_mix\FMI_IMAGE\ZG_FMI_SPLIT\guan17-11_95_3627.5025_3628.1275_stat.png'
@@ -173,6 +174,14 @@ def get_random_ele_data():
     # path_test2 = r'F:\DeepLData\target_stage1_small_big_mix\FMI_IMAGE\ZG_FMI_SPLIT\guan17-11_195_3677.5025_3678.1275_stat.png'
     # path_test1 = r'F:\DeepLData\target_stage1_small_big_mix\FMI_IMAGE\ZG_FMI_SPLIT\LG7-12_423_5191.7520_5192.3770_dyna.png'
     # path_test2 = r'F:\DeepLData\target_stage1_small_big_mix\FMI_IMAGE\ZG_FMI_SPLIT\LG7-12_423_5191.7520_5192.3770_stat.png'
+
+    # # 桃镇1H 14960*256的图像
+    # path_test1 = r'F:\桌面\算法测试-长庆数据收集\logging_CSV\桃镇1H\桃镇1H_DYNA_FULL_TEST.txt'
+    # path_test2 = r'F:\桌面\算法测试-长庆数据收集\logging_CSV\桃镇1H\桃镇1H_STAT_FULL_TEST.txt'
+
+    # 桃镇1H 全部图像
+    path_test1 = r'F:\桌面\算法测试-长庆数据收集\logging_CSV\桃镇1H\桃镇1H_DYNA_FULL.txt'
+    path_test2 = r'F:\桌面\算法测试-长庆数据收集\logging_CSV\桃镇1H\桃镇1H_STAT_FULL.txt'
 
     data_img_dyna, data_depth = get_ele_data_from_path(path_test1)
     data_img_stat, data_depth = get_ele_data_from_path(path_test2)

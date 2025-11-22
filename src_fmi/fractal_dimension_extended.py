@@ -52,7 +52,7 @@ def multifractal_analysis(image, q_range=np.arange(-10, 11, 1), box_sizes=None):
     partition_functions = {q: [] for q in q_range}  # 配分函数 χ(q, ε)
     partition_functions_q1 = []
 
-    print(f"开始多重分形分析，q范围: {q_range[0]} 到 {q_range[-1]}")
+    # print(f"开始多重分形分析，q范围: {q_range[0]} 到 {q_range[-1]}")
 
     # 步骤1: 计算不同尺度下的配分函数
     for box_size in box_sizes:
@@ -234,21 +234,18 @@ def cal_pic_fractal_dimension_extended(image, image_shape=[256, 256],
     if image is None or image.size == 0:
         raise ValueError("输入图像数据为空")
 
+    # 调整图像尺寸
+    if image.shape[:2] != tuple(image_shape):
+        image = cv2.resize(image, tuple(image_shape), interpolation=cv2.INTER_AREA)
+    else:
+        image = image
+
     # 图像预处理
     if processing_method == 'adaptive_binary':
-        processed_image = adaptive_binarization(image, 'otsu_adaptive')
+        image = adaptive_binarization(image, 'otsu_adaptive')
     elif processing_method == 'edge_detection':
-        processed_image = edge_detection(image, 'canny_adaptive')
-    elif processing_method == 'original':
-        processed_image = image
-    else:
-        processed_image = image
+        image = edge_detection(image, 'canny_adaptive')
 
-    # 调整图像尺寸
-    if processed_image.shape[:2] != tuple(image_shape):
-        processed_image = cv2.resize(processed_image, tuple(image_shape), interpolation=cv2.INTER_AREA)
-    else:
-        processed_image = processed_image
 
     try:
         # 分形分析
@@ -261,22 +258,22 @@ def cal_pic_fractal_dimension_extended(image, image_shape=[256, 256],
                 }
 
             try:
-                fd, multifractal_result = multifractal_analysis(processed_image, q_range=multifractal_params['q_range'], box_sizes=multifractal_params['box_sizes'])
-                return fd, processed_image, multifractal_result
+                fd, multifractal_result = multifractal_analysis(image, q_range=multifractal_params['q_range'], box_sizes=multifractal_params['box_sizes'])
+                return fd, image, multifractal_result
             except Exception as e:
                 print(f"多重分形分析失败: {e}")
                 # 降级到普通分形分析
-                fd = differential_box_counting_dimension(processed_image)
+                fd = differential_box_counting_dimension(image)
                 multifractal_result = None
         else:
             # 单分形分析
             if method == 'box_counting': #盒计数法
-                fd = box_counting_dimension(processed_image)
+                fd = box_counting_dimension(image)
             else:  # differential_box
-                fd = differential_box_counting_dimension(processed_image)
+                fd = differential_box_counting_dimension(image)
             multifractal_result = None
 
-        return fd, processed_image, multifractal_result
+        return fd, image, multifractal_result
 
     except Exception as e:
         print(f"分形分析过程中出错: {e}")
@@ -955,11 +952,11 @@ def demo_multifractal_analysis():
     """
     演示多重分形分析的使用方法
     """
-    # # 生成一个测试图像（可以用您的电成像数据替换）
-    # data_img_dyna, data_img_stat, data_depth = get_random_ele_data()
-    # print(data_img_dyna.shape, data_img_stat.shape, data_depth.shape)       # (500, 250) (500, 250) (500, 1)
+    # 生成一个测试图像（可以用您的电成像数据替换）
+    data_img_dyna, data_img_stat, data_depth = get_random_ele_data()
+    print(data_img_dyna.shape, data_img_stat.shape, data_depth.shape)       # (500, 250) (500, 250) (500, 1)
 
-    data_img_stat = cv2.imread(r'C:\Users\Maple\Documents\MATLAB\multifractal-last modified\output.jpg', cv2.IMREAD_GRAYSCALE)
+    # data_img_stat = cv2.imread(r'C:\Users\Maple\Documents\MATLAB\multifractal-last modified\output2.jpg', cv2.IMREAD_GRAYSCALE)
     test_image = data_img_stat.astype(np.uint8)
 
     print("\n=== 多重分形分析 ===")
@@ -971,7 +968,7 @@ def demo_multifractal_analysis():
         # processing_method='adaptive_binary',
         multifractal_params={
             # 'q_range': np.arange(-5, 5.5, 0.5),
-            'q_range': np.arange(-5, 6.0, 0.2),
+            'q_range': np.arange(-5, 5.5, 0.5),
             # 'q_range': np.arange(-5, 6, 1),
             # 'q_range': np.arange(-12, 13, 2),
             'box_sizes': [2, 4, 8, 16, 32, 64],
