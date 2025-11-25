@@ -218,6 +218,17 @@ def trans_NMR_as_Ciflog_file_type(NMR_dict: Dict[float, Any] = None) -> Tuple[np
 
     return depth_array, image_array
 
+# 把fde的图像格式数据，转换成相对应的谱类数据格式
+def trans_fde_image_to_NMR_type(IMG_ARRAY: np.ndarray) -> Dict[str, Any]:
+    NMR_DICT = {}
+    for i in range(IMG_ARRAY.shape[0]):
+        if i % 5 == 0:
+            depth = IMG_ARRAY[i, 0]
+            NMR_DICT[f'{depth:.4f}'] = {'NMR_X': np.linspace(0, 6.3, 64), 'NMR_Y': IMG_ARRAY[i, 1:]}
+            NMR_DICT[f'{depth:.4f}'] = {'NMR_X': np.linspace(0, 6.3, 64), 'NMR_Y': IMG_ARRAY[i, 1:]}
+
+    return NMR_DICT
+
 
 if __name__ == '__main__':
     """
@@ -246,39 +257,39 @@ if __name__ == '__main__':
     alpha_f_stat = np.hstack((depth_array.reshape((-1, 1)), image_fde_stat.astype(np.float32)))
     np.savetxt('alpha_f_stat.txt', alpha_f_stat, delimiter='\t', comments='', fmt='%.4f')
 
-    # # show_Pic([image_fde_dyna, image_fde_stat])
-    #
-    # # 使用类接口进行可视化
-    # print("创建可视化器...")
-    # visualizer = WellLogVisualizer()
-    # try:
-    #     # 启用详细日志级别
-    #     logging.getLogger().setLevel(logging.INFO)
-    #
-    #     # 执行可视化
-    #     visualizer.visualize(
-    #         logging_dict=None,
-    #         fmi_dict={  # FMI图像数据
-    #             'depth': data_depth,
-    #             'image_data': [data_img_dyna, data_img_stat]+fmi_result_list,
-    #             'title': ['FMI动态', 'FMI静态', 'DYNA_PRO', 'STAT_PRO']
-    #         },
-    #         NMR_dict=fmi_multi_fde_list,
-    #         NMR_Config={'X_LOG': [False, False], 'NMR_TITLE': ['α-fα-DYNA', 'α-fα-STAT'], 'X_LIMIT':[[1.2, 4], [1.2, 4]], 'Y_scaling_factor': 2.4},
-    #         # depth_limit_config=[320, 380],                      # 深度限制
-    #         figsize=(12, 10)                                    # 图形尺寸
-    #     )
-    #
-    #     # 显示性能统计
-    #     stats = visualizer.get_performance_stats()
-    #     print("性能统计:", stats)
-    #
-    # except Exception as e:
-    #     print(f"可视化过程中出现错误: {e}")
-    #     import traceback
-    #
-    #     traceback.print_exc()  # 打印完整错误堆栈
-    # finally:
-    #     # 清理资源
-    #     visualizer.close()
+    # show_Pic([image_fde_dyna, image_fde_stat])
+
+    # 使用类接口进行可视化
+    print("创建可视化器...")
+    visualizer = WellLogVisualizer()
+    try:
+        # 启用详细日志级别
+        logging.getLogger().setLevel(logging.INFO)
+
+        # 执行可视化
+        visualizer.visualize(
+            logging_dict=None,
+            fmi_dict={  # FMI图像数据
+                'depth': data_depth,
+                'image_data': [data_img_dyna, data_img_stat]+fmi_result_list,
+                'title': ['FMI动态', 'FMI静态', 'DYNA_PRO', 'STAT_PRO']
+            },
+            NMR_dict=fmi_multi_fde_list,
+            NMR_Config={'X_LOG': [False, False], 'NMR_TITLE': ['α-fα-DYNA', 'α-fα-STAT'], 'X_LIMIT':[[1.2, 4], [1.2, 4]], 'Y_scaling_factor': 2.4},
+            # depth_limit_config=[320, 380],                      # 深度限制
+            figsize=(12, 10)                                    # 图形尺寸
+        )
+
+        # 显示性能统计
+        stats = visualizer.get_performance_stats()
+        print("性能统计:", stats)
+
+    except Exception as e:
+        print(f"可视化过程中出现错误: {e}")
+        import traceback
+
+        traceback.print_exc()  # 打印完整错误堆栈
+    finally:
+        # 清理资源
+        visualizer.close()
 

@@ -142,6 +142,6 @@ def cal_images_texture(imgs=[], depth=np.array([]), windows=20, step=5, texture_
         else:
             print('\033[31m' + 'ERROR SVAE TEXTURE PATH AS:{}, and texture file not saved.'.format(path_texture_saved) + '\033[0m')
 
-    return TEXTURE_LOGGING
+    return target_df
 
 

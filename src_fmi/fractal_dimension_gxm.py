@@ -114,8 +114,7 @@ def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step:
                 # 边界检查，避免存储越界
                 if box_counter < maximum_box_count:
                     # 提取当前盒子区域的图像块
-                    image_block = standardized_image[start_row:start_row + current_box_size,
-                                  start_col:start_col + current_box_size]
+                    image_block = standardized_image[start_row:start_row + current_box_size, start_col:start_col + current_box_size]
 
                     # 计算盒子内像素强度总和：μ_i(ε) = Σ pixel_value
                     # 这代表在尺度ε下，盒子i所包含的"质量"或概率测度
@@ -256,7 +255,7 @@ def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step:
     logarithmic_scales = np.array([math.log(scale_value) for scale_value in scale_sequence])
 
     # =========================================================================
-    # 第八阶段：广义分形维数D_q计算
+    # 第八阶段： 广义分形维数D_q计算
     # =========================================================================
 
     # 广义分形维数D_q统一描述不同q值下的分形特征
@@ -311,10 +310,8 @@ def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step:
         # 计算拟合优度R²，评估线性关系的质量
         alpha_fitted_values = np.polyval(alpha_regression, logarithmic_scales)
         alpha_residual_sum_squares = np.sum((singularity_strength_alpha[:, q_index] - alpha_fitted_values) ** 2)
-        alpha_total_sum_squares = np.sum((singularity_strength_alpha[:, q_index] -
-                                          np.mean(singularity_strength_alpha[:, q_index])) ** 2)
-        alpha_regression_r2[q_index] = (1 - (alpha_residual_sum_squares / alpha_total_sum_squares)
-                                        if alpha_total_sum_squares != 0 else 0)
+        alpha_total_sum_squares = np.sum((singularity_strength_alpha[:, q_index] - np.mean(singularity_strength_alpha[:, q_index])) ** 2)
+        alpha_regression_r2[q_index] = (1 - (alpha_residual_sum_squares / alpha_total_sum_squares) if alpha_total_sum_squares != 0 else 0)
 
         # =====================================================================
         # 核心计算6：多重分形谱f(α) = qα(q) - τ(q)
@@ -327,10 +324,8 @@ def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step:
         # 计算f(α)拟合的R²值
         f_spectrum_fitted_values = np.polyval(f_spectrum_regression, logarithmic_scales)
         f_spectrum_residual_sum_squares = np.sum((multifractal_spectrum_f[:, q_index] - f_spectrum_fitted_values) ** 2)
-        f_spectrum_total_sum_squares = np.sum((multifractal_spectrum_f[:, q_index] -
-                                               np.mean(multifractal_spectrum_f[:, q_index])) ** 2)
-        f_spectrum_regression_r2[q_index] = (1 - (f_spectrum_residual_sum_squares / f_spectrum_total_sum_squares)
-                                             if f_spectrum_total_sum_squares != 0 else 0)
+        f_spectrum_total_sum_squares = np.sum((multifractal_spectrum_f[:, q_index] - np.mean(multifractal_spectrum_f[:, q_index])) ** 2)
+        f_spectrum_regression_r2[q_index] = (1 - (f_spectrum_residual_sum_squares / f_spectrum_total_sum_squares) if f_spectrum_total_sum_squares != 0 else 0)
 
     # =========================================================================
     # 第十阶段：质量指数τ(q)计算与结果整合

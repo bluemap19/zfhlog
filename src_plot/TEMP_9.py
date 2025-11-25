@@ -249,46 +249,77 @@ class WellLogVisualizer:
     - 异常安全：完善的错误处理和资源清理
     """
 
-    # 默认曲线颜色序列：10种高对比度颜色，确保不同曲线清晰可辨
+    # ========== 颜色配置 ==========
     DEFAULT_CURVE_COLORS = [
-        '#FF0000',  # 红色
-        '#00FF00',  # 绿色
-        '#0000FF',  # 蓝色
-        '#00FFFF',  # 青色
-        '#FF00FF',  # 洋红
-        '#8000FF',  # 紫色
-        '#00FF80',  # 春绿色
-        '#FF0080',  # 深粉色
-        '#FFA500',  # 橙色
-        '#FFFF00'  # 黄色
+        '#FF0000', '#00FF00', '#0000FF', '#00FFFF', '#FF00FF', '#8000FF', '#00FF80', '#FF0080', '#FFA500', '#FFFF00'
     ]
 
     # 多曲线道颜色序列（用于同一道内的多条曲线）
     DEFAULT_MULTI_CURVE_COLORS = [
-        '#FF0000',  # 红色
-        '#000000',  # 黑色
-        '#0000FF',  # 蓝色
-        '#800080',  # 紫色
-        '#FFA500',  # 橙色
-        '#FFFF00'  # 黄色
+        '#FF0000', '#000000', '#0000FF', '#800080', '#FFA500', '#FFFF00'
     ]
 
     # 布局配置常量：定义图形各元素的相对位置和尺寸
     LAYOUT_CONFIG = {
         'left_margin': 0.06,  # 左侧边距占图形宽度的比例
         'right_margin': 0.98,  # 右侧边距（为滑动条留空间）
-        'top_margin': 0.96,  # 顶部边距
         'legend_bottom_margin': 0.067,  # 有图例时的底部边距
         'no_legend_bottom_margin': 0.062,  # 无图例时的底部边距
         'title_margin': 0.001,  # 标题框与子图的间距
-        'title_height': 0.04,  # 标题框高度
+        'title_height': 0.06,  # 标题框（数据头）高度，也决定了测井曲线图的图头高度
         'slider_width': 0.02,  # 滑动条宽度
-        'fmi_panel_width': 0.1,  # FMI面板宽度（未直接使用，保留兼容性）
         'min_window_size_ratio': 0.01,  # 最小窗口大小相对于总深度范围的比例
-        'scroll_step_ratio': 0.1  # 滚轮滚动步长相对于窗口大小的比例
+        'scroll_step_ratio': 0.1,  # 滚轮滚动步长相对于窗口大小的比例
+        'axis_label_fontsize': 10,  # 坐标轴标签字体大小
+        'tick_label_fontsize': 8,  # 刻度标签字体大小,右侧窗长滑动条字体大小
+        'title_fontsize': 12,  # 标题字体大小
+
+        'legend_box_alpha': 0.8,  # 图例框背景透明度
+        'legend_facecolor': '#FFFFFF',  # 图例框颜色
+        'legend_fontsize': 10,  # 图例字体大小
+
+        'depth_indicator_alpha': 0.2,  # 深度指示器背景透明度
+        'depth_indicator_facecolor':'#666666',# 深度指示器背景颜色
+        'depth_indicator_fontsize':10,# 深度指示器字体大小
     }
 
-    NMR_Config = {'X_LOG': [True, True], 'NMR_TITLE': ['N1', 'N2'], 'X_LIMIT': [[0.1, 200], [0.1, 200]], 'Y_scaling_factor': 1.0, 'JUMP_POINT':50}
+    NMR_CONFIG = {
+        'X_LOG': [True, True],           # 是否使用对数坐标轴
+        'NMR_TITLE': ['N1', 'N2'],       # NMR面板标题
+        'X_LIMIT': [[0.1, 1000], [0.1, 1000]],  # X轴显示范围
+        'Y_scaling_factor': 1.0,         # Y轴缩放因子
+        'JUMP_POINT': 50,                # 采样跳跃点数
+        'line_width': 0.8,               # 谱线宽度
+        'line_alpha': 0.9,               # 谱线透明度
+        'fill_alpha': 0.5,               # 填充透明度
+        'default_color': 'green',        # 默认颜色
+        'fill_line_width': 0.8,          # 网格线透明度
+        'amplitude_scale_base': 1.5,     # 振幅缩放基准值
+        'amplitude_power_factor': 0.6    # 振幅幂次因子
+    }
+
+    # ========== 性能配置 ==========
+    PERFORMANCE_CONFIG = {
+        'cache_enabled': True,  # 是否启用缓存
+        'max_cache_size': 500,  # 最大缓存数据块数量
+        'compression_level': 1,  # 压缩级别1-9
+        'fmi_cache_size': 50,  # FMI缓存大小
+        'nmr_cache_size': 100,  # NMR缓存大小
+    }
+
+    # ========== 渲染配置 ==========
+    RENDERING_CONFIG = {
+        'curve_linewidth': 1.0,  # 曲线线宽，常规测井的曲线线宽
+        'title_box_linewidth': 1,  # 标题框边框宽度
+        'head_box_facecolor':'#f5f5f5',  # 道头的背景颜色-浅灰色背景
+        'head_box_edgecolor':'#aaaaaa',  # 道头的边框颜色-灰色边框
+    }
+
+    # ========== 字体配置 ==========
+    FONT_CONFIG = {
+        'family': ['DejaVu Sans', 'SimHei', 'sans-serif'],  # 字体族
+        'weight_bold': 'bold',  # 粗体字重
+    }
 
     def __init__(self, performance_config: Dict[str, Any] = None):
         """
@@ -299,14 +330,9 @@ class WellLogVisualizer:
             - max_cache_size: 最大缓存条目数
         """
         # 性能配置：控制缓存和行为优化参数
-        self.performance_config = {
-            'cache_enabled': True,  # 缓存开关
-            'max_cache_size': 500,  # 最大缓存数据块数量
-        }
-
         # 如果传入自定义性能配置，更新默认配置
         if performance_config:
-            self.performance_config.update(performance_config)
+            self.PERFORMANCE_CONFIG.update(performance_config)
 
         # 数据相关属性：存储输入数据和配置信息
         self.data: Optional[pd.DataFrame] = None  # 原始测井数据
@@ -337,17 +363,17 @@ class WellLogVisualizer:
         self.NMR_dict: List[Dict[float, Dict[str, Any]]] = []  # NMR核磁谱、多维分形谱、孔隙度谱分布数据
         self.nmr_axes: List[plt.Axes] = []
         self.nmr_plots: List[Dict[str, Any]] = []  # 存储每个NMR道的绘图对象
-        self.nmr_config: Dict[str, Any] = {}
         self.sorted_depths_NMR: List[List[float]] = []
         self.config_num_NMR_per_window: Dict[str, int] = {}   # 存放在不同显示窗长配置下，要显示几个NMR谱
 
         # # 缓存类，专门管理测井数据缓存
         self.cache_system = EnhancedWellLogCache(
             CacheConfig(
-                enabled=self.performance_config['cache_enabled'],
-                max_size=self.performance_config['max_cache_size'],
-                fmi_max_size=50,  # FMI缓存大小
-                compression_level=1
+                enabled=self.PERFORMANCE_CONFIG['cache_enabled'],
+                max_size=self.PERFORMANCE_CONFIG['max_cache_size'],
+                fmi_max_size=self.PERFORMANCE_CONFIG['fmi_cache_size'],  # FMI缓存大小
+                compression_level=self.PERFORMANCE_CONFIG['compression_level'],
+                nmr_max_size=self.PERFORMANCE_CONFIG['nmr_cache_size']
             )
         )
 
@@ -355,18 +381,17 @@ class WellLogVisualizer:
         self._setup_matplotlib_fonts()
 
         # 记录初始化完成日志
-        cache_status = "启用" if self.performance_config['cache_enabled'] else "禁用"
+        cache_status = "启用" if self.PERFORMANCE_CONFIG['cache_enabled'] else "禁用"
         logger.info("WellLogVisualizer初始化完成，缓存%s", cache_status)
 
     def _setup_matplotlib_fonts(self):
-        """设置matplotlib字体，解决特殊字符显示问题"""
+        """设置matplotlib字体 - 使用集中化的字体配置"""
         try:
-            # 尝试设置支持Unicode的字体
-            plt.rcParams['font.family'] = ['DejaVu Sans', 'SimHei', 'sans-serif']
-            plt.rcParams['axes.unicode_minus'] = False  # 使用ASCII减号而不是Unicode负号
-            logger.info("字体设置完成，使用ASCII减号替代Unicode负号")
+            plt.rcParams['font.family'] = self.FONT_CONFIG['family']
+            plt.rcParams['axes.unicode_minus'] = False
+            logger.info("字体设置完成，使用配置: %s", self.FONT_CONFIG['family'])
         except Exception as e:
-            logger.warning(f"字体设置失败: {e}, 使用默认设置")
+            logger.warning("字体设置失败: %s, 使用默认设置", e)
 
     def _validate_logging_data(self, logging_dict:Dict[str, Any]) -> None:
         """
@@ -674,14 +699,14 @@ class WellLogVisualizer:
             depth_data = nmr_dict['depth']
 
             for j, depth in enumerate(depth_data):
-                if j%self.NMR_Config['JUMP_POINT'] != 0:
+                if j%self.NMR_CONFIG['JUMP_POINT'] != 0:
                     continue
 
                 # 为每个深度点创建谱数据
                 nmr_spectrum = nmr_array[j, :]
 
                 # 生成谱类数据的X坐标
-                x_limit = self.NMR_Config['X_LIMIT'][i]
+                x_limit = self.NMR_CONFIG['X_LIMIT'][i]
                 t2_values = np.linspace(min(x_limit), max(x_limit), len(nmr_spectrum))
 
                 # 归一化振幅
@@ -882,15 +907,14 @@ class WellLogVisualizer:
             self.axs = [self.axs]
 
         # 根据是否有图例选择底部边距
-        bottom_margin = (
-            self.LAYOUT_CONFIG['legend_bottom_margin'] if has_legend else self.LAYOUT_CONFIG['no_legend_bottom_margin'])
+        bottom_margin = (self.LAYOUT_CONFIG['legend_bottom_margin'] if has_legend else self.LAYOUT_CONFIG['no_legend_bottom_margin'])
 
         # 调整图形布局参数
         plt.subplots_adjust(
             left=self.LAYOUT_CONFIG['left_margin'],  # 左侧边距
             right=self.LAYOUT_CONFIG['right_margin'],  # 右侧边距（为滑动条留空间）
             bottom=bottom_margin,  # 底部边距
-            top=self.LAYOUT_CONFIG['top_margin'],  # 顶部边距
+            top=1-self.LAYOUT_CONFIG['title_height'],  # 顶部边距
             wspace=0.0  # 子图间水平间距为0（紧密排列）
         )
 
@@ -906,7 +930,7 @@ class WellLogVisualizer:
         # 计算滑动条位置和尺寸
         bottom_margin = (
             self.LAYOUT_CONFIG['legend_bottom_margin'] if has_legend else self.LAYOUT_CONFIG['no_legend_bottom_margin'])
-        slider_height = self.LAYOUT_CONFIG['top_margin'] - bottom_margin
+        slider_height = 1 - self.LAYOUT_CONFIG['title_height'] - bottom_margin
 
         # 创建滑动条轴对象（右侧垂直条）
         slider_ax = plt.axes([
@@ -936,7 +960,7 @@ class WellLogVisualizer:
         self.window_size_slider.valtext.set_visible(False)
 
         # 添加滑动条文本标签（旋转270度）
-        slider_ax.text(0.5, 0.5, '窗口大小(m)', rotation=270, ha='center', va='center', transform=slider_ax.transAxes, fontsize=8)
+        slider_ax.text(0.5, 0.5, '窗口大小(m)', rotation=270, ha='center', va='center', transform=slider_ax.transAxes, fontsize=self.LAYOUT_CONFIG['tick_label_fontsize'])
 
     def _create_title_box(self, ax: plt.Axes, title: Any, color: str, index: int) -> None:
         """
@@ -951,45 +975,47 @@ class WellLogVisualizer:
         # 获取子图在图形中的位置（相对坐标）
         orig_pos = ax.get_position()
 
-        # 计算标题框位置和尺寸（基于子图位置）
+        # 使用配置中的标题参数
         title_bbox = [
-            orig_pos.x0 + self.LAYOUT_CONFIG['title_margin'],  # x起点
-            orig_pos.y0 + orig_pos.height + self.LAYOUT_CONFIG['title_margin'],  # y起点（子图上方）
-            orig_pos.width - 2 * self.LAYOUT_CONFIG['title_margin'],  # 宽度
-            self.LAYOUT_CONFIG['title_height']  # 高度
+            orig_pos.x0 + self.LAYOUT_CONFIG['title_margin'],
+            orig_pos.y0 + orig_pos.height + self.LAYOUT_CONFIG['title_margin'],
+            orig_pos.width - 2 * self.LAYOUT_CONFIG['title_margin'],
+            self.LAYOUT_CONFIG['title_height']
         ]
 
-        # 创建标题背景矩形
+        # 创建标题背景矩形 - 使用配置中的透明度
         title_rect = Rectangle(
             (title_bbox[0], title_bbox[1]), title_bbox[2], title_bbox[3],
-            transform=self.fig.transFigure,  # 使用图形坐标变换
-            facecolor='#f5f5f5',  # 浅灰色背景
-            edgecolor='#aaaaaa',  # 灰色边框
-            linewidth=1,  # 边框宽度
-            clip_on=False,  # 不裁剪（允许显示在子图外）
-            zorder=10  # 高层级确保显示在前面
+            transform=self.fig.transFigure,                             # 使用图形坐标变换
+            facecolor=self.RENDERING_CONFIG['head_box_facecolor'],      # 浅灰色背景
+            edgecolor=self.RENDERING_CONFIG['head_box_edgecolor'],      # 灰色边框
+            linewidth=self.RENDERING_CONFIG['title_box_linewidth'],     # 使用配置的线宽
+            clip_on=False,                                              # 不裁剪（允许显示在子图外）
+            zorder=10,                                                  # 高层级确保显示在前面
         )
         self.fig.add_artist(title_rect)
 
-        # 修改点：检查title类型，支持列表和字符串
         if isinstance(title, list):
-            # 多部分标题：每个部分使用不同颜色
+            # 多部分标题
             n_parts = len(title)
-            part_width = title_bbox[2] / n_parts  # 每个标题部分的宽度
+            # part_width = title_bbox[2] / n_parts
+            part_height = title_bbox[3] / n_parts
 
             for i, part_text in enumerate(title):
                 # 计算每个部分的中心位置
-                x_center = title_bbox[0] + (i + 0.5) * part_width
-                y_center = title_bbox[1] + title_bbox[3] / 2
+                # x_center = title_bbox[0] + (i + 0.5) * part_width
+                # y_center = title_bbox[1] + title_bbox[3] / 2
+                x_center = title_bbox[0] + title_bbox[2] / 2
+                y_center = title_bbox[1] + (i+0.5)*part_height
 
-                # 从多曲线颜色序列中获取颜色（循环使用）
+                # 使用配置的颜色循环
                 part_color = self.DEFAULT_MULTI_CURVE_COLORS[i % len(self.DEFAULT_MULTI_CURVE_COLORS)]
-
                 # 创建单个标题部分文本
                 text_obj = Text(
-                    x_center, y_center,
-                    part_text,
-                    fontsize=12, fontweight='bold', color=part_color,
+                    x_center, y_center, part_text,
+                    fontsize=self.LAYOUT_CONFIG['title_fontsize'],  # 使用配置的字体大小
+                    fontweight=self.FONT_CONFIG['weight_bold'],  # 使用配置的字重
+                    color=part_color,
                     ha='center', va='center',
                     transform=self.fig.transFigure,
                     clip_on=False,
@@ -997,12 +1023,14 @@ class WellLogVisualizer:
                 )
                 self.fig.add_artist(text_obj)
         else:
-            # 单标题：使用传入的颜色
+            # 单标题 # 单标题：使用传入的颜色
             title_text = Text(
                 title_bbox[0] + title_bbox[2] / 2,
                 title_bbox[1] + title_bbox[3] / 2,
                 title,
-                fontsize=12, fontweight='bold', color=color,
+                fontsize=self.LAYOUT_CONFIG['title_fontsize'],  # 使用配置的字体大小
+                fontweight=self.FONT_CONFIG['weight_bold'],  # 使用配置的字重
+                color=color,
                 ha='center', va='center',
                 transform=self.fig.transFigure,
                 clip_on=False,
@@ -1123,7 +1151,7 @@ class WellLogVisualizer:
             for i, curve_col in enumerate(curve_item):
                 curve_color = self.DEFAULT_MULTI_CURVE_COLORS[i % len(self.DEFAULT_MULTI_CURVE_COLORS)]
                 line, = ax.plot(self.data[curve_col].values, self.data[self.depth_col].values,
-                                color=curve_color, linewidth=1.0, linestyle='-', label=curve_col)
+                                color=curve_color, linewidth=self.RENDERING_CONFIG['curve_linewidth'], linestyle='-', label=curve_col)
                 self.plots.append(line)
 
             # 计算多曲线的联合显示范围
@@ -1309,29 +1337,38 @@ class WellLogVisualizer:
         if nmr_index >= len(self.NMR_dict):
             return
 
-        if nmr_index < len(self.NMR_Config['NMR_TITLE']):
-            title = self.NMR_Config['NMR_TITLE'][nmr_index]
+        if nmr_index < len(self.NMR_CONFIG['NMR_TITLE']):
+            title = self.NMR_CONFIG['NMR_TITLE'][nmr_index]
         else:
             title = f"NMR_{nmr_index + 1}"
 
         # 创建标题框
-        self._create_title_box(ax, title, '#222222', panel_index)
+        self._create_title_box(ax, title, '#000000', panel_index)
 
         # 设置坐标轴属性
         ax.set_xlabel('')
         ax.set_ylabel('')
         ax.grid(True, alpha=0.3)
 
+        # 移除X轴的刻度线和刻度标签
+        ax.tick_params(
+            axis='x',  # 针对x轴
+            which='both',  # 同时修改主刻度和次刻度
+            bottom=False,  # 移除底部刻度线
+            top=False,  # 移除顶部刻度线
+            labelbottom=False  # 移除底部刻度标签
+        )
+
         # 'X_LOG': [True, True], 'NMR_TITLE': ['N1', 'N2'], 'X_LIMIT': [[0.1, 2000], [0.1, 2000]], 'Y_scaling_factor': 1.0
-        NMR_X_LOG_CONFIG = self.NMR_Config['X_LOG']
+        NMR_X_LOG_CONFIG = self.NMR_CONFIG['X_LOG']
         if nmr_index < len(NMR_X_LOG_CONFIG):
             if NMR_X_LOG_CONFIG[nmr_index]:
                 # T2核磁谱设置
                 ax.set_xscale('log')                            # T2时间使用对数坐标
 
-        if 'X_LIMIT' in self.NMR_Config.keys():
-            if nmr_index < len(self.NMR_Config['X_LIMIT']):
-                x_limit = self.NMR_Config['X_LIMIT'][nmr_index]
+        if 'X_LIMIT' in self.NMR_CONFIG.keys():
+            if nmr_index < len(self.NMR_CONFIG['X_LIMIT']):
+                x_limit = self.NMR_CONFIG['X_LIMIT'][nmr_index]
                 x_min = min(x_limit)
                 x_max = max(x_limit)
                 ax.set_xlim(x_min, x_max)
@@ -1362,12 +1399,12 @@ class WellLogVisualizer:
 
         # 预创建谱线对象
         for i in range(max_pool_size):
-            line, = ax.plot([], [], 'g-', linewidth=0.8, alpha=0.9, visible=False)
+            line, = ax.plot([], [], 'g-', linewidth=self.NMR_CONFIG['line_width'], alpha=self.NMR_CONFIG['line_alpha'], visible=False)
             nmr_plot['line_pool'].append(line)
 
         # 预创建填充对象
         for i in range(max_pool_size):
-            fill = ax.fill_between([], [], [], alpha=0.5, color='green', linewidth=0, visible=False)
+            fill = ax.fill_between([], [], [], linewidth=self.NMR_CONFIG['fill_line_width'], alpha=self.NMR_CONFIG['fill_alpha'], color=self.NMR_CONFIG['default_color'], visible=False)
             nmr_plot['fill_pool'].append(fill)
 
     def _plot_all_nmr_panels(self) -> None:
@@ -1413,7 +1450,9 @@ class WellLogVisualizer:
         else:
             self.config_num_NMR_per_window[key_depth] = max(nmr_num, self.config_num_NMR_per_window[key_depth])
 
-        scale_factor = 1.5 / self.config_num_NMR_per_window[key_depth]**0.6 * self.NMR_Config['Y_scaling_factor']
+        # scale_factor = 1.5 / self.config_num_NMR_per_window[key_depth]**0.6 * self.NMR_CONFIG['Y_scaling_factor']
+        ###### 使用配置中的基准值和因子
+        scale_factor = (self.NMR_CONFIG['amplitude_scale_base'] / self.config_num_NMR_per_window[key_depth] ** self.NMR_CONFIG['amplitude_power_factor'] * self.NMR_CONFIG['Y_scaling_factor'])
 
         return scale_factor
 
@@ -1599,12 +1638,11 @@ class WellLogVisualizer:
             labels.append(legend_dict[key])
 
         # 创建图例：中央位置，自动列数，半透明背景
-        legend = legend_ax.legend(handles, labels, loc='center', ncol=min(n_items, 6), frameon=True, framealpha=0.9, fontsize=9)
+        legend = legend_ax.legend(handles, labels, loc='center', ncol=min(n_items, 6), frameon=True, framealpha=self.LAYOUT_CONFIG['legend_box_alpha'], fontsize=self.LAYOUT_CONFIG['legend_fontsize'])
 
         # 设置图例框样式
         frame = legend.get_frame()
-        frame.set_facecolor('#f8f8f8')  # 浅灰色背景
-        frame.set_edgecolor('#666666')  # 深灰色边框
+        frame.set_facecolor(self.LAYOUT_CONFIG['legend_facecolor'])  # 浅灰色背景
 
     def _on_window_size_change(self, val: float) -> None:
         """
@@ -1780,8 +1818,8 @@ class WellLogVisualizer:
             # 创建新文本对象（首次调用时）
             self._depth_indicator = self.fig.text(
                 0.99, 0.01, indicator_text,  # 位置：右下角
-                ha='right', va='bottom', fontsize=9,  # 对齐和字体
-                bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.1')  # 半透明背景框
+                ha='right', va='bottom', fontsize=self.LAYOUT_CONFIG['depth_indicator_fontsize'],  # 对齐和字体
+                bbox=dict(facecolor=self.LAYOUT_CONFIG['depth_indicator_facecolor'], alpha=self.LAYOUT_CONFIG['depth_indicator_alpha'], boxstyle='round,pad=0.1')  # 半透明背景框
             )
 
     def visualize(self,
@@ -1790,7 +1828,7 @@ class WellLogVisualizer:
                   colors: List[str] = None,
                   fmi_dict: Dict[str, Any] = None,
                   NMR_dict: List[Dict[str, Any]] = None,
-                  NMR_Config: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
+                  NMR_CONFIG: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
                   depth_limit_config: Optional[List[float]] = None,
                   figure: Optional[plt.Figure] = None) -> None:
         """
@@ -1810,8 +1848,8 @@ class WellLogVisualizer:
 
             if colors is None:
                 colors = self.DEFAULT_CURVE_COLORS  # 默认颜色序列
-            if NMR_Config is not None:
-                self.NMR_Config.update(NMR_Config)
+            if NMR_CONFIG is not None:
+                self.NMR_CONFIG.update(NMR_CONFIG)
 
             # ========== 参数验证 ==========
             logging_dict = self._validate_logging_data(logging_dict)
@@ -1960,12 +1998,12 @@ if __name__ == "__main__":
 
         # 执行可视化
         visualizer.visualize(
-            # logging_dict={'data':sample_data,
-            #               'depth_col':'Depth',
-            #               'curve_cols':[['GR', 'GR_X'], ['RT', 'RX'], 'NPHI', 'RHOB'],  # 选择显示的曲线
-            #               # 'type_cols':['LITHOLOGY', 'FACIES'],  # 分类数据
-            #               # 'legend_dict':{0: '砂岩', 1: '页岩', 2: '石灰岩', 3: '白云岩'}  # 图例定义
-            #               },
+            logging_dict={'data':sample_data,
+                          'depth_col':'Depth',
+                          'curve_cols':[['GR', 'GR_X'], ['RT', 'RX'], 'NPHI', 'RHOB'],  # 选择显示的曲线
+                          'type_cols':['LITHOLOGY', 'FACIES'],  # 分类数据
+                          'legend_dict':{0: '砂岩', 1: '页岩', 2: '石灰岩', 3: '白云岩'}  # 图例定义
+                          },
             fmi_dict={  # FMI图像数据
                 'depth': depth_fmi,
                 'image_data': [fmi_dynamic, fmi_static],
@@ -1977,7 +2015,7 @@ if __name__ == "__main__":
                 'nmr_data': [fmi_dynamic, fmi_static],
                 'title': ['NMR动态', 'NMR静态']
             },
-            NMR_Config={'X_LOG':[True, True], 'NMR_TITLE':['N1', 'N2'], 'X_LIMIT':[[1, 1000], [1, 1000]], 'Y_scaling_factor':6, 'JUMP_POINT':15},
+            NMR_CONFIG={'X_LOG':[False, True], 'NMR_TITLE':['N1_谱', 'N2_谱'], 'X_LIMIT':[[1, 1000], [1, 1000]], 'Y_scaling_factor':12, 'JUMP_POINT':15},
             # depth_limit_config=[320, 380],  # 深度限制
             figsize=(12, 8)  # 图形尺寸
         )

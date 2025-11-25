@@ -170,6 +170,7 @@ class data_table:
         if self._table_3.shape[1] >= 3:
             return self._table_3.iloc[:, [0, 1, -1]]
         return self._table_3
+
     def get_table_3_replaced(self, curve_names=[]):
         if self._table_3_replaced.shape[0] == 0:
             self.table_2_to_3()
@@ -189,6 +190,7 @@ class data_table:
         if self._table_2.shape[1] >= 2:
             return self._table_2.iloc[:, [0, -1]]
         return self._table_2
+
     def get_table_2_replaced(self, curve_names=[]):
         if self._table_2_replaced.shape[0] == 0:
             self.table_3_to_2()
@@ -218,12 +220,9 @@ class data_table:
         self._table_3_replaced = self._table_3.copy()
         self._table_3_replaced[new_col] = self._table_3.iloc[:, -1].map(replace_dict)
 
-        # print(replace_dict)
-        # print(self.table_2)
-        # print(self.table_3)
 
 if __name__ == '__main__':
-    test_table = data_table(path=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\FY1-15\FY1-15_LITHO_TYPE.csv', well_name='FY1-15')
+    test_table = data_table(path=r'F:\logging_workspace\FY1-15\FY1-15_LITHO_TYPE.csv', well_name='FY1-15')
     # test_table = data_table(path=r'F:\\桌面\\算法测试-长庆数据收集\\logging_CSV\\城96\\城96__纹理岩相划分原始数据.csv', well_name='城96')
 
     print(test_table.get_table_3().describe())

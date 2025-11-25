@@ -188,7 +188,7 @@ class data_logging:
 
 if __name__ == '__main__':
     # test_data = data_logging(path=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\城96\A-城96_logging_data.csv', well_name='城96')
-    test_data = data_logging(path=r'F:\桌面\算法测试-长庆数据收集\logging_CSV\FY1-15\FY1-15_texture_logging_data.csv', well_name='FY1-15')
+    test_data = data_logging(path=r'F:\logging_workspace\FY1-15\FY1-15_texture_logging_data.csv', well_name='FY1-15')
 
     # col_names = ['GRC', 'CN', 'DT', 'Sp']
     print(test_data.get_data().describe())
