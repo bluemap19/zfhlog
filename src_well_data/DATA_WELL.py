@@ -11,13 +11,6 @@ from src_well_data.data_FMI import data_FMI
 
 class DATA_WELL:
     def __init__(self, path_folder='', WELL_NAME=''):
-        # # 初始化四种类型数据（测井数据、电成像数据、核磁数据、表格分类数据）的describe
-        # # 存放格式为{logging_path1:describe_data1, logging_path2:describe_data2}
-        # self.describe_logging = {}
-        # self.describe_FMI = {}
-        # self.describe_NMR = {}
-        # self.describe_table = {}
-
         # 初始化四种类型数据（测井数据、电成像数据、核磁数据、表格分类数据）的 数据实体存放，默认保存成{路径：dataframe}的字典格式
         # 存放格式为{logging_path1:dataframe1, logging_path2:dataframe2}
         self.logging_dict = {}

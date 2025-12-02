@@ -56,13 +56,6 @@ def ele_stripes_delete(Pic: np.ndarray, shape_target: Tuple[int, int] = (100, 8)
 
     Raises:
         ValueError: 当目标高度与原始图像高度不匹配时
-
-    Example:
-        >>> import numpy as np
-        >>> original_image = np.array([[0, 1, 2, 3], [0, 0, 1, 2]])
-        >>> processed = ele_stripes_delete(original_image, (2, 3), delete_pix=1)
-        >>> print(processed.shape)
-        (2, 3)
     """
     # 创建目标形状的空数组
     pic_new = np.zeros(shape_target, dtype=np.float64)
@@ -568,7 +561,8 @@ def user_specific_test():
     # 用户提供的测试用例
     test_case = {
         # 'path_fmi': r'F:\logging_workspace\桃镇1H\桃镇1H_STAT_FULL.txt',
-        'path_fmi': r'F:\logging_workspace\禄探\禄探_STAT.txt',
+        # 'path_fmi': r'F:\logging_workspace\禄探\禄探_STAT.txt',
+        'path_fmi': r'C:\Users\purem\Desktop\logging_workspace\禄探\禄探_STAT.txt',
         'fmi_charter': 'STAT'
     }
 

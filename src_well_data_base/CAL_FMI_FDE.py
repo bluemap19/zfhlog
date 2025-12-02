@@ -16,7 +16,8 @@ def user_specific_test():
     print("用户特定测试")
     print("=" * 60)
 
-    FOLDER_PATH = r'F:\logging_workspace\禄探'
+    # FOLDER_PATH = r'F:\logging_workspace\禄探'
+    FOLDER_PATH = r'C:\Users\purem\Desktop\logging_workspace\禄探'
     # FOLDER_PATH = r'F:\logging_workspace\桃镇1H'
 
     # 用户提供的测试用例
@@ -78,7 +79,7 @@ def user_specific_test():
                 'title': ['NMR动态', 'NMR静态']
             },
             NMR_CONFIG={'X_LOG': [False, False], 'NMR_TITLE': ['α-fα-DYNA', 'α-fα-STAT'],
-                        'X_LIMIT': [[0, 6.4], [0, 6.4]], 'Y_scaling_factor': 2, 'JUMP_POINT':1},
+                        'X_LIMIT': [[0, 6.4], [0, 6.4]], 'Y_scaling_factor': 15, 'JUMP_POINT':10},
             # depth_limit_config=[320, 380],                      # 深度限制
             figsize=(12, 10)  # 图形尺寸
         )
