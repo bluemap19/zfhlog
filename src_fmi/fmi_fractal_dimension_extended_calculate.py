@@ -199,7 +199,7 @@ def trans_NMR_as_Ciflog_file_type(NMR_dict: Dict[float, Any] = None) -> Tuple[np
                 min_index_current = max(0, min_index_current)
                 max_index_current = min(num_columns - 1, max_index_current)
 
-                print(f"深度 {depth_str}: 索引范围 [{min_index_current}, {max_index_current}]")
+                # print(f"深度 {depth_str}: 索引范围 [{min_index_current}, {max_index_current}]")
 
                 # 对原始数据进行排序（按X值）
                 sort_idx = np.argsort(x_original)

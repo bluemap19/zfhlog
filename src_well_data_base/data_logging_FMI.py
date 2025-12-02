@@ -424,7 +424,7 @@ class DataFMI:
         if os.path.exists(fmi_texture_path):
             if fmi_texture_path.endswith('.csv'):
                 self._logger.info('已经存在了纹理文件{}，进行直接的读取'.format(fmi_texture_path.split('/')[-1].split('\\')[-1]))
-                texture_df = pd.read_csv(fmi_texture_path, index_col=0)
+                texture_df = pd.read_csv(fmi_texture_path)
                 return texture_df
 
         try:
@@ -517,7 +517,7 @@ class DataFMI:
         # 'path_fmi': r'F:\logging_workspace\桃镇1H\桃镇1H_DYNA_FULL_TEST.txt',
         return self.path_fmi.replace('.txt', '_fde_NMR.txt')
 
-    def get_fmi_fde(self, path_fde='') -> np.ndarray:
+    def get_fmi_fde(self, path_fde='', config_fde={}) -> np.ndarray:
         """
         获取FMI数据的fde分形谱
 
@@ -536,22 +536,26 @@ class DataFMI:
                     self._logger.info('不支持的fde数据读取格式：{}'.format(path_fde))
                 return image_fde_fmi
             else:
-                self._logger.info('未存在该文件对应的fde格式，从新计算其fde谱')
+                self._logger.info('未存在该文件对应的fde格式，重新计算其fde谱')
+
+        config_fde_default = {'windows_length': 150, 'windows_step': 50, 'processing_method': 'original'}
+        if config_fde:
+            config_fde_default.update(config_fde)
 
         fmi_result_list, fmi_multi_fde_list = cal_fmis_fractal_dimension_extended(
             fmi_dict={
                 'depth': self._data_depth,  # 深度数据
                 'fmis': [self._data_fmi.astype(np.uint8)],  # 电成像数据
             },
-            windows_length=200,  # 窗口长度：平衡纵向分辨率和统计可靠性
-            windows_step=100,  # 滑动步长：控制计算密度
-            processing_method='original',  # 图像预处理的方式：自适应二值化突出岩性边界 adaptive_binary  original
+            windows_length=config_fde_default['windows_length'],            # 窗口长度：平衡纵向分辨率和统计可靠性
+            windows_step=config_fde_default['windows_step'],                # 滑动步长：控制计算密度
+            processing_method=config_fde_default['processing_method'],      # 图像预处理的方式：自适应二值化突出岩性边界 adaptive_binary  original
         )
 
-        depth_array, image_fde_dyna = trans_NMR_as_Ciflog_file_type(fmi_multi_fde_list[0])
-        alpha_f_dyna = np.hstack((depth_array.reshape((-1, 1)), image_fde_dyna.astype(np.float32)))
-        np.savetxt(path_fde, alpha_f_dyna, delimiter='\t', comments='', fmt='%.4f')
-        return alpha_f_dyna
+        depth_array, image_fde = trans_NMR_as_Ciflog_file_type(fmi_multi_fde_list[0])
+        alpha_f = np.hstack((depth_array.reshape((-1, 1)), image_fde.astype(np.float32)))
+        np.savetxt(path_fde, alpha_f, delimiter='\t', comments='', fmt='%.4f')
+        return alpha_f
 
 def user_specific_test():
     """
@@ -563,13 +567,12 @@ def user_specific_test():
 
     # 用户提供的测试用例
     test_case = {
-        'path_fmi': r'F:\logging_workspace\桃镇1H\桃镇1H_DYNA_FULL_TEST.txt',
-        'well_name': '桃镇1H',
-        'fmi_charter': 'DYNA'
+        # 'path_fmi': r'F:\logging_workspace\桃镇1H\桃镇1H_STAT_FULL.txt',
+        'path_fmi': r'F:\logging_workspace\禄探\禄探_STAT.txt',
+        'fmi_charter': 'STAT'
     }
 
     print(f"测试文件: {test_case['path_fmi']}")
-    print(f"井名: {test_case['well_name']}")
     print(f"仪器: {test_case['fmi_charter']}")
     print("-" * 50)
 
@@ -577,7 +580,6 @@ def user_specific_test():
         # 创建FMI处理器实例
         test_FMI = DataFMI(
             path_fmi=test_case['path_fmi'],
-            # well_name=test_case['well_name'],
             fmi_charter=test_case['fmi_charter']
         )
 
@@ -600,33 +602,41 @@ def user_specific_test():
         for key, value in summary.items():
             print(f"  {key}: {value}")
 
-        FMI_TEXTURE = test_FMI.get_texture()
+        FMI_TEXTURE = test_FMI.get_texture(texture_config = {
+                'level': 16,  # 灰度级别
+                'distance': [2, 4],  # 像素距离
+                # 'angles': [0, np.pi / 4, np.pi / 2, np.pi * 3 / 4],  # 角度方向
+                'angles': [0, np.pi / 2],  # 角度方向
+                'windows_length': 80,  # 窗口长度
+                'windows_step': 10  # 滑动步长
+            }
+        )
         print(FMI_TEXTURE.describe())
 
-        FMI_FDE = test_FMI.get_fmi_fde()
-        print(FMI_FDE.shape)
-
-        FMI_FDE_DICT = trans_fde_image_to_NMR_type(FMI_FDE)
-
-        visualizer = WellLogVisualizer()
-        # 执行可视化
-        visualizer.visualize(
-            logging_dict=None,
-            fmi_dict={  # FMI图像数据
-                'depth': test_FMI._data_depth,
-                'image_data': [test_FMI._data_fmi] ,
-                'title': ['FMI动态', 'FMI静态', 'DYNA_PRO', 'STAT_PRO']
-            },
-            NMR_dict=[FMI_FDE_DICT],
-            NMR_Config={'X_LOG': [False, False], 'NMR_TITLE': ['α-fα-DYNA', 'α-fα-STAT'],
-                        'X_LIMIT': [[0, 6.4], [0, 6.4]], 'Y_scaling_factor': 4},
-            # depth_limit_config=[320, 380],                      # 深度限制
-            figsize=(12, 10)  # 图形尺寸
-        )
-
-        # 显示性能统计
-        stats = visualizer.get_performance_stats()
-        print("性能统计:", stats)
+        # FMI_FDE = test_FMI.get_fmi_fde()
+        # print(FMI_FDE.shape)
+        #
+        # FMI_FDE_DICT = trans_fde_image_to_NMR_type(FMI_FDE)
+        #
+        # visualizer = WellLogVisualizer()
+        # # 执行可视化
+        # visualizer.visualize(
+        #     logging_dict=None,
+        #     fmi_dict={  # FMI图像数据
+        #         'depth': test_FMI._data_depth,
+        #         'image_data': [test_FMI._data_fmi] ,
+        #         'title': ['FMI动态', 'FMI静态', 'DYNA_PRO', 'STAT_PRO']
+        #     },
+        #     NMR_dict=[FMI_FDE_DICT],
+        #     NMR_Config={'X_LOG': [False, False], 'NMR_TITLE': ['α-fα-DYNA', 'α-fα-STAT'],
+        #                 'X_LIMIT': [[0, 6.4], [0, 6.4]], 'Y_scaling_factor': 4},
+        #     # depth_limit_config=[320, 380],                      # 深度限制
+        #     figsize=(12, 10)  # 图形尺寸
+        # )
+        #
+        # # 显示性能统计
+        # stats = visualizer.get_performance_stats()
+        # print("性能统计:", stats)
 
     except FileNotFoundError:
         print(f"文件不存在: {test_case['path_fmi']}")
