@@ -28,7 +28,7 @@ def data_combine_table2col(data_main, table_vice, drop=True):
 
     # 2. 计算分辨率
     depth_table_resolution = get_resolution_by_depth(table_depths)
-    depth_resolution = get_resolution_by_depth(main_depths)
+    # depth_resolution = get_resolution_by_depth(main_depths)
     tolerance = depth_table_resolution / 2 + 0.001
 
     # 3. 使用KD树进行高效最近邻搜索

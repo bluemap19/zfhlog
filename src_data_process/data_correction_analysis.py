@@ -60,11 +60,12 @@ def feature_influence_analysis(
         df_input: pd.DataFrame,
         input_cols: List[str],
         target_col: str,
-        n_estimators: int = 100,
+        regressor_use: bool = False,
+        n_estimators: int = 60,
         random_state: int = 42,
         figsize: Tuple[int, int] = (6, 8),
         replace_dict={},
-        plot_horizontal=True
+        plot_horizontal=True,
 ) -> Tuple[pd.Series, List[str], pd.Series, List[str]]:
     """
     分析输入属性对目标属性的影响力
@@ -84,7 +85,7 @@ def feature_influence_analysis(
     input_cols_RF: 按随机森林特征重要性排序后的输入属性列表
     """
     if not replace_dict:
-        replace_dict = {1:'T1', 2:'T2', 3:'T3', 4:'T4', 5:'T5', 6:'T6', 7:'T7', 8:'T8'}
+        replace_dict = {0:'T0', 1:'T1', 2:'T2', 3:'T3', 4:'T4', 5:'T5', 6:'T6', 7:'T7', 8:'T8'}
 
     df = df_input.copy()
     df[target_col] = df[target_col].astype(int)
@@ -168,8 +169,8 @@ def feature_influence_analysis(
             X[col] = le.fit_transform(X[col])
             encoders[col] = le
 
-    # 选择模型类型
-    if pd.api.types.is_numeric_dtype(data[target_col]):
+    # 选择模型类型，默认是使用分类树进行计算
+    if regressor_use:
         model = RandomForestRegressor(
             n_estimators=n_estimators,
             random_state=random_state
@@ -283,6 +284,7 @@ if __name__ == '__main__':
         df_input=test_data,
         input_cols=input_cols,
         target_col=target_col,
+        regressor_use=False,
         replace_dict={}
     )
 

@@ -445,6 +445,8 @@ class DataTable:
         Returns:
             类型替换后的深度-类型格式DataFrame
         """
+        self.get_table_2()
+
         # 惰性替换：如果替换数据为空，应用类型替换
         if self._table_2_replaced.empty:
             self._apply_type_replacement()
@@ -485,6 +487,8 @@ class DataTable:
         Returns:
             类型替换后的开始-结束-类型格式DataFrame
         """
+        self.get_table_3()
+
         if self._table_3_replaced.empty:
             self._apply_type_replacement()
 
@@ -554,6 +558,10 @@ class DataTable:
             'table_3_rows': len(self._table_3),
             'replace_dict_size': len(self._replace_dict)
         }
+
+    def get_replace_dict(self):
+        self.read_data()
+        return self._replace_dict
 
 
 def user_specific_test():

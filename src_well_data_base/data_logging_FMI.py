@@ -137,7 +137,6 @@ class DataFMI:
         self._table_2: pd.DataFrame = pd.DataFrame()  # 保留属性，用于兼容性
         self._data_fmi: np.ndarray = np.array([])  # FMI成像数据体
         self._data_depth: np.ndarray = np.array([])  # 深度数据
-        self._data_depth_stat: np.ndarray = np.array([])  # 静态深度数据（用于纹理计算）
 
         # 配置参数
         self._resolution: float = 0.0025  # 默认分辨率
@@ -235,9 +234,6 @@ class DataFMI:
             if self._data_fmi.size == 0 or self._data_depth.size == 0:
                 raise FMIException("读取到的数据为空")
 
-            # 设置静态深度数据（用于纹理计算）
-            self._data_depth_stat = self._data_depth.copy()
-
             # 更新加载状态
             self._is_data_loaded = True
             self._logger.info(f"成功加载FMI数据，形状: {self._data_fmi.shape}")
@@ -319,8 +315,9 @@ class DataFMI:
             # 根据深度范围筛选数据（待实现）
             depth_min = min(depth)
             depth_max = max(depth)
-            depth_index = []
-            return self._data_fmi, self._data_depth
+            idx = (self._data_depth >= depth_min) & (self._data_depth <= depth_max)
+            # idx = (depth_min <= self._data_depth <= depth_max)
+            return self._data_fmi[idx], self._data_depth[idx]
 
     def ele_stripes_delete(self, delete_pix: float = 0, width_ratio: float = 0.8) -> None:
         """

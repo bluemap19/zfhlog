@@ -536,7 +536,7 @@ class DataLogging:
             self.read_data()
 
         # 步骤2: 确定曲线名称列表
-        if curve_names is None:
+        if curve_names is None or len(curve_names) == 0:
             curve_names = self._curve_names.copy()
 
         # 步骤3: 确保深度列包含在结果中
@@ -701,7 +701,8 @@ if __name__ == '__main__':
 
     # 测试曲线名称映射
     print("\n=== 曲线名称映射测试 ===")
-    test_curves = ['GRC', 'CN', 'DT', 'SP']
+    # test_curves = ['GRC', 'CN', 'DT', 'SP']
+    test_curves = []
     try:
         print(f"原始曲线: {test_curves}")
         data_logging = test_data.get_data(curve_names=test_curves)

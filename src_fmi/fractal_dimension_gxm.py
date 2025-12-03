@@ -6,6 +6,9 @@ from typing import Dict
 
 import pandas as pd
 
+from src_fmi.fmi_data_read import get_random_ele_data
+from src_fmi.image_operation import show_Pic
+
 
 def multifractal_analysis(image_array: np.ndarray, q_range: float = 5.0, q_step: float = 0.1) -> Dict:
     """
@@ -371,6 +374,7 @@ def visualize_multifractal_results(analysis_results: Dict):
     # 设置图形参数
     plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
     plt.rcParams['axes.unicode_minus'] = False
+    font_size=18
 
     # 创建2×2子图
     figure, subplot_axes = plt.subplots(2, 2, figsize=(15, 12))
@@ -378,9 +382,9 @@ def visualize_multifractal_results(analysis_results: Dict):
     # 子图1: q-α(q)+f(q)关系
     subplot_axes[0, 0].plot(q_values, singularity_exponents, 'r-o', markersize=3, label='α(q)')
     subplot_axes[0, 0].plot(q_values, multifractal_spectrum, 'g-s', markersize=3, label='f(q)')
-    subplot_axes[0, 0].set_xlabel('q', fontsize=14)
-    subplot_axes[0, 0].set_ylabel('Value', fontsize=14)
-    subplot_axes[0, 0].set_title('Singularity Exponent α(q) and Multifractal Spectrum f(q) vs q', fontsize=14)
+    subplot_axes[0, 0].set_xlabel('q', fontsize=font_size)
+    subplot_axes[0, 0].set_ylabel('Value', fontsize=font_size)
+    subplot_axes[0, 0].set_title('Singularity Exponent α(q) and Multifractal Spectrum f(q) vs q', fontsize=font_size)
     subplot_axes[0, 0].legend()
     subplot_axes[0, 0].grid(True, alpha=0.3)
 
@@ -397,24 +401,24 @@ def visualize_multifractal_results(analysis_results: Dict):
                                     label='Parabolic Fit')
         except Exception as e:
             print(f"抛物线拟合失败: {e}")
-    subplot_axes[0, 1].set_xlabel('Singularity Exponent α(q)', fontsize=14)
-    subplot_axes[0, 1].set_ylabel('Multifractal Spectrum f(α)', fontsize=14)
-    subplot_axes[0, 1].set_title('Multifractal Spectrum f(α) vs Singularity Exponent α', fontsize=14)
+    subplot_axes[0, 1].set_xlabel('Singularity Exponent α(q)', fontsize=font_size)
+    subplot_axes[0, 1].set_ylabel('Multifractal Spectrum f(α)', fontsize=font_size)
+    subplot_axes[0, 1].set_title('Multifractal Spectrum f(α) vs Singularity Exponent α', fontsize=font_size)
     subplot_axes[0, 1].legend()
     subplot_axes[0, 1].grid(True, alpha=0.3)
 
     # 子图3: 广义分形维数 D_q vs q
     subplot_axes[1, 0].plot(q_values, generalized_dimensions, 'm-^', markersize=4, linewidth=2)
-    subplot_axes[1, 0].set_xlabel('q', fontsize=14)
-    subplot_axes[1, 0].set_ylabel('Generalized Dimension D(q)', fontsize=14)
-    subplot_axes[1, 0].set_title('Generalized Fractal Dimension D(q) vs q', fontsize=14)
+    subplot_axes[1, 0].set_xlabel('q', fontsize=font_size)
+    subplot_axes[1, 0].set_ylabel('Generalized Dimension D(q)', fontsize=font_size)
+    subplot_axes[1, 0].set_title('Generalized Fractal Dimension D(q) vs q', fontsize=font_size)
     subplot_axes[1, 0].grid(True, alpha=0.3)
 
     # 子图4: 质量指数 τ(q) vs q
     subplot_axes[1, 1].plot(q_values, mass_exponents, 'c-d', markersize=4, linewidth=2)
-    subplot_axes[1, 1].set_xlabel('q', fontsize=14)
-    subplot_axes[1, 1].set_ylabel('Mass Exponent τ(q)', fontsize=14)
-    subplot_axes[1, 1].set_title('Mass Exponent τ(q) vs q', fontsize=14)
+    subplot_axes[1, 1].set_xlabel('q', fontsize=font_size)
+    subplot_axes[1, 1].set_ylabel('Mass Exponent τ(q)', fontsize=font_size)
+    subplot_axes[1, 1].set_title('Mass Exponent τ(q) vs q', fontsize=font_size)
     subplot_axes[1, 1].grid(True, alpha=0.3)
 
     plt.tight_layout()
@@ -424,8 +428,12 @@ def visualize_multifractal_results(analysis_results: Dict):
 # 测试用例
 if __name__ == "__main__":
     # 创建测试图像（256×256随机纹理）
-    test_texture = cv2.imread(r"C:\Users\Maple\Documents\MATLAB\multifractal-last modified\output1.jpg", cv2.IMREAD_GRAYSCALE).astype(np.uint8)
+    # test_texture = cv2.imread(r"C:\Users\Maple\Documents\MATLAB\multifractal-last modified\output1.jpg", cv2.IMREAD_GRAYSCALE).astype(np.uint8)
+    test_texture, test_texture_stat, depth = get_random_ele_data()
+    test_texture = test_texture.astype(np.uint8)
+    test_texture = cv2.resize(test_texture, (512, 512))
     print(test_texture.shape, type(test_texture))
+    show_Pic([test_texture])
 
     print("开始执行多维分形分析...")
     fractal_results = multifractal_analysis(test_texture)

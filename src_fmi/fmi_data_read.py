@@ -179,9 +179,9 @@ def get_random_ele_data():
     # path_test1 = r'F:\桌面\算法测试-长庆数据收集\logging_CSV\桃镇1H\桃镇1H_DYNA_FULL_TEST.txt'
     # path_test2 = r'F:\桌面\算法测试-长庆数据收集\logging_CSV\桃镇1H\桃镇1H_STAT_FULL_TEST.txt'
 
-    # 桃镇1H 全部图像
-    path_test1 = r'F:\桌面\算法测试-长庆数据收集\logging_CSV\桃镇1H\桃镇1H_DYNA_FULL.txt'
-    path_test2 = r'F:\桌面\算法测试-长庆数据收集\logging_CSV\桃镇1H\桃镇1H_STAT_FULL.txt'
+    # # 桃镇1H 全部图像
+    # path_test1 = r'F:\logging_workspace\桃镇1H\桃镇1H_DYNA_FULL.txt'
+    # path_test2 = r'F:\logging_workspace\桃镇1H\桃镇1H_STAT_FULL.txt'
 
     data_img_dyna, data_depth = get_ele_data_from_path(path_test1)
     data_img_stat, data_depth = get_ele_data_from_path(path_test2)

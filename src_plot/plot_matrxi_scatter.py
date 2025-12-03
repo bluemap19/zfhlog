@@ -16,15 +16,16 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
                         input_names: list = [],
                         target_col='',
                         target_col_dict: dict = {},
-                        figsize: tuple = (10, 10),):
+                        figsize: tuple = (12, 12),
+                        font_size=12,
+                        label_size=10,
+                        ):
     """
     进行数据散步图绘制，制作不同类别数据分布
     :param df: 数据体，只能是dataframe
     :param input_names: 输入属性列名称，对应输入属性列
     :param target_col: 分类列名称，对应类别分类列信息
-    :param plot_string: 图形名称title
     :param target_col_dict: 类别是int分类类别型，那就需要替换成 字符型，这个是替换字典信息
-    :param figure: 画图类，在哪个 实体plt上进行画图
     :return:
     """
     # 添加数据检查点
@@ -81,7 +82,6 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
             for i in range(len(all_type)):
                 target_col_dict_temp[i] = all_type[i]
 
-    # 修改这部分代码
     geology_colors = [
         '#4B0082',  # 中GR长英黏土质（靛青）
         '#32CD32',  # 中低GR长英质（亮绿）
@@ -97,7 +97,11 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
         '#FF6347',  # 番茄红
         '#20B2AA'  # 浅海绿色
     ]
-    palette = color_palette(geology_colors, n_colors=len(target_col_dict_temp))
+    n_categories = len(data[target_col].unique())
+    # 只取需要的颜色数量
+    actual_colors = geology_colors[:n_categories] if n_categories <= len(geology_colors) else geology_colors
+    print(actual_colors)
+    palette = color_palette(actual_colors, n_colors=n_categories)
 
     """
     data：DataFrame格式
@@ -183,7 +187,7 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
         # bbox_to_anchor=(0.5, -0.05),  # 图例放在图外，下方中间
         loc='upper center',  # 位置在顶部中间
         ncol=min(5, len(target_col_dict_temp)),  # 水平排列，修改legend的每一行存在多少个类别标签legends，一般不要超过5个
-        fontsize=16,  # 标签字号
+        fontsize=label_size,  # 标签字号
         fancybox=False,
         shadow=False,       # 阴影
         framealpha=0.2,
@@ -203,8 +207,8 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
             color='gray',  # 网格颜色
             zorder=0  # 确保网格在数据层下方
         )
-        ax.xaxis.label.set_size(16)  # X轴标签字号
-        ax.yaxis.label.set_size(16)  # Y轴标签字号
+        ax.xaxis.label.set_size(font_size)  # X轴标签字号
+        ax.yaxis.label.set_size(font_size)  # Y轴标签字号
         # 刻度线专业设置（重点修改部分）
         ax.tick_params(
             which='both',  # 同时控制主/次刻度
@@ -212,7 +216,7 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
             length=3,  # 适当缩短刻度线长度
             width=0.8,  # 保持线宽与边框协调
             color='#606060',  # 刻度线颜色与边框统一
-            labelsize=14,
+            labelsize=label_size,
             rotation=45,
             grid_alpha=0.6,
             # top=True,  # 显示顶部刻度
@@ -236,8 +240,10 @@ def plot_matrxi_scatter(df: pd.DataFrame = pd.DataFrame(),
     )
 
     # 这两行主要用来进行调整legend的留空位置大小，如果要修改的话，按照规则（X位置，Y位置，宽度，高度），一般只修改高度，也就是只修改第四位的大小
+    # plt.tight_layout(rect=[0, 0, 1, 0.95])
     g.fig.set_size_inches(figsize[0], figsize[1])
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    # 使用更精确的布局调整代替 tight_layout wspace=0.3→ 子图间水平间距 = 子图宽度的 30%
+    plt.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.95, wspace=0.05, hspace=0.05)
 
     plt.show()
 

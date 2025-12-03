@@ -297,58 +297,6 @@ class DATA_WELL:
         well_value = self.get_default_dict(self.logging_dict, well_key)
         well_value._data_with_type = df
 
-    # # dataframe文件保存
-    # def data_save(self, path='', new_sheet_name='', df=pd.DataFrame()):
-    #     if path.endswith('.xlsx'):
-    #         if df.shape[0] > 0:
-    #             # 检查文件是否已存在
-    #             try:
-    #                 # 加载现有工作簿获取所有Sheet名称
-    #                 with pd.ExcelFile(path) as xls:
-    #                     existing_sheets = xls.sheet_names
-    #
-    #                 # 生成唯一Sheet名称（避免覆盖）
-    #                 if new_sheet_name in existing_sheets:
-    #                     i = 1
-    #                     while f"{new_sheet_name}_{i}" in existing_sheets:
-    #                         i += 1
-    #                     new_sheet_name = f"{new_sheet_name}_{i}"
-    #
-    #                 # 以追加模式写入
-    #                 with pd.ExcelWriter(path, engine='openpyxl', mode='a') as writer:
-    #                     df.to_excel(writer, sheet_name=new_sheet_name, index=False)
-    #
-    #                 print(f"成功添加新Sheet: [{new_sheet_name}]")
-    #
-    #             except FileNotFoundError:
-    #                 # 如果文件不存在则新建
-    #                 df.to_excel(path, sheet_name=new_sheet_name, index=False)
-    #                 print(f"新建文件并添加Sheet: [{new_sheet_name}]")
-    #
-    #     elif path.endswith('.csv'):
-    #         if df.shape[0] > 0:
-    #             if os.path.exists(path):
-    #                 print(f"已存在文件，未保存：{path}")
-    #             else:
-    #                 df.to_csv( path,
-    #                            index=False,  # 不保存索引
-    #                            encoding='utf-8-sig',  # 支持中文的编码格式
-    #                            sep=',',  # CSV分隔符
-    #                            quotechar='"',  # 文本限定符
-    #                            float_format='%.4f')  # 浮点数格式
-    #                 print(f"已创建新文件：{path}")
-    #
-    # def save_logging_data(self):
-    #     # 保存的是保留了Type类型的测井数据
-    #     for key in list(self.logging_dict.keys()):
-    #         data_logging = self.get_default_dict(self.logging_dict, key)
-    #         if data_logging._data.shape[0] > 0:
-    #             # 原始测井数据的合并
-    #             self.data_save(path=key, new_sheet_name=self.WELL_NAME, df=data_logging._data)
-    #             path_combined = self.generate_new_path(key)
-    #             # 筛选测井数据＋分类数据的合并
-    #             self.data_save(path=path_combined, new_sheet_name=self.WELL_NAME, df=data_logging._data_with_type)
-
     # 根据目标字符串特征，搜索符合目标特征的文件，读取文件并返回目标数据
     def search_logging_data_by_charters(self, target_path_feature=[], target_file_type='logging', curve_names=[], Norm=False):
         path_target = self.search_data_path_by_charters(target_path_feature, target_file_type)

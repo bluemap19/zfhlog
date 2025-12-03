@@ -1,242 +1,393 @@
+import logging
+import os
+
+import numpy as np
+import pandas as pd
+from typing import List, Dict, Any, Optional, Tuple, Union
+
+from src_data_process.data_correction_analysis import feature_influence_analysis
+from src_data_process.data_dilute import dilute_dataframe
+from src_data_process.data_linear_regression import calculate_predictions
+from src_data_process.data_linear_regression_2 import MultiVariateLinearRegressor
 from src_file_op.dir_operation import search_files_by_criteria
+from src_logging.logging_combine import data_combine_table2col
+from src_plot.TEMP_9 import WellLogVisualizer
+from src_plot.plot_matrxi_scatter import plot_matrxi_scatter
 from src_well_data_base.data_logging_FMI import DataFMI
 from src_well_data_base.data_logging_normal import DataLogging
 from src_well_data_base.data_logging_table import DataTable
 
 
 class DATA_WELL:
-    def __init__(self, path_folder='', WELL_NAME=''):
-        # 初始化四种类型数据（测井数据、电成像数据、核磁数据、表格分类数据）的 数据实体存放，默认保存成{路径：dataframe}的字典格式
-        # 存放格式为{logging_path1:dataframe1, logging_path2:dataframe2}
-        self.logging_dict = {}
-        self.table_dict = {}
-        self.FMI_dict = {}
-        self.NMR_dict = {}
+    """
+    井数据统一管理器：
+    - 日常曲线测井数据 DataLogging
+    - 电成像 FMI DataFMI
+    - 表格类型数据 DataTable
+    - 未来拓展 NMR 数据
+    """
 
-        # 初始化每一个path对应的dataframe对应的目标文件header表头，即曲线名称{路径：[depth, GR, DEN]}的字典格式，这个保存的是所有文件的目标表头
-        self.curve_names_target = {}
-        # 初始化 测井数据+表格数据 的保存，依旧是{路径：dataframe}的字典格式保存
-        self.logging_table = {}
+    # =============== 基础初始化 ==================
+    def __init__(self, path_folder: str = '', WELL_NAME: str = ''):
 
-        # 数据的分辨率保存，默认以{路径：float}字典格式
-        self.resolution = {}
+        # ---- 数据容器 ----
+        self.logging_dict: Dict[str, DataLogging] = {}
+        self.table_dict: Dict[str, DataTable] = {}
+        self.FMI_dict: Dict[str, DataFMI] = {}
+        self.NMR_dict: Dict[str, Any] = {}
 
-        # 初始化井名所在的路径
+        # ---- 路径容器 ----
+        self.path_list_logging: List[str] = []
+        self.path_list_table: List[str] = []
+        self.path_list_fmi: List[str] = []
+        self.path_list_nmr: List[str] = []
+
+        # 根路径
         self.well_path = path_folder
 
-        # 如果没有传入井名，那么就默认取路径最后一个文件夹的名字作为井名称
-        if WELL_NAME == '':
-            self.WELL_NAME = path_folder.split('/')[-1].split('\\')[-1].split('.')[0]
-        else:
+        # ---- 井名判定 ----
+        if WELL_NAME:
             self.WELL_NAME = WELL_NAME
-
-        # 配置四种格式文件的关键字，分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据路径关键词NMR
-        # 保存目标文件关键字,分别存放 测井数据文件关键词logging，表格数据关键词table，电成像数据关键词FMI， 核磁数据NMR
-        self.LOGGING_CHARTER = ['logging']
-        self.FMI_CHARTER = ['dyna', 'stat']
-        self.NMR_CHARTER = ['nmr']
-        self.TABLE_CHARTER = ['table', 'LITHO_TYPE']
-        # 保存目标文件路径,分别存放 测井数据文件路径键logging，表格数据路径键table，电成像数据路径键FMI， 核磁数据路径键NMR
-
-        # 存放格式为logging:[logging_path1, logging_path2], table:[table_path1, table_path2], FMI:[FMI_path1, FMI_path2], NMR:[NMR_path1, NMR_path2]
-        self.path_list_logging = []
-        self.path_list_table = []
-        self.path_list_fmi = []
-        self.path_list_NMR = []
-
-        # 初始化之后，直接初始化本地路径下目标文件
-        self.search_data_file()
-
-    # 初始化self.file_path_dict字典，存在四种key，分别是‘logging’，‘table’，‘FMI’，‘NMR’每一个key对应一个list，list里面装的是对应目标测井文件格式的数据路径
-    def search_data_file(self):
-        # 搜寻测井数据所在文件
-        file_list = search_files_by_criteria(self.well_path, name_keywords=self.LOGGING_CHARTER, file_extensions=['.xlsx', '.csv'])
-        if len(file_list) == 0:
-            print('No logging files found,in path:{}, by charter:{} {}'.format(self.well_path, self.WELL_NAME, self.LOGGING_CHARTER))
-            self.path_list_logging = []
-        if len(file_list) >= 1:
-            print('Successed searching logging file as:{}'.format(file_list))
-            self.path_list_logging = file_list
-
-        # 搜寻表格数据所在文件
-        file_list = search_files_by_criteria(self.well_path, name_keywords=self.TABLE_CHARTER, file_extensions=['.xlsx', '.csv'])
-        if len(file_list) >= 1:
-            print('successed searching table file as:{}'.format(file_list))
-            self.path_list_table = file_list
         else:
-            print('No table file found,in path:{}, by charter:{}'.format(self.well_path, self.TABLE_CHARTER))
-            self.path_list_table = []
+            self.WELL_NAME = os.path.basename(path_folder)
 
-        # 搜索电成像图像数据
-        file_list_fmi_dyna = search_files_by_criteria(self.well_path, name_keywords=self.FMI_CHARTER, file_extensions=['.txt'], all_keywords=False)
-        if len(file_list_fmi_dyna) >= 1:
-            print('successed searching fmi dyna file as:{}'.format(file_list_fmi_dyna))
-            self.path_list_fmi = file_list_fmi_dyna
-        else:
-            print('No fmi dyna file found,in path:{}, by charter:{}'.format(self.well_path, self.FMI_CHARTER))
-            self.path_list_fmi = []
+        # ---- 文件识别关键字 ----
+        self.LOGGING_KW = ['logging']
+        self.TABLE_KW = ['table', 'LITHO_TYPE']
+        self.FMI_KW = ['DYNA', 'STAT']
+        self.NMR_KW = ['nmr']
 
+        # 初始化路径扫描
+        self.scan_files()
 
-    # 测井文件读取，data_logging类型的初始化
-    def data_logging_init(self, path=''):
-        # 数据体字典self.logging_dict已经存放了，初始化了，则直接返回就行了
-        if path in list(self.logging_dict.keys()):
+    # =========================================================================
+    #                          文件扫描模块
+    # =========================================================================
+    def scan_files(self):
+        """扫描井目录，识别各类文件路径"""
+        if not os.path.exists(self.well_path):
+            print(f"[WARN] 路径不存在: {self.well_path}")
             return
-        else:
-            if path == '':
-                path = self.path_list_logging[0]
-            logging_data = DataLogging(path=path, well_name=self.WELL_NAME)
-            # 井类型dataframe的data初始化
-            self.logging_dict[path] = logging_data
 
+        self.path_list_logging = search_files_by_criteria(
+            self.well_path,
+            name_keywords=self.LOGGING_KW,
+            file_extensions=['.xlsx', '.csv'],
+            all_keywords=False
+        )
 
-    # 表格资料读取，table_data类型的初始化
-    def data_table_init(self, path=''):
-        # 数据体字典self.table_dict已经存放了，初始化了，则直接返回就行了
-        if path in list(self.table_dict.keys()):
-            return
-        else:
-            if path == '':
-                path = self.path_list_table[0]
-            table_data = DataTable(path=path, well_name=self.WELL_NAME)
-            self.table_dict[path] = table_data
+        self.path_list_table = search_files_by_criteria(
+            self.well_path,
+            name_keywords=self.TABLE_KW,
+            file_extensions=['.xlsx', '.csv'],
+            all_keywords=False
+        )
 
-    # 成像资料读取， data_FMI 类型的初始化, 其key使用的是 path_stat+path_dyna
-    def data_FMI_init(self, path_fmi=''):
-        # 数据体字典 self.FMI_dict 已经存放了，初始化了，则直接返回就行了
-        if path_fmi in list(self.FMI_dict.keys()):
-            return
-        else:
-            if path_fmi == '':
-                path_dyna = self.path_list_fmi[0]
-            if (path_fmi is None):
-                print('\033[31m' + 'Empty fmi file found,in path:{}'.format(path_fmi) + '\033[0m')
-                exit(0)
-            fmi_data = DataFMI(path_fmi=path_fmi)
-            self.FMI_dict[path_fmi] = fmi_data
+        self.path_list_fmi = search_files_by_criteria(
+            self.well_path,
+            name_keywords=self.FMI_KW,
+            file_extensions=['.txt'],
+            all_keywords=False
+        )
 
-    def check_logging_files(self, well_key=''):
-        # 如果测井资料为空，初始化测井资料
-        if not self.logging_dict:
-            if well_key == '':
-                # 判断是否存在 目标测井数据文件
-                if len(self.file_path_dict['logging']) > 0:
-                    for path in self.file_path_dict['logging']:
-                        self.data_logging_init(path=path)
-                else:
-                    print('No Logging Data Found:{}'.format(self.file_path_dict['logging']))
-                    self.search_data_file()
-                    return pd.DataFrame()
-            else:
-                self.data_logging_init(path=well_key)
-        # logging data 类的存放器 dict 不为空
-        else:
-            # 已经初始化过了
-            if well_key in list(self.logging_dict.keys()):
+        self.path_list_nmr = search_files_by_criteria(
+            self.well_path,
+            name_keywords=self.NMR_KW,
+            file_extensions=['.csv'],
+            all_keywords=False
+        )
+
+    # =========================================================================
+    #                          内部辅助函数
+    # =========================================================================
+    def _get_default_obj(self, data_dict: Dict, key: str = ''):
+        """
+        dict 为空 → 返回空
+        key为空  → 返回第一个
+        key匹配  → 返回对应对象
+        """
+        if not data_dict:
+            print("\033[33m[WARN] 数据未初始化\033[0m")
+            return None
+
+        if not key:
+            return next(iter(data_dict.values()))  # 返回第一个对象
+
+        # 支持模糊匹配
+        for k in data_dict.keys():
+            if key in k:
+                return data_dict[k]
+
+        # 完全匹配失败
+        return None
+
+    # =========================================================================
+    #                          数据初始化模块
+    # =========================================================================
+    def init_logging(self, path: str = ''):
+        """初始化普通测井数据"""
+        if not path:
+            if not self.path_list_logging:
                 return
-            # 还没有初始化，则重新进行初始化，但是要求这个输入的的路径 well_key 在 file_path_dict['logging']中
-            if well_key in self.file_path_dict['logging']:
-                self.data_logging_init(path=well_key)
+            path = self.path_list_logging[0]
 
-    # 获取测井数据，根据文件路径+曲线名称，返回dataframe格式的测井数据
-    def get_logging_data(self, well_key='', curve_names=[], Norm=False):
-        self.check_logging_files(well_key)
+        if path not in self.logging_dict:
+            self.logging_dict[path] = DataLogging(path=path, well_name=self.WELL_NAME)
 
-        # 如果不为空的话，就要取第一个文件作为数据输出文件了
-        well_value = self.get_default_dict(dict=self.logging_dict, key_default=well_key)
-        if Norm:
-            data_temp = well_value.get_data_normed(curve_names)
-        else:
-            data_temp = well_value.get_data(curve_names)
-        return data_temp
-
-    def check_table_files(self, table_key=''):
-        # 如果字典表格数据为空，初始化表格数据字典
-        if not self.table_dict:
-            if table_key == '':
-                if len(self.file_path_dict['table']) > 0:
-                    for path in self.file_path_dict['table']:
-                        self.data_table_init(path=path)
-                else:
-                    self.search_data_file()
-                    return
-            else:
-                self.data_table_init(path=table_key)
-        # table data 类的存放器 dict 不为空
-        else:
-            # 已经初始化过了
-            if table_key in list(self.table_dict.keys()):
+    def init_table(self, path: str = ''):
+        """初始化表格数据"""
+        if not path:
+            if not self.path_list_table:
                 return
-            # 还没有初始化，则重新进行初始化，但是要求这个输入的的路径 table_key 在 file_path_dict['table']中
-            if table_key in self.file_path_dict['table']:
-                self.data_table_init(path=table_key)
+            path = self.path_list_table[0]
 
-    # 获得dep-s，dep-e，type类型的表格数据
-    def get_type_3(self, table_key='', curve_names=[]):
-        self.check_table_files(table_key)
+        if path not in self.table_dict:
+            self.table_dict[path] = DataTable(path=path, well_name=self.WELL_NAME)
 
-        table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
-        if table_value._data.empty:
-            table_value.read_data()
-
-        return table_value.get_table_3(curve_names=curve_names)
-
-    def get_type_3_replaced(self, table_key='', curve_names=[], replace_dict={}, new_col=''):
-        self.check_table_files(table_key)
-
-        table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
-        if table_value._data.empty:
-            table_value.read_data()
-
-        table_value.table_type_replace(replace_dict=replace_dict, new_col=new_col)
-        return table_value.get_table_3_replaced(curve_names=curve_names)
-
-    # 获得depth，type类型的表格数据
-    def get_type_2(self, table_key='', curve_names=[]):
-        self.check_table_files(table_key)
-
-        table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
-        if table_value._data.empty:
-            table_value.read_data()
-
-        return table_value.get_table_2(curve_names=curve_names)
-
-    def get_type_2_replaced(self, table_key='', curve_names=[], replace_dict={}, new_col=''):
-        self.check_table_files(table_key)
-
-        table_value = self.get_default_dict(dict=self.table_dict, key_default=table_key)
-        if table_value._data.empty:
-            table_value.read_data()
-
-        table_value.table_type_replace(replace_dict=replace_dict, new_col=new_col)
-        return table_value.get_table_2_replaced(curve_names=curve_names)
-
-    def check_fmi_files(self, fmi_stat_key='', fmi_dyna_key=''):
-        # 如果字典表格数据为空，初始化表格数据字典
-        if not self.FMI_dict:
-            self.data_FMI_init(path_stat=fmi_stat_key, path_dyna=fmi_dyna_key)
-        # FMI data 类的存放器 dict 不为空
-        else:
-            # 已经初始化过了
-            if fmi_stat_key + fmi_dyna_key in list(self.FMI_dict.keys()):
+    def init_FMI(self, path: str = ''):
+        """初始化电成像数据（stat/dyna均可）"""
+        if not path:
+            if not self.path_list_fmi:
                 return
-            # 还没有初始化，则重新进行初始化，但是要求这个输入的的路径 fmi_stat_key 在 file_path_dict['fmi_stat']中
-            if (fmi_stat_key in self.file_path_dict['fmi_stat']) and (
-                    fmi_dyna_key in self.file_path_dict['fmi_dyna']):
-                self.data_FMI_init(path_stat=fmi_stat_key, path_dyna=fmi_dyna_key)
-            if len(fmi_stat_key + fmi_dyna_key) < 2:
-                self.data_FMI_init(path_stat=fmi_stat_key, path_dyna=fmi_dyna_key)
-            else:
-                print('\033[31m' + 'PATH {}&{} Not In This WELL PATH LIST:{}&{}'.format(fmi_stat_key, fmi_dyna_key,
-                                                                                        self.file_path_dict[
-                                                                                            'fmi_stat'],
-                                                                                        self.file_path_dict[
-                                                                                            'fmi_dyna']) + '\033[0m')
+            path = self.path_list_fmi[0]
 
-    def get_fmi_data(self, fmi_stat_key='', fmi_dyna_key='', mode='ALL'):
-        self.check_fmi_files(fmi_stat_key=fmi_stat_key, fmi_dyna_key=fmi_dyna_key)
+        if path not in self.FMI_dict:
+            self.FMI_dict[path] = DataFMI(path_fmi=path)
 
-        fmi_value = self.get_default_dict(dict=self.FMI_dict, key_default=fmi_stat_key + fmi_dyna_key)
-        data_all = fmi_value.get_data(mode=mode)
+    # =========================================================================
+    #                          统一访问接口
+    # =========================================================================
+    def get_logging(self, key: str = '', curve_names: List[str] = None, norm=False):
+        """
+        获取测井数据 DataFrame
 
-        return data_all
+        :param key: 文件名或关键字
+        :param curve_names: 需要的曲线列表
+        :param norm: 是否归一化
+        """
+        self.init_logging(key)
+        obj = self._get_default_obj(self.logging_dict, key)
+        if obj is None:
+            return pd.DataFrame()
+        return obj.get_data_normed(curve_names) if norm else obj.get_data(curve_names)
+
+    def get_table(self, key: str = '', mode='3', replaced=False, replace_dict=None, new_col='Type_Replaced'):
+        """
+        mode='3': depth_start, depth_end, type
+        mode='2': depth, type
+        """
+        self.init_table(key)
+        obj = self._get_default_obj(self.table_dict, key)
+        if obj is None:
+            return pd.DataFrame()
+
+        if replaced and replace_dict:
+            obj._apply_type_replacement(replace_dict=new_col)
+
+        return obj.get_table_3() if mode == '3' else obj.get_table_2()
+
+    def get_FMI(self, key: str = '', depth: Optional[List[float]] = None):
+        """获得 FMI 电成像数据"""
+        self.init_FMI(key)
+        obj = self._get_default_obj(self.FMI_dict, key)
+        if obj is None:
+            return None
+        return obj.get_data(depth)
+
+    # =========================================================================
+    #                          数据概览接口
+    # =========================================================================
+    def well_summary(self) -> Dict[str, Any]:
+        return {
+            "well": self.WELL_NAME,
+            "path": self.well_path,
+            "paths_logging": self.path_list_logging,
+            "paths_fmi": self.path_list_fmi,
+            "paths_table": self.path_list_table,
+            "paths_nmr": self.path_list_nmr,
+            "logging_files_num": len(self.path_list_logging),
+            "fmi_files_num": len(self.path_list_fmi),
+            "table_files_num": len(self.path_list_table),
+            "nmr_files_num": len(self.path_list_nmr),
+        }
+
+    def __repr__(self):
+        return f"<DATA_WELL {self.WELL_NAME} | logging={len(self.logging_dict)}, fmi={len(self.FMI_dict)}, table={len(self.table_dict)}>"
+
+    def combine_logging_table(
+            self,
+            logging_key='',
+            curve_names_logging=None,
+            table_key='',
+            replace_dict=None,
+            new_col='Type',
+            norm=False,
+    ):
+        """
+        将连续曲线logging与类型表（3列或2列）合并
+        生成 (depth + curves + lithology_label)
+        """
+
+        # 1 获取曲线数据
+        df_log = self.get_logging(logging_key, curve_names_logging, norm)
+        depth_col = df_log.columns[0]
+
+        # 2 获取 table
+        self.init_table(table_key)
+        table_obj = self._get_default_obj(self.table_dict, table_key)
+
+        if replace_dict:
+            table_obj._apply_type_replacement(replace_dict=replace_dict, new_col=new_col)
+
+        df_tab = table_obj.get_table_2_replaced()
+
+        # 排序
+        df_log = df_log.sort_values(depth_col)
+        df_tab = df_tab.sort_values(df_tab.columns[0])
+
+
+        logging_columns = list(df_log.columns)
+        table_columns = list(df_tab.columns)
+        array_logging = df_log.values.astype(np.float32)
+        array_table = df_tab.values.astype(np.float32)
+        array_merge = data_combine_table2col(array_logging, array_table, drop=True)
+
+        data_columns = logging_columns + [table_columns[-1]]
+        df_merge = pd.DataFrame(array_merge, columns=data_columns)
+        df_merge.dropna(inplace=True)
+        df_merge[table_columns[-1]] = df_merge[table_columns[-1]].astype(int)
+
+        if new_col != '' or new_col is None:
+            ##### 重命名
+            df_merge.rename(columns={table_columns[-1]: new_col}, inplace=True)
+
+        return df_merge
+
+
+    def update_data_with_type(self, key, df: pd.DataFrame):
+        obj = self._get_default_obj(self.logging_dict, key)
+        if obj is None: return
+        obj.data_with_type = df  # 推荐公开属性，不要操作 protected 成员
+
+    def search_data_path(self, keywords: List[str], path_list):
+        for p in path_list:
+            if all(k.lower() in p.lower() for k in keywords):
+                return p
+        return None
+
+    def search_logging_data(self, keywords=[], curve_names=None, norm=False):
+        path = self.search_data_path(keywords, self.path_list_logging)
+        return self.get_logging(path, curve_names, norm)
+
+    def get_table_replace_dict(self, table_key=''):
+        self.init_table(table_key)
+        table_obj = self._get_default_obj(self.table_dict, table_key)
+        return table_obj.get_replace_dict()
+
+if __name__ == '__main__':
+    # well = DATA_WELL("F:\logging_workspace\桃镇1H")
+    well = DATA_WELL(r'F:\logging_workspace\禄探')
+
+    summary_temp = well.well_summary()
+    for k, val in summary_temp.items():
+        print(k, val)
+
+    print(well.get_table_replace_dict(table_key='F:\\logging_workspace\\禄探\\df_层理类型_table.csv'))
+
+    logging_data_temp = well.get_logging()
+
+    # input_cols = ['AC', 'CAL', 'CNL', 'DEN', 'DTS', 'GR', 'RT', 'RXO']
+    # input_cols = ['CON_MEAN_STAT', 'DIS_MEAN_STAT', 'HOM_MEAN_STAT', 'ENG_MEAN_STAT', 'COR_MEAN_STAT', 'ASM_MEAN_STAT', 'ENT_MEAN_STAT', 'CON_SUB_STAT', 'DIS_SUB_STAT', 'HOM_SUB_STAT', 'ENG_SUB_STAT', 'COR_SUB_STAT', 'ASM_SUB_STAT', 'ENT_SUB_STAT', 'CON_X_STAT', 'DIS_X_STAT', 'HOM_X_STAT', 'ENG_X_STAT', 'COR_X_STAT', 'ASM_X_STAT', 'ENT_X_STAT', 'CON_Y_STAT', 'DIS_Y_STAT', 'HOM_Y_STAT', 'ENG_Y_STAT', 'COR_Y_STAT', 'ASM_Y_STAT', 'ENT_Y_STAT']
+    # input_cols = ['COR_MEAN_STAT', 'COR_Y_STAT', 'ASM_SUB_STAT', 'HOM_SUB_STAT', 'COR_X_STAT', 'ENG_SUB_STAT', 'ENT_SUB_STAT', 'HOM_X_STAT']
+
+    # input_cols = ['CON_MEAN_DYNA', 'DIS_MEAN_DYNA', 'HOM_MEAN_DYNA', 'ENG_MEAN_DYNA', 'COR_MEAN_DYNA', 'ASM_MEAN_DYNA', 'ENT_MEAN_DYNA', 'CON_SUB_DYNA', 'DIS_SUB_DYNA', 'HOM_SUB_DYNA', 'ENG_SUB_DYNA', 'COR_SUB_DYNA', 'ASM_SUB_DYNA', 'ENT_SUB_DYNA', 'CON_X_DYNA', 'DIS_X_DYNA', 'HOM_X_DYNA', 'ENG_X_DYNA', 'COR_X_DYNA', 'ASM_X_DYNA', 'ENT_X_DYNA', 'CON_Y_DYNA', 'DIS_Y_DYNA', 'HOM_Y_DYNA', 'ENG_Y_DYNA', 'COR_Y_DYNA', 'ASM_Y_DYNA', 'ENT_Y_DYNA']
+    # input_cols = ['ENT_SUB_DYNA', 'HOM_X_DYNA', 'ENG_SUB_DYNA', 'HOM_SUB_DYNA', 'ASM_SUB_DYNA', 'CON_SUB_DYNA', 'CON_X_DYNA', 'DIS_SUB_DYNA']
+    input_cols = ['HOM_X_STAT', 'HOM_X_DYNA', 'ENT_SUB_DYNA', 'ASM_SUB_STAT', 'CON_X_DYNA', 'CON_SUB_DYNA', 'COR_MEAN_STAT', 'ASM_SUB_DYNA', 'HOM_SUB_STAT', 'COR_Y_STAT', 'HOM_SUB_DYNA', 'ENG_SUB_DYNA', 'ENT_SUB_STAT', 'COR_X_STAT', 'DIS_SUB_DYNA', 'ENG_SUB_STAT']
+
+    target_col = 'Type'
+    logging_data_temp_type = well.combine_logging_table(
+            logging_key='F:\\logging_workspace\\禄探\\禄探_TEXTURE_logging_120.csv',
+            curve_names_logging=[],
+            table_key='F:\\logging_workspace\\禄探\\df_层理类型_table.csv',
+            replace_dict={},
+            new_col=target_col,
+            norm=True,
+    )
+    print(list(logging_data_temp_type.columns))
+    print(logging_data_temp_type.describe())
+    # print(logging_data_temp_type.tail(10))
+
+    # 创建模型实例
+    model = MultiVariateLinearRegressor(fit_intercept=True)
+
+    # 训练模型（使用x1, x2, x3预测y1, y2）
+    model.fit(logging_data_temp_type, x_cols=['HOM_X_STAT', 'HOM_X_DYNA', 'ENT_SUB_DYNA', 'ASM_SUB_STAT'], y_cols=['Type'])
+
+    # 进行预测
+    logging_data_temp_type['Type_pred'] = model.predict(logging_data_temp_type)
+    # 计算评估指标
+    test_metrics = model.score(logging_data_temp_type)
+
+    # pearson_result, pearson_sorted, rf_result, rf_sorted = feature_influence_analysis(
+    #     df_input=logging_data_temp_type,
+    #     input_cols=input_cols,
+    #     target_col=target_col,
+    #     regressor_use=False,
+    #     replace_dict={},
+    # )
+    # print("\n按皮尔逊系数排序的属性:", pearson_sorted)
+    # print("\n按随机森林特征重要性排序的属性:", rf_sorted)
+
+    # # 按组抽稀，每个组保留50%的数据
+    # logging_data_dilute = dilute_dataframe(logging_data_temp_type, ratio=5, method='random', group_by=target_col)
+    # print(f"按组抽稀50%后形状: {logging_data_dilute.shape}")
+    # plot_matrxi_scatter(logging_data_dilute, ['HOM_X_STAT', 'HOM_X_DYNA', 'ENT_SUB_DYNA', 'ASM_SUB_STAT', 'CON_X_DYNA', 'CON_SUB_DYNA', 'COR_MEAN_STAT'], target_col, target_col_dict={})
+
+    depth_config = [logging_data_temp_type['DEPTH'].min(), logging_data_temp_type['DEPTH'].max()]
+    fmi_dynamic, depth_dyna = well.get_FMI(key='F:\\logging_workspace\\禄探\\禄探_DYNA.txt', depth=depth_config)
+    fmi_static, depth_stat = well.get_FMI(key='F:\\logging_workspace\\禄探\\禄探_STAT.txt', depth=depth_config)
+
+    # 使用类接口进行可视化
+    print("创建可视化器...")
+    visualizer = WellLogVisualizer()
+    try:
+        # 启用详细日志级别
+        logging.getLogger().setLevel(logging.INFO)
+
+        # 执行可视化
+        visualizer.visualize(
+            logging_dict={'data': logging_data_temp_type,
+                          'depth_col': 'DEPTH',
+                          'curve_cols': ['CON_MEAN_STAT', 'DIS_MEAN_STAT', 'HOM_MEAN_STAT', 'ENG_MEAN_STAT', 'Type_pred'],  # 选择显示的曲线
+                          'type_cols': ['Type'],  # 分类数据
+                          'legend_dict': {0: '0', 1: '1', 2: '2', 3: '3'}  # 图例定义
+                          },
+            fmi_dict={  # FMI图像数据
+                'depth': depth_dyna,
+                'image_data': [fmi_dynamic, fmi_static],
+                'title': ['FMI动态', 'FMI静态']
+            },
+            # # NMR_dict=[NMR_DICT1, NMR_DICT2],
+            # NMR_dict={  # NMR数据
+            #     'depth': depth_fmi,
+            #     'nmr_data': [fmi_dynamic, fmi_static],
+            #     'title': ['NMR动态', 'NMR静态']
+            # },
+            # NMR_CONFIG={'X_LOG': [False, True], 'NMR_TITLE': ['N1_谱', 'N2_谱'], 'X_LIMIT': [[1, 1000], [1, 1000]],
+            #             'Y_scaling_factor': 12, 'JUMP_POINT': 15},
+            # depth_limit_config=[320, 380],  # 深度限制
+            figsize=(16, 12)  # 图形尺寸
+        )
+
+        # 显示性能统计
+        stats = visualizer.get_performance_stats()
+        print("性能统计:", stats)
+
+    except Exception as e:
+        print(f"可视化过程中出现错误: {e}")
+        import traceback
+
+        traceback.print_exc()  # 打印完整错误堆栈
+    finally:
+        # 清理资源
+        visualizer.close()
